@@ -1012,6 +1012,51 @@ button:disabled { opacity: .45; cursor: default; }
 .master-list small { display: block; color: var(--muted); margin-top: 4px; }
 .icon-btn.danger { color: #fca5a5; border-color: rgba(239,68,68,.45); }
 
+/* ── dashboard page layout ───────────────────────────────────────────────── */
+.dash-page { display: grid; gap: 20px; direction: rtl; }
+.dash-header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.dash-header__icon { font-size: 2.2rem; line-height: 1; }
+.dash-header__title { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+.dash-header__sub { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
+
+/* teacher assignments table card */
+.dash-table-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.dash-table-card__head { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.dash-table-card__title { margin: 0; font-size: 1rem; font-weight: 700; }
+.dash-table-card__empty { padding: 16px 18px; }
+.dash-table-scroll { overflow-x: auto; }
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88rem;
+}
+.dash-table thead tr { background: var(--card2); }
+.dash-table th {
+  padding: 10px 16px;
+  text-align: right;
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.dash-table tbody tr { border-bottom: 1px solid var(--border); }
+.dash-table td { padding: 10px 16px; }
+.dash-table__name { font-weight: 600; }
+.dash-table__muted { color: var(--muted); }
+.dash-table__note { margin: 0; padding: 8px 16px 12px; font-size: .75rem; color: var(--faint); }
+
 /* ── dashboard stat cards ────────────────────────────────────────────────── */
 .dash-grid {
   display: grid;
@@ -1107,6 +1152,65 @@ button:disabled { opacity: .45; cursor: default; }
   background: var(--card2);
   color: var(--accent);
 }
+.archive-chip--muted { color: var(--muted); font-weight: 600; }
+
+/* archive layout */
+.archive-wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 env(safe-area-inset-bottom);
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.archive-sticky-head {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.archive-title { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.archive-section-label { margin: 2px 0 0; font-size: .8rem; color: var(--muted); }
+.archive-head-actions { display: flex; gap: 8px; }
+.archive-body { padding: 12px 16px; display: grid; gap: 12px; align-content: start; }
+.archive-list { display: grid; gap: 10px; }
+.archive-tab--active { background: var(--accent); color: #08152A; border-color: var(--accent); }
+.archive-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.archive-entry__teacher { font-size: .8rem; color: var(--muted); }
+.archive-entry__body { margin: 0; font-size: .95rem; line-height: 1.6; }
+.archive-load-more {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--fg);
+  padding: 12px;
+  font: inherit;
+  font-size: .9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  transition: border-color var(--transition-fast);
+}
+.archive-load-more:hover { border-color: var(--accent); }
+.archive-load-more:disabled { cursor: default; opacity: .6; }
+
+/* skeleton shimmer */
+.archive-skel {
+  height: 14px;
+  border-radius: 6px;
+  background: var(--surface3);
+  animation: pulse 1.4s ease infinite;
+}
+.archive-skel--w45 { width: 45%; height: 18px; }
+.archive-skel--w80 { width: 80%; }
+.archive-skel--w60 { width: 60%; }
 
 /* ── mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 480px) {

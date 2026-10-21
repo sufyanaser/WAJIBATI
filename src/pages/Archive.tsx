@@ -43,45 +43,10 @@ function excerpt(text: string, max = 120): string {
 // ── Skeleton loader ───────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div
-      style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '14px 16px',
-        display: 'grid',
-        gap: 8,
-      }}
-    >
-      <div
-        style={{
-          height: 18,
-          width: '45%',
-          borderRadius: 6,
-          background: 'var(--surface3)',
-          animation: 'pulse 1.4s ease infinite',
-        }}
-      />
-      <div
-        style={{
-          height: 14,
-          width: '80%',
-          borderRadius: 6,
-          background: 'var(--surface3)',
-          animation: 'pulse 1.4s ease infinite',
-          animationDelay: '.15s',
-        }}
-      />
-      <div
-        style={{
-          height: 14,
-          width: '60%',
-          borderRadius: 6,
-          background: 'var(--surface3)',
-          animation: 'pulse 1.4s ease infinite',
-          animationDelay: '.3s',
-        }}
-      />
+    <div className="archive-entry">
+      <div className="archive-skel archive-skel--w45" />
+      <div className="archive-skel archive-skel--w80" style={{ animationDelay: '.15s' }} />
+      <div className="archive-skel archive-skel--w60" style={{ animationDelay: '.3s' }} />
     </div>
   )
 }
@@ -228,64 +193,24 @@ export default function Archive() {
   )
 
   return (
-    <main dir="rtl" style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 env(safe-area-inset-bottom)' }}>
+    <main dir="rtl" className="archive-wrap">
       {/* header */}
-      <div
-        style={{
-          background: 'var(--card)',
-          borderBottom: '1px solid var(--border)',
-          padding: '14px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-        }}
-      >
+      <header className="archive-sticky-head">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>أرشيف الواجبات</h1>
+          <h1 className="archive-title">أرشيف الواجبات</h1>
           {sections.length > 0 && selectedSection !== null && (
-            <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
+            <p className="archive-section-label">
               {sections.find(s => s.id === selectedSection)?.label ?? ''}
             </p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => nav('/')}
-            style={{
-              background: 'transparent',
-              color: 'var(--fg)',
-              border: '1px solid var(--border)',
-              borderRadius: 10,
-              padding: '8px 14px',
-              fontSize: '.88rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            اليوم
-          </button>
-          <button
-            onClick={signOut}
-            style={{
-              background: 'transparent',
-              color: 'var(--fg)',
-              border: '1px solid var(--border)',
-              borderRadius: 10,
-              padding: '8px 14px',
-              fontSize: '.88rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            خروج
-          </button>
+        <div className="archive-head-actions">
+          <button className="icon-btn" onClick={() => nav('/')}>اليوم</button>
+          <button className="icon-btn" onClick={signOut}>خروج</button>
         </div>
-      </div>
+      </header>
 
-      <div style={{ padding: '12px 16px', display: 'grid', gap: 12 }}>
+      <div className="archive-body">
         {/* search bar */}
         <HomeworkSearch
           value={search}
@@ -298,21 +223,12 @@ export default function Archive() {
 
         {/* section selector (only if multiple children) */}
         {sections.length > 1 && (
-          <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <nav className="archive-tabs">
             {sections.map(s => (
               <button
                 key={s.id}
+                className={`archive-tab${selectedSection === s.id ? ' archive-tab--active' : ''}`}
                 onClick={() => handleSectionChange(s.id)}
-                style={{
-                  padding: '7px 16px',
-                  fontSize: '.85rem',
-                  fontWeight: 600,
-                  borderRadius: 20,
-                  border: '1px solid var(--border)',
-                  background: selectedSection === s.id ? 'var(--accent)' : 'var(--card)',
-                  color: selectedSection === s.id ? '#111' : 'var(--fg)',
-                  cursor: 'pointer',
-                }}
               >
                 {s.label}
               </button>
@@ -320,12 +236,9 @@ export default function Archive() {
           </nav>
         )}
 
-        {/* pulse keyframe */}
-        <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}`}</style>
-
         {/* content */}
         {(loading || searching) && items.length === 0 ? (
-          <div style={{ display: 'grid', gap: 10 }}>
+          <div className="archive-list">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -338,93 +251,33 @@ export default function Archive() {
           />
         ) : (
           <>
-            <div style={{ display: 'grid', gap: 10 }}>
+            <div className="archive-list">
               {items.map(item => (
-                <article
-                  key={item.id}
-                  style={{
-                    background: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 12,
-                    padding: '14px 16px',
-                    display: 'grid',
-                    gap: 8,
-                  }}
-                >
-                  {/* date */}
-                  <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>
-                    {arDate(item.due_date)}
-                  </p>
-
-                  {/* chips row */}
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <article key={item.id} className="archive-entry">
+                  <p className="archive-entry__date">{arDate(item.due_date)}</p>
+                  <div className="archive-chips">
                     {item.subject && (
-                      <span
-                        style={{
-                          ...chipStyle(item.subject.color),
-                          padding: '3px 10px',
-                          borderRadius: 20,
-                          fontSize: '.82rem',
-                          fontWeight: 700,
-                          border: '1px solid var(--border)',
-                        }}
-                      >
+                      <span className="archive-chip" style={chipStyle(item.subject.color)}>
                         {item.subject.name}
                       </span>
                     )}
                     {item.period != null && (
-                      <span
-                        style={{
-                          padding: '3px 10px',
-                          borderRadius: 20,
-                          fontSize: '.78rem',
-                          border: '1px solid var(--border)',
-                          color: 'var(--muted)',
-                        }}
-                      >
-                        حصة {item.period}
-                      </span>
+                      <span className="archive-chip archive-chip--muted">حصة {item.period}</span>
                     )}
                     {item.teacher && (
-                      <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>
-                        {item.teacher.full_name}
-                      </span>
+                      <span className="archive-entry__teacher">{item.teacher.full_name}</span>
                     )}
                   </div>
-
-                  {/* body excerpt */}
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '.95rem',
-                      lineHeight: 1.6,
-                      color: 'var(--fg)',
-                    }}
-                  >
-                    {excerpt(item.body)}
-                  </p>
+                  <p className="archive-entry__body">{excerpt(item.body)}</p>
                 </article>
               ))}
             </div>
 
-            {/* load more */}
             {hasMore && (
               <button
+                className="archive-load-more"
                 onClick={loadMore}
                 disabled={loadingMore}
-                style={{
-                  background: 'var(--card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 12,
-                  color: 'var(--fg)',
-                  padding: '12px',
-                  fontSize: '.9rem',
-                  cursor: loadingMore ? 'default' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                }}
               >
                 {loadingMore ? <Spinner size={20} /> : 'تحميل المزيد'}
               </button>

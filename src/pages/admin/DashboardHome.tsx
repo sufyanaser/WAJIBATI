@@ -94,122 +94,72 @@ export default function DashboardHome() {
   }, [])
 
   return (
-    <div dir="rtl" style={{ display: 'grid', gap: 20 }}>
+    <div dir="rtl" className="dash-page">
 
       {/* ── school header ──────────────────────────────────────────────── */}
-      <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: 18,
-        padding: '22px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-      }}>
-        <span style={{ fontSize: '2.2rem', lineHeight: 1 }}>🎓</span>
+      <div className="dash-header">
+        <span className="dash-header__icon">🎓</span>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>
-            واجباتي | لوحة الإدارة
-          </h1>
-          <p style={{ margin: 0, fontSize: '.85rem', color: 'var(--muted)', marginTop: 2 }}>
-            مركز إدارة المدرسة
-          </p>
+          <h1 className="dash-header__title">واجباتي | لوحة الإدارة</h1>
+          <p className="dash-header__sub">مركز إدارة المدرسة</p>
         </div>
       </div>
 
       {/* ── nav card grid ──────────────────────────────────────────────── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-        gap: 12,
-      }}>
+      <div className="dash-grid">
         {navCards.map(card => (
           <button
             key={card.route}
+            className="dash-card"
             onClick={() => nav(card.route)}
-            style={{
-              background: 'var(--card)',
-              border: '1px solid var(--border)',
-              borderRadius: 16,
-              padding: '20px 16px',
-              cursor: 'pointer',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 10,
-              transition: 'border-color .15s, background .15s',
-              color: 'var(--fg)',
-            }}
-            onMouseEnter={e => {
-              ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)'
-              ;(e.currentTarget as HTMLButtonElement).style.background = 'var(--card2)'
-            }}
-            onMouseLeave={e => {
-              ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)'
-              ;(e.currentTarget as HTMLButtonElement).style.background = 'var(--card)'
-            }}
           >
-            <span style={{ fontSize: '2rem', lineHeight: 1 }}>{card.icon}</span>
-            <span style={{ fontWeight: 700, fontSize: '.95rem' }}>{card.label}</span>
+            <span className="dash-card__icon">{card.icon}</span>
+            <span className="dash-card__label">{card.label}</span>
             {stats && (
-              <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>
+              <span className="dash-card__stat">
                 {stats[card.statKey]} {statLabels[card.statKey]}
               </span>
             )}
             {loading && !stats && (
-              <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>…</span>
+              <span className="dash-card__stat">…</span>
             )}
           </button>
         ))}
       </div>
 
       {/* ── teacher assignments preview ────────────────────────────────── */}
-      <div style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: 16,
-        overflow: 'hidden',
-      }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
-            إسناد المدرسين الحالي
-          </h2>
+      <div className="dash-table-card">
+        <div className="dash-table-card__head">
+          <h2 className="dash-table-card__title">إسناد المدرسين الحالي</h2>
         </div>
 
         {loading ? (
-          <p className="muted" style={{ padding: '16px 18px' }}>جارٍ التحميل…</p>
+          <p className="muted dash-table-card__empty">جارٍ التحميل…</p>
         ) : assignments.length === 0 ? (
-          <p className="muted" style={{ padding: '16px 18px' }}>
+          <p className="muted dash-table-card__empty">
             لا توجد بيانات جدول — أضف مواد ومدرسين ثم ابنِ الجدول الدراسي
           </p>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.88rem' }}>
+          <div className="dash-table-scroll">
+            <table className="dash-table">
               <thead>
-                <tr style={{ background: 'var(--card2)' }}>
+                <tr>
                   {['المدرس', 'المادة', 'الصف والشعبة'].map(h => (
-                    <th key={h} style={{
-                      padding: '10px 16px',
-                      textAlign: 'right',
-                      color: 'var(--muted)',
-                      fontWeight: 600,
-                      borderBottom: '1px solid var(--border)',
-                    }}>{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {assignments.map((a, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '10px 16px', fontWeight: 600 }}>{a.teacher_name}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--muted)' }}>{a.subject_name}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--muted)' }}>{a.section_label}</td>
+                  <tr key={i}>
+                    <td className="dash-table__name">{a.teacher_name}</td>
+                    <td className="dash-table__muted">{a.subject_name}</td>
+                    <td className="dash-table__muted">{a.section_label}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p style={{ margin: 0, padding: '8px 16px 12px', fontSize: '.75rem', color: 'var(--faint)' }}>
+            <p className="dash-table__note">
               بيانات حقيقية من جدول الحصص — لإدارة التفاصيل انتقل إلى الجدول الدراسي
             </p>
           </div>

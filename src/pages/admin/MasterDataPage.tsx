@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import ImportPage from './ImportPage'
 import { supabase } from '../../lib/supabase'
 
@@ -10,8 +11,9 @@ type Entity = { key: string; label: string; table: string; fields: Field[]; acti
 const keyOf = (prefix: string) => `${prefix}-${Date.now().toString(36).toUpperCase()}`
 
 export default function MasterDataPage() {
+  const [searchParams] = useSearchParams()
   const [mode,setMode]=useState<'manual'|'excel'>('manual')
-  const [entityKey,setEntityKey]=useState('subjects')
+  const [entityKey,setEntityKey]=useState(() => searchParams.get('entity') ?? 'subjects')
   const [rows,setRows]=useState<Row[]>([])
   const [lookups,setLookups]=useState<Record<string,Option[]>>({})
   const [form,setForm]=useState<Row>({})
@@ -20,6 +22,7 @@ export default function MasterDataPage() {
   const [busy,setBusy]=useState(false)
   const [message,setMessage]=useState('')
 
+  useEffect(()=>{ const e = searchParams.get('entity'); if(e) setEntityKey(e) },[searchParams])
   useEffect(()=>{ void loadLookups() },[])
 
   async function loadLookups() {

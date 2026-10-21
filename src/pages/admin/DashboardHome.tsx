@@ -20,12 +20,12 @@ interface Assignment {
 // ── nav cards ──────────────────────────────────────────────────────────────────
 
 const navCards = [
-  { label: 'الطلاب',               icon: '🎓', route: '/admin/master-data/students',   statKey: 'students' as const },
-  { label: 'المدرسون',             icon: '👥', route: '/admin/master-data/teachers',   statKey: 'teachers' as const },
-  { label: 'الواجبات',             icon: '📚', route: '/admin/homework',               statKey: 'homeworkToday' as const },
-  { label: 'الجدول الدراسي',       icon: '📅', route: '/admin/master-data/timetable',  statKey: 'sections' as const },
-  { label: 'الحسابات والصلاحيات', icon: '🛡', route: '/admin/import',                statKey: 'noticesActive' as const },
-  { label: 'أولياء الأمور',        icon: '👨‍👩‍👧', route: '/admin/master-data/guardians', statKey: 'guardians' as const },
+  { label: 'الطلاب',               icon: '🎓', route: '/admin/master-data?entity=students',   statKey: 'students' as const },
+  { label: 'المدرسون',             icon: '👥', route: '/admin/master-data?entity=teachers',   statKey: 'teachers' as const },
+  { label: 'الواجبات',             icon: '📚', route: '/admin/homework',                       statKey: 'homeworkToday' as const },
+  { label: 'الجدول الدراسي',       icon: '📅', route: '/admin/master-data?entity=timetable',  statKey: 'sections' as const },
+  { label: 'الحسابات والصلاحيات', icon: '🛡', route: '/admin/import',                        statKey: 'noticesActive' as const },
+  { label: 'أولياء الأمور',        icon: '👨‍👩‍👧', route: '/admin/master-data?entity=guardians', statKey: 'guardians' as const },
 ]
 
 const statLabels: Record<keyof Stats, string> = {

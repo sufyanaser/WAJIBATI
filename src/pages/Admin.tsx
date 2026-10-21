@@ -32,7 +32,7 @@ interface PSlot extends TtSlot {
   error: string | null
   selectedSubjectId: number | null
   attaches: { id: string; storage_path: string; mime: string }[]
-  pendingFiles: File[]
+  pendingFiles: Array<{file: File; status: 'pending'|'uploading'|'failed'}>
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -143,12 +143,18 @@ export default function Admin() {
   // ── attachment upload ─────────────────────────────────────────────────────────
   async function uploadFile(slotIdx: number, file: File, hwId: string): Promise<void> {
     if (!secId) return
-    setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, uploading: true, error: null } : r))
+    setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+      ...r, uploading: true, error: null,
+      pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'uploading' as const } : pf),
+    }))
     const path = `${secId}/${hwId}/${Date.now()}_${file.name}`
     const { error: storErr } = await supabase.storage
       .from('attachments').upload(path, file, { upsert: true })
     if (storErr) {
-      setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, uploading: false, error: storErr.message } : r))
+      setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+        ...r, uploading: false, error: storErr.message,
+        pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'failed' as const } : pf),
+      }))
       return
     }
     const { data: row, error: dbErr } = await supabase.from('attachments')
@@ -157,16 +163,18 @@ export default function Admin() {
     if (dbErr || !row) {
       // Storage succeeded but DB failed — clean up orphaned storage object
       await supabase.storage.from('attachments').remove([path])
-      setSlots(p => p.map((r, j) => j === slotIdx
-        ? { ...r, uploading: false, error: dbErr?.message ?? 'فشل حفظ المرفق في قاعدة البيانات' }
-        : r))
+      setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+        ...r, uploading: false, error: dbErr?.message ?? 'فشل حفظ المرفق في قاعدة البيانات',
+        pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'failed' as const } : pf),
+      }))
       return
     }
     const newAttId = (row as { id: string }).id
-    setSlots(p => p.map((r, j) => j === slotIdx
-      ? { ...r, uploading: false, error: null,
-          attaches: [...r.attaches, { id: newAttId, storage_path: path, mime: file.type }] }
-      : r))
+    setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+      ...r, uploading: false, error: null,
+      pendingFiles: r.pendingFiles.filter(pf => pf.file !== file),
+      attaches: [...r.attaches, { id: newAttId, storage_path: path, mime: file.type }],
+    }))
   }
 
   function handleFileSelect(slotIdx: number, file: File) {
@@ -180,13 +188,12 @@ export default function Admin() {
       setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, error: 'الحد الأقصى 5 مرفقات' } : r))
       return
     }
+    // Always queue first; if hw_id exists, immediately start uploading
+    setSlots(p => p.map((r, j) => j === slotIdx
+      ? { ...r, pendingFiles: [...r.pendingFiles, { file, status: 'pending' as const }], error: null }
+      : r))
     if (s.hw_id) {
       void uploadFile(slotIdx, file, s.hw_id)
-    } else {
-      // Queue until hw_id is available (card not yet saved)
-      setSlots(p => p.map((r, j) => j === slotIdx
-        ? { ...r, pendingFiles: [...r.pendingFiles, file], error: null }
-        : r))
     }
   }
 
@@ -248,24 +255,16 @@ export default function Admin() {
       newId = (data as { id: string }).id
     }
 
-    // Capture pending files before clearing state
-    const pendingToUpload = slots[i].pendingFiles
+    // Capture pending+failed files before state update
+    const pendingToUpload = slots[i].pendingFiles.filter(pf => pf.status !== 'uploading')
 
     setSlots(p => p.map((r, j) => j === i
       ? { ...r, saving: false, dirty: false, error: null,
           hw_id: newId ?? r.hw_id,
-          status: publish ? 'published' : 'draft',
-          pendingFiles: [] }
+          status: publish ? 'published' : 'draft' }
       : r))
 
-    // Flush pending files now that hw_id exists — BEFORE sending push notification
-    if (newId && pendingToUpload.length > 0) {
-      for (const file of pendingToUpload) {
-        await uploadFile(i, file, newId)
-      }
-    }
-
-    // Send push only after all attachments are committed
+    // Send push immediately once the homework text is saved — attachments are optional (Rule 3)
     if (publish && newId) {
       supabase.functions.invoke('send-push', {
         body: {
@@ -276,12 +275,19 @@ export default function Admin() {
         },
       }).catch(() => { /* non-critical */ })
     }
+
+    // Flush queued and retry failed files after push (non-blocking for notification)
+    if (newId && pendingToUpload.length > 0) {
+      for (const pf of pendingToUpload) {
+        await uploadFile(i, pf.file, newId)
+      }
+    }
   }
 
   async function publishAll() {
     for (let i = 0; i < slots.length; i++) {
       const sl = slots[i]
-      if (sl.body.trim() && !sl.saving && !sl.uploading && sl.pendingFiles.length === 0) {
+      if (sl.body.trim() && !sl.saving && !sl.uploading) {
         await saveSlot(i, true)
       }
     }
@@ -468,16 +474,23 @@ export default function Admin() {
                           </div>
                         )}
 
-                        {/* Pending attachments (queued, not yet uploaded) */}
+                        {/* Pending attachments — per-file status: معلق / جارٍ الرفع / فشل */}
                         {s.pendingFiles.length > 0 && (
                           <div className="attachments" aria-label="مرفقات معلقة">
-                            {s.pendingFiles.map((f, fi) => (
-                              <span key={fi} className="attach-item attach-pending">
-                                {f.type.startsWith('image/') ? '🖼' : '📄'} {f.name}
-                                <span className="attach-pending-label">معلق</span>
+                            {s.pendingFiles.map((pf, fi) => (
+                              <span key={fi} className={
+                                'attach-item attach-pending' + (pf.status === 'failed' ? ' attach-failed' : '')
+                              }>
+                                {pf.file.type.startsWith('image/') ? '🖼' : '📄'} {pf.file.name}
+                                <span className="attach-pending-label">
+                                  {pf.status === 'uploading' ? 'جارٍ الرفع'
+                                    : pf.status === 'failed' ? 'فشل'
+                                    : 'معلق'}
+                                </span>
                                 <button
                                   className="attach-del"
                                   title="إزالة"
+                                  disabled={pf.status === 'uploading'}
                                   onClick={() => removePendingFile(i, fi)}
                                 >✕</button>
                               </span>

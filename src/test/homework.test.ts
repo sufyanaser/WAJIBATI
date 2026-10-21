@@ -76,7 +76,7 @@ interface PSlot {
   saving: boolean
   error: string | null
   attaches: { id: string; storage_path: string; mime: string }[]
-  pendingFiles: { name: string }[]
+  pendingFiles: { file: { name: string; type: string }; status: string }[]
 }
 
 function makeSlot(overrides: Partial<PSlot> = {}): PSlot {
@@ -137,7 +137,10 @@ describe('Attachment slot logic', () => {
       attaches: Array.from({ length: 3 }, (_, k) => ({
         id: String(k), storage_path: `s/h/${k}.jpg`, mime: 'image/jpeg',
       })),
-      pendingFiles: [{ name: 'a.jpg' }, { name: 'b.jpg' }],
+      pendingFiles: [
+        { file: { name: 'a.jpg', type: 'image/jpeg' }, status: 'pending' },
+        { file: { name: 'b.jpg', type: 'image/jpeg' }, status: 'pending' },
+      ],
     })
     expect(slot.attaches.length + slot.pendingFiles.length >= 5).toBe(true)
   })
@@ -163,10 +166,15 @@ describe('Attachment slot logic', () => {
   })
 
   it('pending file removed from queue', () => {
-    const slot = makeSlot({ pendingFiles: [{ name: 'x.jpg' }, { name: 'y.pdf' }] })
+    const slot = makeSlot({
+      pendingFiles: [
+        { file: { name: 'x.jpg', type: 'image/jpeg' }, status: 'pending' },
+        { file: { name: 'y.pdf', type: 'application/pdf' }, status: 'pending' },
+      ],
+    })
     const updated = { ...slot, pendingFiles: slot.pendingFiles.filter((_, k) => k !== 0) }
     expect(updated.pendingFiles).toHaveLength(1)
-    expect(updated.pendingFiles[0].name).toBe('y.pdf')
+    expect(updated.pendingFiles[0].file.name).toBe('y.pdf')
   })
 })
 
@@ -359,6 +367,39 @@ describe('Admin component — integration', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('يجب اختيار المادة'))
   })
 
+  it('shows "فشل" status label when storage upload fails (Rule 4 & 5)', async () => {
+    // File stays in pendingFiles with status=failed after upload error
+    mockDbFrom.mockImplementation((table: string) => {
+      if (table === 'admins') return makeQB({ data: { role: 'owner' } })
+      if (table === 'notices') return makeQB({ data: [] })
+      if (table === 'sections') return makeQB({
+        data: [{ id: 1, letter: 'أ', stage: { name: 'الرابع', branch: 'علمي' } }],
+      })
+      if (table === 'timetable') return makeQB({ data: [{ period: 1, subject: { id: 1, name: 'رياضيات', color: null }, teacher: null }] })
+      if (table === 'homework') return makeQB({
+        data: [{ id: 'hw-1', period: 1, body: 'واجب', status: 'draft', attachments: [] }],
+      })
+      return makeQB({ data: null })
+    })
+    mockStorageUpload.mockResolvedValue({ error: { message: 'خطأ تخزين' } })
+
+    const { default: Admin } = await import('../pages/Admin')
+    render(
+      React.createElement(MemoryRouter, { initialEntries: ['/admin'] },
+        React.createElement(Admin))
+    )
+    await waitFor(() => screen.getAllByTitle('إرفاق صورة من المعرض'))
+    const galleryInputs = document.querySelectorAll('input[accept="image/*"]:not([capture])')
+    const file = makeFile({ name: 'photo.jpg', size: 100, type: 'image/jpeg' })
+    await act(async () => {
+      fireEvent.change(galleryInputs[0], { target: { files: [file] } })
+    })
+    // File should stay in the pending list with "فشل" label (retained for retry)
+    await waitFor(() => expect(screen.getByText('فشل')).toBeInTheDocument())
+    // File name still visible (not dropped from queue)
+    expect(screen.getByText(/photo\.jpg/)).toBeInTheDocument()
+  })
+
   it('queues file as pending when card has no hw_id (not yet saved)', async () => {
     mockDbFrom.mockImplementation((table: string) => {
       if (table === 'admins') return makeQB({ data: { role: 'owner' } })
@@ -525,30 +566,33 @@ describe('Regression — publish guard and flush ordering', () => {
    * The current implementation only checks !slots[i].saving — it does NOT
    * check uploading. This test documents the gap at the logic level.
    */
-  it('[FIXED A] publishAll guard blocks slot when uploading=true', () => {
-    // Fixed guard: body.trim() && !saving && !uploading && pendingFiles.length === 0
+  it('[RULE 1/2] publishAll does not block on pending/failed files (attachments optional)', () => {
+    // Guard: body.trim() && !saving && !uploading — pendingFiles.length no longer blocks
     interface ExtSlot extends PSlot { uploading: boolean }
     function publishAllGuard(sl: ExtSlot): boolean {
-      return sl.body.trim().length > 0 && !sl.saving && !sl.uploading && sl.pendingFiles.length === 0
+      return sl.body.trim().length > 0 && !sl.saving && !sl.uploading
     }
     const ready = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false } as ExtSlot
     const uploading = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: true } as ExtSlot
     const withPending = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false,
-      pendingFiles: [{ name: 'f.jpg' }] } as ExtSlot
+      pendingFiles: [{ file: { name: 'f.jpg', type: 'image/jpeg' }, status: 'pending' }] } as ExtSlot
+    const withFailed = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false,
+      pendingFiles: [{ file: { name: 'f.jpg', type: 'image/jpeg' }, status: 'failed' }] } as ExtSlot
     expect(publishAllGuard(ready)).toBe(true)
-    expect(publishAllGuard(uploading)).toBe(false)
-    expect(publishAllGuard(withPending)).toBe(false)
+    expect(publishAllGuard(uploading)).toBe(false)   // mid-upload: still blocked
+    expect(publishAllGuard(withPending)).toBe(true)  // pending files: not blocked (optional)
+    expect(publishAllGuard(withFailed)).toBe(true)   // failed files: not blocked (optional)
   })
 
-  it('[FIXED B] flush pending THEN send-push ordering is correct', () => {
-    // Verify the fixed ordering: flush-pending precedes send-push
+  it('[RULE 3] send-push fires BEFORE flush pending (attachments must not delay notification)', () => {
+    // Verify correct ordering: send-push precedes flush-pending
     const callOrder: string[] = []
-    function simulateSaveSlotFixed(hasPending: boolean, publish: boolean) {
-      if (hasPending) callOrder.push('flush-pending')
+    function simulateSaveSlot(hasPending: boolean, publish: boolean) {
       if (publish) callOrder.push('send-push')
+      if (hasPending) callOrder.push('flush-pending')
     }
-    simulateSaveSlotFixed(true, true)
-    expect(callOrder).toEqual(['flush-pending', 'send-push'])
+    simulateSaveSlot(true, true)
+    expect(callOrder).toEqual(['send-push', 'flush-pending'])
   })
 })
 

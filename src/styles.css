@@ -360,6 +360,7 @@ button:disabled { opacity: .45; cursor: default; }
 .subject-select { width: 100%; margin-bottom: 6px; }
 .attach-actions { display: flex; gap: 4px; }
 .attach-pending { opacity: .65; border-style: dashed; }
+.attach-failed { opacity: .85; border-color: #e53e3e; color: #e53e3e; }
 .attach-pending-label { font-size: .72rem; color: var(--muted); margin-right: 4px; }
 
 /* ── login screen ─────────────────────────────────────────────────────────── */

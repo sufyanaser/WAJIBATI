@@ -16,3 +16,11 @@ export function normalizePhone(raw: string): string {
   if (/^7\d{9}$/.test(d)) return '+964' + d
   throw new Error('invalid_phone')
 }
+
+/**
+ * Maps an admin login username to its Supabase Auth email.
+ * Convention: <username>@admin.rumaila.local
+ * Example: 'admin' → 'admin@admin.rumaila.local'
+ */
+export const usernameToAdminEmail = (username: string): string =>
+  `${username.toLowerCase().trim()}@admin.rumaila.local`

@@ -16,11 +16,16 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
+    "@tanstack/react-table": "^9.3.1",
+    "@types/recharts": "^1.8.29",
     "html-to-image": "^1.11.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.90.0",
     "react-router-dom": "^6.26.0",
-    "read-excel-file": "^5.8.8"
+    "read-excel-file": "^5.8.8",
+    "recharts": "^3.10.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",

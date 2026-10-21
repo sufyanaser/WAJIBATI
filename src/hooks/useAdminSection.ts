@@ -92,16 +92,36 @@ export function useAdminSection(
     const hw = (hwR.data ?? []) as unknown as HwRow[]
     const hwMap = new Map(hw.map(r => [r.period, r]))
 
+    // For slots that have a subject but no teacher in timetable, try teaching_assignments
+    // (falls back silently if the table/function doesn't exist yet)
+    const slotsNeeding = tt.filter(s => s.subject && !s.teacher).map(s => s.subject!.id)
+    const taMap = new Map<number, { id: number; full_name: string }>()
+    if (slotsNeeding.length > 0) {
+      for (const subjectId of slotsNeeding) {
+        const { data } = await supabase.rpc('get_section_subject_teachers', {
+          p_section_id: sid,
+          p_subject_id: subjectId,
+        }).limit(1)
+        if (data && (data as Array<{ teacher_id: number; full_name: string }>).length > 0) {
+          const first = (data as Array<{ teacher_id: number; full_name: string }>)[0]
+          taMap.set(subjectId, { id: first.teacher_id, full_name: first.full_name })
+        }
+      }
+    }
+
     const slots: PeriodSlot[] = Array.from({ length: 6 }, (_, i) => {
       const period = i + 1
       const slot = tt.find(s => s.period === period)
       const ex = hwMap.get(period)
+      // Prefer timetable teacher; fall back to teaching_assignment if missing
+      const fallbackTeacher = slot?.subject ? taMap.get(slot.subject.id) : undefined
+      const resolvedTeacher = slot?.teacher ?? fallbackTeacher ?? null
       return {
         period,
         subject_id: slot?.subject?.id ?? null,
-        teacher_id: slot?.teacher?.id ?? null,
+        teacher_id: resolvedTeacher?.id ?? null,
         subject: slot?.subject?.name ?? '',
-        teacher: slot?.teacher?.full_name ?? '',
+        teacher: resolvedTeacher?.full_name ?? '',
         hw_id: ex?.id ?? null,
         body: ex?.body ?? '',
         status: ex?.status ?? null,

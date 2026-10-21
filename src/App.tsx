@@ -4,6 +4,7 @@ import Today from './pages/Today'
 import Archive from './pages/Archive'
 import AdminLogin from './pages/AdminLogin'
 import AdminShell from './pages/admin/AdminShell'
+import DashboardHome from './pages/admin/DashboardHome'
 import HomeworkEntry from './pages/admin/HomeworkEntry'
 import NoticesPage from './pages/admin/NoticesPage'
 import ImportPage from './pages/admin/ImportPage'
@@ -17,7 +18,8 @@ export default function App() {
         <Route path="/archive" element={<Archive />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminShell />}>
-          <Route index element={<Navigate to="homework" replace />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardHome />} />
           <Route path="homework" element={<HomeworkEntry />} />
           <Route path="notices" element={<NoticesPage />} />
           <Route path="import" element={<ImportPage />} />

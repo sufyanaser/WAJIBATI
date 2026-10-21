@@ -335,6 +335,28 @@ button:disabled { opacity: .45; cursor: default; }
   text-decoration: none;
 }
 .attach-link:hover { border-color: var(--accent); }
+.attach-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: .84rem;
+  color: var(--fg);
+}
+.attach-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--err);
+  font-size: .8rem;
+  padding: 0 2px;
+  line-height: 1;
+}
+.slot-error { color: var(--err); font-size: .84rem; margin: 4px 0 0; }
+.subject-select { width: 100%; margin-bottom: 6px; }
 
 /* ── login screen ─────────────────────────────────────────────────────────── */
 .login-title { text-align: center; color: var(--accent); }

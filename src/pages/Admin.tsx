@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchSubjects } from '../lib/subjects'
+import type { Subject } from '../lib/subjects'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
@@ -25,6 +27,8 @@ interface PSlot extends TtSlot {
   status: 'draft' | 'published' | 'archived' | null
   dirty: boolean
   saving: boolean
+  error: string | null
+  selectedSubjectId: number | null
   attaches: { id: string; storage_path: string; mime: string }[]
 }
 
@@ -41,6 +45,8 @@ export default function Admin() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [tab, setTab] = useState<'واجبات' | 'إشعارات' | 'استيراد'>('واجبات')
   const [sectionLabel, setSectionLabel] = useState('')
+
+  const [subjects, setSubjects] = useState<Subject[]>([])
 
   // import tab state
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: { row: number; message: string }[] } | null>(null)
@@ -70,6 +76,7 @@ export default function Admin() {
       setReady(true)
       loadSections()
       loadNotices()
+      fetchSubjects().then(setSubjects)
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -111,6 +118,10 @@ export default function Admin() {
         status: ex?.status ?? null,
         dirty: false,
         saving: false,
+        error: null,
+        selectedSubjectId: (ex as unknown as { subject_id?: number } | undefined)?.subject_id
+          ?? slot?.subject?.id
+          ?? null,
         attaches: ex?.attachments ?? [],
       }
     }))
@@ -129,11 +140,15 @@ export default function Admin() {
     if (!secId) return
     const s = slots[i]
     if (!s.body.trim()) return
-    setSlots(p => p.map((r, j) => j === i ? { ...r, saving: true } : r))
+    if (!s.selectedSubjectId) {
+      setSlots(p => p.map((r, j) => j === i ? { ...r, error: 'يجب اختيار المادة' } : r))
+      return
+    }
+    setSlots(p => p.map((r, j) => j === i ? { ...r, saving: true, error: null } : r))
 
     const payload = {
       section_id: secId, due_date: date, period: s.period,
-      subject_id: s.subject?.id ?? null,
+      subject_id: s.selectedSubjectId,
       teacher_id: s.teacher?.id ?? null,
       body: s.body,
       status: publish ? 'published' as const : 'draft' as const,
@@ -143,13 +158,13 @@ export default function Admin() {
     if (newId) {
       const { error: updErr } = await supabase.from('homework').update(payload).eq('id', newId)
       if (updErr) {
-        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false } : r))
+        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false, error: updErr.message } : r))
         return
       }
     } else {
       const { data, error: insErr } = await supabase.from('homework').insert(payload).select('id').single()
       if (insErr || !data) {
-        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false } : r))
+        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false, error: insErr?.message ?? 'خطأ في الحفظ' } : r))
         return
       }
       newId = (data as { id: string }).id
@@ -167,7 +182,7 @@ export default function Admin() {
     }
 
     setSlots(p => p.map((r, j) => j === i
-      ? { ...r, saving: false, dirty: false, hw_id: newId ?? r.hw_id, status: publish ? 'published' : 'draft' }
+      ? { ...r, saving: false, dirty: false, error: null, hw_id: newId ?? r.hw_id, status: publish ? 'published' : 'draft' }
       : r))
   }
 
@@ -183,20 +198,38 @@ export default function Admin() {
     const { error } = await supabase.from('homework').delete().eq('id', s.hw_id)
     if (error) return
     setSlots(p => p.map((r, j) => j === i
-      ? { ...r, hw_id: null, body: '', status: null, dirty: false, attaches: [] }
+      ? { ...r, hw_id: null, body: '', status: null, dirty: false, error: null, attaches: [] }
       : r))
   }
 
-  // ── attachment upload ────────────────────────────────────────────────────────
+  // ── attachment upload / delete ────────────────────────────────────────────────
   async function uploadFile(i: number, file: File) {
     const s = slots[i]
     if (!s.hw_id || !secId) return
+    if (s.attaches.length >= 5) {
+      setSlots(p => p.map((r, j) => j === i ? { ...r, error: 'الحد الأقصى 5 مرفقات' } : r))
+      return
+    }
     const path = `${secId}/${s.hw_id}/${Date.now()}_${file.name}`
     const { error } = await supabase.storage.from('attachments').upload(path, file, { upsert: true })
-    if (error) return
-    await supabase.from('attachments').insert({ homework_id: s.hw_id, storage_path: path, mime: file.type })
+    if (error) {
+      setSlots(p => p.map((r, j) => j === i ? { ...r, error: error.message } : r))
+      return
+    }
+    const { data: row } = await supabase.from('attachments')
+      .insert({ homework_id: s.hw_id, storage_path: path, mime: file.type })
+      .select('id').single()
+    const newId = (row as { id: string } | null)?.id ?? `tmp-${Date.now()}`
     setSlots(p => p.map((r, j) => j === i
-      ? { ...r, attaches: [...r.attaches, { id: `tmp-${Date.now()}`, storage_path: path, mime: file.type }] }
+      ? { ...r, error: null, attaches: [...r.attaches, { id: newId, storage_path: path, mime: file.type }] }
+      : r))
+  }
+
+  async function deleteAttachment(slotIdx: number, attachId: string, storagePath: string) {
+    await supabase.storage.from('attachments').remove([storagePath])
+    await supabase.from('attachments').delete().eq('id', attachId)
+    setSlots(p => p.map((r, j) => j === slotIdx
+      ? { ...r, attaches: r.attaches.filter(a => a.id !== attachId) }
       : r))
   }
 
@@ -324,14 +357,6 @@ export default function Admin() {
                         className={'period-card' + (s.status === 'published' ? ' published' : '')}>
                         <div className="period-card-header">
                           <span className="period-num">حصة {s.period}</span>
-                          {s.subject && (
-                            <span className="subject-chip"
-                              style={s.subject.color
-                                ? { background: s.subject.color + '33', borderColor: s.subject.color }
-                                : {}}>
-                              {s.subject.name}
-                            </span>
-                          )}
                           {s.teacher && <span className="teacher-name">{s.teacher.full_name}</span>}
                           {s.status && (
                             <span className={'status-badge ' + s.status}>
@@ -340,16 +365,35 @@ export default function Admin() {
                           )}
                         </div>
 
+                        <select
+                          className="admin-select subject-select"
+                          value={s.selectedSubjectId ?? ''}
+                          onChange={e => setSlots(p => p.map((r, j) =>
+                            j === i ? { ...r, selectedSubjectId: e.target.value ? Number(e.target.value) : null, error: null } : r))}
+                        >
+                          <option value="">-- اختر المادة --</option>
+                          {subjects.map(sub => (
+                            <option key={sub.id} value={sub.id}>{sub.name}</option>
+                          ))}
+                        </select>
+
                         <textarea className="hw-textarea" rows={3} placeholder="نص الواجب…"
                           value={s.body}
                           onChange={e => setSlots(p => p.map((r, j) =>
                             j === i ? { ...r, body: e.target.value, dirty: true } : r))} />
 
+                        {s.error && <p className="slot-error">{s.error}</p>}
+
                         {s.attaches.length > 0 && (
                           <div className="attachments">
-                            {s.attaches.map((a, ai) => (
-                              <span key={ai} className="attach-link">
+                            {s.attaches.map((a) => (
+                              <span key={a.id} className="attach-item">
                                 {a.mime.startsWith('image/') ? '🖼' : '📄'} {a.storage_path.split('/').pop()}
+                                <button
+                                  className="attach-del"
+                                  title="حذف المرفق"
+                                  onClick={() => deleteAttachment(i, a.id, a.storage_path)}
+                                >✕</button>
                               </span>
                             ))}
                           </div>
@@ -366,15 +410,13 @@ export default function Admin() {
                             onClick={() => saveSlot(i, true)}>
                             {s.saving ? '…' : 'نشر'}
                           </button>
+                          <label className="btn-attach" title="إرفاق ملف">
+                            📎
+                            <input type="file" accept="image/*,application/pdf,.doc,.docx" hidden
+                              onChange={e => { if (e.target.files?.[0]) uploadFile(i, e.target.files[0]) }} />
+                          </label>
                           {s.hw_id && (
-                            <label className="btn-attach" title="إرفاق ملف">
-                              📎
-                              <input type="file" hidden
-                                onChange={e => { if (e.target.files?.[0]) uploadFile(i, e.target.files[0]) }} />
-                            </label>
-                          )}
-                          {s.hw_id && (
-                            <button className="btn-del" onClick={() => deleteHw(i)} title="حذف">✕</button>
+                            <button className="btn-del" onClick={() => deleteHw(i)} title="حذف الواجب">✕</button>
                           )}
                         </div>
                       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { ExportButton } from '../components/ExportButton'
 
 // ── types ────────────────────────────────────────────────────────────────────
 interface Child { student_id: number; full_name: string; section_id: number; section_label: string }
@@ -53,14 +54,18 @@ export default function Today() {
   const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
   const [gid, setGid] = useState<string | null>(null)
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+  const [schoolName, setSchoolName] = useState('اعدادية الرميلة للبنين')
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── boot ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) { nav('/login'); return }
       bootstrap()
-      if ('Notification' in window) {
+      supabase.from('settings').select('value').eq('key', 'school').maybeSingle().then(({ data: s }) => {
+        if (s?.value && typeof s.value === 'object' && 'name' in s.value)
+          setSchoolName(String((s.value as { name: string }).name))
+      })
+      if (data.session && 'Notification' in window) {
         if (Notification.permission === 'default') setPushOpt('pending')
         else if (Notification.permission === 'granted') setPushOpt('granted')
       }
@@ -83,6 +88,7 @@ export default function Today() {
       section_id: r.student.section.id,
       section_label: `${r.student.section.stage.name} ${r.student.section.stage.branch} ‏/ ${r.student.section.letter}`,
     })))
+    if (!rows.length) setLoading(false)
   }
 
   // ── load day ─────────────────────────────────────────────────────────────────
@@ -307,10 +313,23 @@ export default function Today() {
             </div>
           )}
 
-          {/* section badge */}
+          {/* section badge + export */}
           {child && (
-            <div className="section-bar">
+            <div className="section-bar" style={{ justifyContent: 'space-between' }}>
               <span className="badge">{child.section_label}</span>
+              {!loading && hw.length > 0 && (
+                <ExportButton data={{
+                  schoolName,
+                  sectionName: child.section_label,
+                  date: toISO(date),
+                  items: hw.map(h => ({
+                    period: h.period ?? 0,
+                    subject: h.subject?.name ?? '—',
+                    teacher: h.teacher?.full_name ?? '—',
+                    body: h.body,
+                  })),
+                }} />
+              )}
             </div>
           )}
 

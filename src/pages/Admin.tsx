@@ -65,7 +65,7 @@ export default function Admin() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) { nav('/admin/login'); return }
-      const { data: adm } = await supabase.from('admins').select('role').maybeSingle()
+      const { data: adm } = await supabase.from('admins').select('role').eq('user_id', data.session.user.id).maybeSingle()
       if (!adm) { await supabase.auth.signOut(); nav('/admin/login'); return }
       setReady(true)
       loadSections()
@@ -141,10 +141,18 @@ export default function Admin() {
 
     let newId = s.hw_id
     if (newId) {
-      await supabase.from('homework').update(payload).eq('id', newId)
+      const { error: updErr } = await supabase.from('homework').update(payload).eq('id', newId)
+      if (updErr) {
+        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false } : r))
+        return
+      }
     } else {
-      const { data } = await supabase.from('homework').insert(payload).select('id').single()
-      newId = (data as { id: string } | null)?.id ?? null
+      const { data, error: insErr } = await supabase.from('homework').insert(payload).select('id').single()
+      if (insErr || !data) {
+        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false } : r))
+        return
+      }
+      newId = (data as { id: string }).id
     }
 
     if (publish && newId) {
@@ -172,7 +180,8 @@ export default function Admin() {
   async function deleteHw(i: number) {
     const s = slots[i]
     if (!s.hw_id) return
-    await supabase.from('homework').delete().eq('id', s.hw_id)
+    const { error } = await supabase.from('homework').delete().eq('id', s.hw_id)
+    if (error) return
     setSlots(p => p.map((r, j) => j === i
       ? { ...r, hw_id: null, body: '', status: null, dirty: false, attaches: [] }
       : r))

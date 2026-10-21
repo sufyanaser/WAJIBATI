@@ -1,12 +1,25 @@
 :root {
-  --bg: #0F1E33;
-  --card: #16294A;
-  --card2: #1A3258;
-  --fg: #F2F5FA;
-  --muted: #7A9CC4;
-  --accent: #C9A227;
-  --err: #E5534B;
-  --border: #2B4470;
+  /* ── base palette ─────────────────────── */
+  --bg:       #08152A;
+  --card:     #0F1E33;
+  --card2:    #172842;
+  --surface3: #1A2E4A;
+  --fg:       #DCE8F4;
+  --muted:    #6A8BAC;
+  --faint:    #374F69;
+  --accent:   #E8B04A;
+  --accent-dim:#9B6E1E;
+  --err:      #E5534B;
+  --border:   #1E3352;
+  /* ── status colors ────────────────────── */
+  --success:  #1DB87E;
+  --success-bg:#0D2E21;
+  --warn:     #F27038;
+  --warn-bg:  #2E1608;
+  /* ── role colors ──────────────────────── */
+  --role-admin:   #3D84C8;
+  --role-guardian:#8B5CF6;
+  --role-system:  #14B8A6;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -14,7 +27,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font: 18px/1.6 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  font: 18px/1.6 'Tajawal', 'IBM Plex Sans Arabic', system-ui, sans-serif;
 }
 .screen {
   max-width: 520px;
@@ -507,3 +520,48 @@ button:disabled { opacity: .45; cursor: default; }
   gap: 8px;
 }
 .notice-header strong { flex: 1; }
+
+/* ── utility: buttons ────────────────────────────────────────────────────── */
+.btn { display:inline-flex; align-items:center; gap:.5rem; padding:.6rem 1.2rem; border-radius:.5rem; border:none; font-family:inherit; font-size:.9rem; font-weight:600; cursor:pointer; transition:opacity .15s,transform .1s; }
+.btn:active { transform:scale(.97); }
+.btn-primary { background:var(--accent); color:#0F1E33; }
+.btn-primary:hover { opacity:.9; }
+.btn-ghost { background:transparent; color:var(--accent); border:1.5px solid var(--accent); }
+.btn-ghost:hover { background:rgba(232,176,74,.08); }
+.btn-danger { background:var(--err); color:#fff; }
+.btn-sm { padding:.35rem .8rem; font-size:.8rem; }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+/* ── utility: cards ──────────────────────────────────────────────────────── */
+.u-card { background:var(--card); border:1px solid var(--border); border-radius:.75rem; padding:1.25rem; }
+.u-card2 { background:var(--card2); border:1px solid var(--border); border-radius:.75rem; padding:1rem; }
+
+/* ── utility: badges ─────────────────────────────────────────────────────── */
+.badge-gold { background:rgba(232,176,74,.15); color:var(--accent); border-radius:9999px; display:inline-flex; align-items:center; padding:.2rem .6rem; font-size:.75rem; font-weight:600; }
+.badge-success { background:var(--success-bg); color:var(--success); border-radius:9999px; display:inline-flex; align-items:center; padding:.2rem .6rem; font-size:.75rem; font-weight:600; }
+.badge-warn { background:var(--warn-bg); color:var(--warn); border-radius:9999px; display:inline-flex; align-items:center; padding:.2rem .6rem; font-size:.75rem; font-weight:600; }
+.badge-muted { background:rgba(106,139,172,.15); color:var(--muted); border-radius:9999px; display:inline-flex; align-items:center; padding:.2rem .6rem; font-size:.75rem; font-weight:600; }
+
+/* ── utility: inputs ─────────────────────────────────────────────────────── */
+.input { width:100%; padding:.7rem 1rem; background:var(--card2); border:1.5px solid var(--border); border-radius:.5rem; color:var(--fg); font-family:inherit; font-size:1rem; transition:border-color .15s; }
+.input:focus { outline:none; border-color:var(--accent); }
+.input::placeholder { color:var(--muted); }
+.select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236A8BAC' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:left .75rem center; padding-left:2.5rem; }
+
+/* ── utility: layout ─────────────────────────────────────────────────────── */
+.stack { display:flex; flex-direction:column; }
+.stack-sm { gap:.5rem; }
+.stack-md { gap:1rem; }
+.stack-lg { gap:1.5rem; }
+.row { display:flex; align-items:center; }
+.row-between { justify-content:space-between; }
+.row-gap-sm { gap:.5rem; }
+.divider { height:1px; background:var(--border); margin:.75rem 0; }
+
+/* ── utility: typography ─────────────────────────────────────────────────── */
+.heading-lg { font-size:1.4rem; font-weight:700; color:var(--fg); }
+.heading-md { font-size:1.1rem; font-weight:700; color:var(--fg); }
+.text-muted { color:var(--muted); font-size:.9rem; }
+.text-accent { color:var(--accent); }
+.text-success { color:var(--success); }
+.text-err { color:var(--err); }

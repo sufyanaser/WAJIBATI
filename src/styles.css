@@ -1036,3 +1036,14 @@ button:disabled { opacity: .45; cursor: default; }
   transition: background var(--transition-fast, 150ms ease);
 }
 .archive-link:hover { background: var(--accent-dim); }
+.master-import { display: grid; gap: 16px; }
+.master-template { display: block; margin: 12px 0; text-align: center; text-decoration: none; }
+.master-picker { display: block; text-align: center; cursor: pointer; }
+.master-warning { background: rgba(232,176,74,.12); border: 1px solid rgba(232,176,74,.45); border-radius: 10px; padding: 10px 12px; color: var(--fg); line-height: 1.7; }
+.master-counts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 12px 0; direction: ltr; }
+.master-counts span { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+.master-ok { color: #8fd19e; font-weight: 700; }
+.master-steps { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; line-height: 1.7; }
+.master-steps p { margin: 5px 0; }
+.master-confirm { display: flex; align-items: flex-start; gap: 10px; margin: 14px 0; line-height: 1.6; cursor: pointer; }
+.master-confirm input { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }

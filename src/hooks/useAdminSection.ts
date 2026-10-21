@@ -14,6 +14,13 @@ interface HwRow {
   period: number
   body: string
   status: 'draft' | 'published' | 'archived'
+  attachments: AttachmentRow[]
+}
+
+export interface AttachmentRow {
+  id: string
+  storage_path: string
+  mime: string
 }
 
 export interface PeriodSlot {
@@ -25,6 +32,7 @@ export interface PeriodSlot {
   hw_id: string | null
   body: string
   status: 'draft' | 'published' | 'archived' | null
+  attachments: AttachmentRow[]
 }
 
 export interface SaveResult {
@@ -44,6 +52,8 @@ export interface UseAdminSectionResult {
   setBodies: (bodies: Record<number, string>) => void
   save: () => Promise<SaveResult>
   publish: () => Promise<PublishResult>
+  uploadAttachment: (period: number, file: File) => Promise<{ ok: boolean; error?: string }>
+  deleteAttachment: (period: number, attachmentId: string, storagePath: string) => Promise<{ ok: boolean; error?: string }>
 }
 
 // ── hook ───────────────────────────────────────────────────────────────────────
@@ -71,7 +81,7 @@ export function useAdminSection(
         .order('period'),
       supabase
         .from('homework')
-        .select('id, period, body, status')
+        .select('id, period, body, status, attachments(id,storage_path,mime)')
         .eq('section_id', sid)
         .eq('due_date', date),
     ])
@@ -93,6 +103,7 @@ export function useAdminSection(
         hw_id: ex?.id ?? null,
         body: ex?.body ?? '',
         status: ex?.status ?? null,
+        attachments: ex?.attachments ?? [],
       }
     })
 
@@ -188,6 +199,65 @@ export function useAdminSection(
     return upsertAll('draft')
   }
 
+  async function uploadAttachment(
+    period: number,
+    file: File,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const slot = periodsWithOverrides.find(p => p.period === period)
+    if (!slot?.hw_id) return { ok: false, error: 'احفظ الواجب أولاً' }
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+    const MAX_BYTES = 5 * 1024 * 1024
+    if (!ALLOWED_TYPES.includes(file.type)) return { ok: false, error: 'نوع الملف غير مدعوم' }
+    if (file.size > MAX_BYTES) return { ok: false, error: 'حجم الملف يتجاوز 5MB' }
+
+    const ext = file.name.split('.').pop() ?? 'bin'
+    const storagePath = `${sectionId}/${slot.hw_id}/${Date.now()}.${ext}`
+
+    const { error: upErr } = await supabase.storage
+      .from('attachments')
+      .upload(storagePath, file, { contentType: file.type, upsert: false })
+    if (upErr) return { ok: false, error: upErr.message }
+
+    const { data: row, error: dbErr } = await supabase
+      .from('attachments')
+      .insert({ homework_id: slot.hw_id, storage_path: storagePath, mime: file.type })
+      .select('id,storage_path,mime')
+      .single()
+    if (dbErr || !row) {
+      await supabase.storage.from('attachments').remove([storagePath])
+      return { ok: false, error: dbErr?.message ?? 'فشل الحفظ' }
+    }
+
+    const newAtt = row as AttachmentRow
+    setPeriods(prev =>
+      prev.map(p =>
+        p.period === period ? { ...p, attachments: [...p.attachments, newAtt] } : p,
+      ),
+    )
+    return { ok: true }
+  }
+
+  async function deleteAttachment(
+    period: number,
+    attachmentId: string,
+    storagePath: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const { error: dbErr } = await supabase.from('attachments').delete().eq('id', attachmentId)
+    if (dbErr) return { ok: false, error: dbErr.message }
+
+    await supabase.storage.from('attachments').remove([storagePath])
+
+    setPeriods(prev =>
+      prev.map(p =>
+        p.period === period
+          ? { ...p, attachments: p.attachments.filter(a => a.id !== attachmentId) }
+          : p,
+      ),
+    )
+    return { ok: true }
+  }
+
   async function publish(): Promise<PublishResult> {
     const saveResult = await upsertAll('published')
 
@@ -216,5 +286,5 @@ export function useAdminSection(
     }
   }
 
-  return { periods: periodsWithOverrides, loading, setBodies, save, publish }
+  return { periods: periodsWithOverrides, loading, setBodies, save, publish, uploadAttachment, deleteAttachment }
 }

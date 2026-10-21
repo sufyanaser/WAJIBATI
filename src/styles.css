@@ -1,0 +1,7 @@
+:root { --bg:#0F1E33; --card:#16294A; --fg:#F2F5FA; --accent:#C9A227; --err:#E5534B; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.6 'IBM Plex Sans Arabic', system-ui, sans-serif; }
+.screen { max-width:520px; margin:0 auto; padding:24px 16px env(safe-area-inset-bottom); display:grid; gap:14px; }
+input, button { font:inherit; padding:16px; border-radius:12px; border:1px solid #2B4470; background:var(--card); color:var(--fg); }
+button { background:var(--accent); color:#111; font-weight:700; border:0; }
+.err { color:var(--err); margin:0; }

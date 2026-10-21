@@ -79,9 +79,9 @@ DECLARE
   sub_comp    SMALLINT; sub_pe   SMALLINT; sub_baath SMALLINT;
 
   -- teacher IDs (first teacher per subject)
-  t_islam   INT; t_ar   INT; t_en   INT; t_math INT;
-  t_phy     INT; t_chem INT; t_bio  INT; t_hist INT;
-  t_geo     INT; t_econ INT; t_phil INT; t_watan INT;
+  t_islam   INT; t_ar    INT; t_en    INT; t_math  INT;
+  t_phy     INT; t_chem  INT; t_bio   INT; t_hist  INT;
+  t_geo     INT; t_econ  INT; t_phil  INT; t_watan INT;
   t_comp    INT; t_pe   INT; t_baath INT;
 
   sec_id    INT;

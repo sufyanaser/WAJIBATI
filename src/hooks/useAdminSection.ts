@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 // ── types ──────────────────────────────────────────────────────────────────────
@@ -65,6 +65,8 @@ export function useAdminSection(
   const [periods, setPeriods] = useState<PeriodSlot[]>([])
   const [loading, setLoading] = useState(false)
   const [bodyOverrides, setBodyOverrides] = useState<Record<number, string>>({})
+  const uploadingPeriodsRef = useRef<Set<number>>(new Set())
+  const deletingIdsRef = useRef<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     if (!sectionId || !date) return
@@ -203,39 +205,52 @@ export function useAdminSection(
     period: number,
     file: File,
   ): Promise<{ ok: boolean; error?: string }> {
-    const slot = periodsWithOverrides.find(p => p.period === period)
-    if (!slot?.hw_id) return { ok: false, error: 'احفظ الواجب أولاً' }
-
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
-    const MAX_BYTES = 5 * 1024 * 1024
-    if (!ALLOWED_TYPES.includes(file.type)) return { ok: false, error: 'نوع الملف غير مدعوم' }
-    if (file.size > MAX_BYTES) return { ok: false, error: 'حجم الملف يتجاوز 5MB' }
-
-    const ext = file.name.split('.').pop() ?? 'bin'
-    const storagePath = `${sectionId}/${slot.hw_id}/${Date.now()}.${ext}`
-
-    const { error: upErr } = await supabase.storage
-      .from('attachments')
-      .upload(storagePath, file, { contentType: file.type, upsert: false })
-    if (upErr) return { ok: false, error: upErr.message }
-
-    const { data: row, error: dbErr } = await supabase
-      .from('attachments')
-      .insert({ homework_id: slot.hw_id, storage_path: storagePath, mime: file.type })
-      .select('id,storage_path,mime')
-      .single()
-    if (dbErr || !row) {
-      await supabase.storage.from('attachments').remove([storagePath])
-      return { ok: false, error: dbErr?.message ?? 'فشل الحفظ' }
+    if (uploadingPeriodsRef.current.has(period)) {
+      return { ok: false, error: 'جارٍ رفع الملف بالفعل' }
     }
+    uploadingPeriodsRef.current.add(period)
+    try {
+      const slot = periodsWithOverrides.find(p => p.period === period)
+      if (!slot?.hw_id) return { ok: false, error: 'احفظ الواجب أولاً' }
 
-    const newAtt = row as AttachmentRow
-    setPeriods(prev =>
-      prev.map(p =>
-        p.period === period ? { ...p, attachments: [...p.attachments, newAtt] } : p,
-      ),
-    )
-    return { ok: true }
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+      const MAX_BYTES = 5 * 1024 * 1024
+      if (!ALLOWED_TYPES.includes(file.type)) return { ok: false, error: 'نوع الملف غير مدعوم' }
+      if (file.size > MAX_BYTES) return { ok: false, error: 'حجم الملف يتجاوز 5MB' }
+
+      const ext = file.name.split('.').pop() ?? 'bin'
+      const uniqueId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      const storagePath = `${sectionId}/${slot.hw_id}/${uniqueId}.${ext}`
+
+      const { error: upErr } = await supabase.storage
+        .from('attachments')
+        .upload(storagePath, file, { contentType: file.type, upsert: false })
+      if (upErr) return { ok: false, error: upErr.message }
+
+      const { data: row, error: dbErr } = await supabase
+        .from('attachments')
+        .insert({ homework_id: slot.hw_id, storage_path: storagePath, mime: file.type })
+        .select('id,storage_path,mime')
+        .single()
+      if (dbErr || !row) {
+        console.error('[attachments] orphaned storage file after db failure:', storagePath)
+        const { error: rmErr } = await supabase.storage.from('attachments').remove([storagePath])
+        if (rmErr) console.error('Orphan storage file, manual cleanup needed:', storagePath, rmErr.message)
+        return { ok: false, error: dbErr?.message ?? 'فشل الحفظ' }
+      }
+
+      const newAtt = row as AttachmentRow
+      setPeriods(prev =>
+        prev.map(p =>
+          p.period === period ? { ...p, attachments: [...p.attachments, newAtt] } : p,
+        ),
+      )
+      return { ok: true }
+    } finally {
+      uploadingPeriodsRef.current.delete(period)
+    }
   }
 
   async function deleteAttachment(
@@ -243,19 +258,39 @@ export function useAdminSection(
     attachmentId: string,
     storagePath: string,
   ): Promise<{ ok: boolean; error?: string }> {
-    const { error: dbErr } = await supabase.from('attachments').delete().eq('id', attachmentId)
-    if (dbErr) return { ok: false, error: dbErr.message }
+    if (deletingIdsRef.current.has(attachmentId)) {
+      return { ok: false, error: 'جارٍ الحذف بالفعل' }
+    }
+    deletingIdsRef.current.add(attachmentId)
+    try {
+      const { error: dbErr } = await supabase.from('attachments').delete().eq('id', attachmentId)
+      if (dbErr) return { ok: false, error: dbErr.message }
 
-    await supabase.storage.from('attachments').remove([storagePath])
+      const { error: storErr } = await supabase.storage.from('attachments').remove([storagePath])
+      if (storErr) {
+        console.error('[attachments] storage orphan after db delete — manual cleanup needed:', storagePath, storErr.message)
+        // DB record is gone, UI state is correct; storage cleanup can be done manually or via scheduled GC
+        setPeriods(prev =>
+          prev.map(p =>
+            p.period === period
+              ? { ...p, attachments: p.attachments.filter(a => a.id !== attachmentId) }
+              : p,
+          ),
+        )
+        return { ok: true }
+      }
 
-    setPeriods(prev =>
-      prev.map(p =>
-        p.period === period
-          ? { ...p, attachments: p.attachments.filter(a => a.id !== attachmentId) }
-          : p,
-      ),
-    )
-    return { ok: true }
+      setPeriods(prev =>
+        prev.map(p =>
+          p.period === period
+            ? { ...p, attachments: p.attachments.filter(a => a.id !== attachmentId) }
+            : p,
+        ),
+      )
+      return { ok: true }
+    } finally {
+      deletingIdsRef.current.delete(attachmentId)
+    }
   }
 
   async function publish(): Promise<PublishResult> {

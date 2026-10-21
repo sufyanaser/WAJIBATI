@@ -833,6 +833,31 @@ button:disabled { opacity: .45; cursor: default; }
   cursor: not-allowed;
 }
 
+.he-attach-chip--uploading {
+  opacity: 0.6;
+}
+
+.he-attach-chip--error {
+  border-color: var(--danger, #e55);
+  color: var(--danger, #e55);
+}
+
+.he-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px dashed var(--warning, #E8B04A);
+  border-radius: var(--radius-full, 9999px);
+  padding: 3px 10px;
+  font-size: .78rem;
+  color: var(--warning, #E8B04A);
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.he-retry-btn:hover:not(:disabled) { opacity: 0.8; }
+.he-retry-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
 /* ── row status badges ───────────────────────────────────────────────────── */
 .he-status {
   display: inline-block;

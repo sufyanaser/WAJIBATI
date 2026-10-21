@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 // ── types ──────────────────────────────────────────────────────────────────────
@@ -14,6 +14,13 @@ interface HwRow {
   period: number
   body: string
   status: 'draft' | 'published' | 'archived'
+  attachments: AttachmentRow[]
+}
+
+export interface AttachmentRow {
+  id: string
+  storage_path: string
+  mime: string
 }
 
 export interface PeriodSlot {
@@ -25,6 +32,7 @@ export interface PeriodSlot {
   hw_id: string | null
   body: string
   status: 'draft' | 'published' | 'archived' | null
+  attachments: AttachmentRow[]
 }
 
 export interface SaveResult {
@@ -44,6 +52,8 @@ export interface UseAdminSectionResult {
   setBodies: (bodies: Record<number, string>) => void
   save: () => Promise<SaveResult>
   publish: () => Promise<PublishResult>
+  uploadAttachment: (period: number, file: File) => Promise<{ ok: boolean; error?: string }>
+  deleteAttachment: (period: number, attachmentId: string, storagePath: string) => Promise<{ ok: boolean; error?: string }>
 }
 
 // ── hook ───────────────────────────────────────────────────────────────────────
@@ -55,6 +65,8 @@ export function useAdminSection(
   const [periods, setPeriods] = useState<PeriodSlot[]>([])
   const [loading, setLoading] = useState(false)
   const [bodyOverrides, setBodyOverrides] = useState<Record<number, string>>({})
+  const uploadingPeriodsRef = useRef<Set<number>>(new Set())
+  const deletingIdsRef = useRef<Set<string>>(new Set())
 
   const load = useCallback(async () => {
     if (!sectionId || !date) return
@@ -71,7 +83,7 @@ export function useAdminSection(
         .order('period'),
       supabase
         .from('homework')
-        .select('id, period, body, status')
+        .select('id, period, body, status, attachments(id,storage_path,mime)')
         .eq('section_id', sid)
         .eq('due_date', date),
     ])
@@ -113,6 +125,7 @@ export function useAdminSection(
         hw_id: ex?.id ?? null,
         body: ex?.body ?? '',
         status: ex?.status ?? null,
+        attachments: ex?.attachments ?? [],
       }
     })
 
@@ -208,6 +221,98 @@ export function useAdminSection(
     return upsertAll('draft')
   }
 
+  async function uploadAttachment(
+    period: number,
+    file: File,
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (uploadingPeriodsRef.current.has(period)) {
+      return { ok: false, error: 'جارٍ رفع الملف بالفعل' }
+    }
+    uploadingPeriodsRef.current.add(period)
+    try {
+      const slot = periodsWithOverrides.find(p => p.period === period)
+      if (!slot?.hw_id) return { ok: false, error: 'احفظ الواجب أولاً' }
+
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+      const MAX_BYTES = 5 * 1024 * 1024
+      if (!ALLOWED_TYPES.includes(file.type)) return { ok: false, error: 'نوع الملف غير مدعوم' }
+      if (file.size > MAX_BYTES) return { ok: false, error: 'حجم الملف يتجاوز 5MB' }
+
+      const ext = file.name.split('.').pop() ?? 'bin'
+      const uniqueId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      const storagePath = `${sectionId}/${slot.hw_id}/${uniqueId}.${ext}`
+
+      const { error: upErr } = await supabase.storage
+        .from('attachments')
+        .upload(storagePath, file, { contentType: file.type, upsert: false })
+      if (upErr) return { ok: false, error: upErr.message }
+
+      const { data: row, error: dbErr } = await supabase
+        .from('attachments')
+        .insert({ homework_id: slot.hw_id, storage_path: storagePath, mime: file.type })
+        .select('id,storage_path,mime')
+        .single()
+      if (dbErr || !row) {
+        console.error('[attachments] orphaned storage file after db failure:', storagePath)
+        const { error: rmErr } = await supabase.storage.from('attachments').remove([storagePath])
+        if (rmErr) console.error('Orphan storage file, manual cleanup needed:', storagePath, rmErr.message)
+        return { ok: false, error: dbErr?.message ?? 'فشل الحفظ' }
+      }
+
+      const newAtt = row as AttachmentRow
+      setPeriods(prev =>
+        prev.map(p =>
+          p.period === period ? { ...p, attachments: [...p.attachments, newAtt] } : p,
+        ),
+      )
+      return { ok: true }
+    } finally {
+      uploadingPeriodsRef.current.delete(period)
+    }
+  }
+
+  async function deleteAttachment(
+    period: number,
+    attachmentId: string,
+    storagePath: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    if (deletingIdsRef.current.has(attachmentId)) {
+      return { ok: false, error: 'جارٍ الحذف بالفعل' }
+    }
+    deletingIdsRef.current.add(attachmentId)
+    try {
+      const { error: dbErr } = await supabase.from('attachments').delete().eq('id', attachmentId)
+      if (dbErr) return { ok: false, error: dbErr.message }
+
+      const { error: storErr } = await supabase.storage.from('attachments').remove([storagePath])
+      if (storErr) {
+        console.error('[attachments] storage orphan after db delete — manual cleanup needed:', storagePath, storErr.message)
+        // DB record is gone, UI state is correct; storage cleanup can be done manually or via scheduled GC
+        setPeriods(prev =>
+          prev.map(p =>
+            p.period === period
+              ? { ...p, attachments: p.attachments.filter(a => a.id !== attachmentId) }
+              : p,
+          ),
+        )
+        return { ok: true }
+      }
+
+      setPeriods(prev =>
+        prev.map(p =>
+          p.period === period
+            ? { ...p, attachments: p.attachments.filter(a => a.id !== attachmentId) }
+            : p,
+        ),
+      )
+      return { ok: true }
+    } finally {
+      deletingIdsRef.current.delete(attachmentId)
+    }
+  }
+
   async function publish(): Promise<PublishResult> {
     const saveResult = await upsertAll('published')
 
@@ -236,5 +341,5 @@ export function useAdminSection(
     }
   }
 
-  return { periods: periodsWithOverrides, loading, setBodies, save, publish }
+  return { periods: periodsWithOverrides, loading, setBodies, save, publish, uploadAttachment, deleteAttachment }
 }

@@ -5,3 +5,4 @@ dist/
 supabase/.temp/
 *.tsbuildinfo
 .claude/
+docs/reference/

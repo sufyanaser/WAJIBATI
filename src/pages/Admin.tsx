@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { fetchSubjects } from '../lib/subjects'
+import type { Subject } from '../lib/subjects'
+import { validateFile } from '../lib/attachmentUtils'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
@@ -25,7 +28,11 @@ interface PSlot extends TtSlot {
   status: 'draft' | 'published' | 'archived' | null
   dirty: boolean
   saving: boolean
+  uploading: boolean
+  error: string | null
+  selectedSubjectId: number | null
   attaches: { id: string; storage_path: string; mime: string }[]
+  pendingFiles: Array<{file: File; status: 'pending'|'uploading'|'failed'}>
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -41,6 +48,12 @@ export default function Admin() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [tab, setTab] = useState<'واجبات' | 'إشعارات' | 'استيراد'>('واجبات')
   const [sectionLabel, setSectionLabel] = useState('')
+
+  const [subjects, setSubjects] = useState<Subject[]>([])
+
+  // upload/save in-flight guards (ref-based to avoid React state race conditions)
+  const uploadingFiles = useRef(new Set<File>())
+  const savingSlots = useRef(new Set<number>())
 
   // import tab state
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: { row: number; message: string }[] } | null>(null)
@@ -70,6 +83,7 @@ export default function Admin() {
       setReady(true)
       loadSections()
       loadNotices()
+      fetchSubjects().then(setSubjects)
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -111,7 +125,13 @@ export default function Admin() {
         status: ex?.status ?? null,
         dirty: false,
         saving: false,
+        uploading: false,
+        error: null,
+        selectedSubjectId: (ex as unknown as { subject_id?: number } | undefined)?.subject_id
+          ?? slot?.subject?.id
+          ?? null,
         attaches: ex?.attachments ?? [],
+        pendingFiles: [],
       }
     }))
     setLoadingSlots(false)
@@ -124,16 +144,120 @@ export default function Admin() {
     loadSlots(secId, date)
   }, [secId, date, sections, loadSlots])
 
+  // ── attachment upload ─────────────────────────────────────────────────────────
+  async function uploadFile(slotIdx: number, file: File, hwId: string): Promise<void> {
+    if (!secId) return
+    // Prevent duplicate upload of the same File object (ref-based guard, React state is async)
+    if (uploadingFiles.current.has(file)) return
+    uploadingFiles.current.add(file)
+    setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+      ...r, uploading: true, error: null,
+      pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'uploading' as const } : pf),
+    }))
+    const path = `${secId}/${hwId}/${Date.now()}_${file.name}`
+    const { error: storErr } = await supabase.storage
+      .from('attachments').upload(path, file, { upsert: true })
+    if (storErr) {
+      uploadingFiles.current.delete(file)
+      setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+        ...r, uploading: false, error: storErr.message,
+        pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'failed' as const } : pf),
+      }))
+      return
+    }
+    const { data: row, error: dbErr } = await supabase.from('attachments')
+      .insert({ homework_id: hwId, storage_path: path, mime: file.type })
+      .select('id').single()
+    if (dbErr || !row) {
+      // Storage succeeded but DB failed — clean up orphaned storage object
+      await supabase.storage.from('attachments').remove([path])
+      uploadingFiles.current.delete(file)
+      setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+        ...r, uploading: false, error: dbErr?.message ?? 'فشل حفظ المرفق في قاعدة البيانات',
+        pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'failed' as const } : pf),
+      }))
+      return
+    }
+    uploadingFiles.current.delete(file)
+    const newAttId = (row as { id: string }).id
+    setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+      ...r, uploading: false, error: null,
+      pendingFiles: r.pendingFiles.filter(pf => pf.file !== file),
+      attaches: [...r.attaches, { id: newAttId, storage_path: path, mime: file.type }],
+    }))
+  }
+
+  function handleFileSelect(slotIdx: number, file: File) {
+    const s = slots[slotIdx]
+    const err = validateFile(file)
+    if (err) {
+      setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, error: err } : r))
+      return
+    }
+    if (s.attaches.length + s.pendingFiles.length >= 5) {
+      setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, error: 'الحد الأقصى 5 مرفقات' } : r))
+      return
+    }
+    // Always queue first; if hw_id exists, immediately start uploading
+    setSlots(p => p.map((r, j) => j === slotIdx
+      ? { ...r, pendingFiles: [...r.pendingFiles, { file, status: 'pending' as const }], error: null }
+      : r))
+    if (s.hw_id) {
+      void uploadFile(slotIdx, file, s.hw_id)
+    }
+  }
+
+  async function deleteAttachment(slotIdx: number, attachId: string, storagePath: string) {
+    setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, uploading: true } : r))
+    const { error: storErr } = await supabase.storage.from('attachments').remove([storagePath])
+    if (storErr) {
+      setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, uploading: false, error: storErr.message } : r))
+      return
+    }
+    const { error: dbErr } = await supabase.from('attachments').delete().eq('id', attachId)
+    if (dbErr) {
+      setSlots(p => p.map((r, j) => j === slotIdx ? { ...r, uploading: false, error: dbErr.message } : r))
+      return
+    }
+    setSlots(p => p.map((r, j) => j === slotIdx
+      ? { ...r, uploading: false, attaches: r.attaches.filter(a => a.id !== attachId) }
+      : r))
+  }
+
+  function removePendingFile(slotIdx: number, fileIdx: number) {
+    setSlots(p => p.map((r, j) => j === slotIdx
+      ? { ...r, pendingFiles: r.pendingFiles.filter((_, k) => k !== fileIdx) }
+      : r))
+  }
+
+  function retryUpload(slotIdx: number, file: File, hwId: string) {
+    if (uploadingFiles.current.has(file)) return  // already retrying
+    setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+      ...r,
+      pendingFiles: r.pendingFiles.map(pf =>
+        pf.file === file ? { ...pf, status: 'pending' as const } : pf
+      ),
+    }))
+    void uploadFile(slotIdx, file, hwId)
+  }
+
   // ── save / publish slot ───────────────────────────────────────────────────────
   async function saveSlot(i: number, publish: boolean) {
     if (!secId) return
     const s = slots[i]
     if (!s.body.trim()) return
-    setSlots(p => p.map((r, j) => j === i ? { ...r, saving: true } : r))
+    if (!s.selectedSubjectId) {
+      setSlots(p => p.map((r, j) => j === i ? { ...r, error: 'يجب اختيار المادة' } : r))
+      return
+    }
+    // Ref-based guard: prevents double-save even if React state hasn't propagated yet
+    if (savingSlots.current.has(i)) return
+    savingSlots.current.add(i)
+    setSlots(p => p.map((r, j) => j === i ? { ...r, saving: true, error: null } : r))
 
     const payload = {
       section_id: secId, due_date: date, period: s.period,
-      subject_id: s.subject?.id ?? null,
+      subject_id: s.selectedSubjectId,
       teacher_id: s.teacher?.id ?? null,
       body: s.body,
       status: publish ? 'published' as const : 'draft' as const,
@@ -143,18 +267,35 @@ export default function Admin() {
     if (newId) {
       const { error: updErr } = await supabase.from('homework').update(payload).eq('id', newId)
       if (updErr) {
-        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false } : r))
+        savingSlots.current.delete(i)
+        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false, error: updErr.message } : r))
         return
       }
     } else {
       const { data, error: insErr } = await supabase.from('homework').insert(payload).select('id').single()
       if (insErr || !data) {
-        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false } : r))
+        savingSlots.current.delete(i)
+        setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false, error: insErr?.message ?? 'خطأ في الحفظ' } : r))
         return
       }
       newId = (data as { id: string }).id
     }
 
+    savingSlots.current.delete(i)
+
+    // Capture files not already in flight (React status flag + ref guard)
+    const pendingToUpload = slots[i].pendingFiles.filter(pf =>
+      pf.status !== 'uploading' && !uploadingFiles.current.has(pf.file)
+    )
+
+    setSlots(p => p.map((r, j) => j === i
+      ? { ...r, saving: false, dirty: false, error: null,
+          hw_id: newId ?? r.hw_id,
+          status: publish ? 'published' : 'draft' }
+      : r))
+
+    // Push fires right after DB save — attachments must not delay guardian notification (Rule 3)
+    // Only fires when homework is successfully saved with published status
     if (publish && newId) {
       supabase.functions.invoke('send-push', {
         body: {
@@ -166,14 +307,21 @@ export default function Admin() {
       }).catch(() => { /* non-critical */ })
     }
 
-    setSlots(p => p.map((r, j) => j === i
-      ? { ...r, saving: false, dirty: false, hw_id: newId ?? r.hw_id, status: publish ? 'published' : 'draft' }
-      : r))
+    // Flush queued/failed files after push (non-blocking for notification)
+    if (newId && pendingToUpload.length > 0) {
+      for (const pf of pendingToUpload) {
+        await uploadFile(i, pf.file, newId)
+      }
+    }
   }
 
   async function publishAll() {
     for (let i = 0; i < slots.length; i++) {
-      if (slots[i].body.trim() && !slots[i].saving) await saveSlot(i, true)
+      const sl = slots[i]
+      // !sl.uploading intentionally removed: text publish is independent of optional attachment uploads
+      if (sl.body.trim() && !sl.saving) {
+        await saveSlot(i, true)
+      }
     }
   }
 
@@ -183,20 +331,8 @@ export default function Admin() {
     const { error } = await supabase.from('homework').delete().eq('id', s.hw_id)
     if (error) return
     setSlots(p => p.map((r, j) => j === i
-      ? { ...r, hw_id: null, body: '', status: null, dirty: false, attaches: [] }
-      : r))
-  }
-
-  // ── attachment upload ────────────────────────────────────────────────────────
-  async function uploadFile(i: number, file: File) {
-    const s = slots[i]
-    if (!s.hw_id || !secId) return
-    const path = `${secId}/${s.hw_id}/${Date.now()}_${file.name}`
-    const { error } = await supabase.storage.from('attachments').upload(path, file, { upsert: true })
-    if (error) return
-    await supabase.from('attachments').insert({ homework_id: s.hw_id, storage_path: path, mime: file.type })
-    setSlots(p => p.map((r, j) => j === i
-      ? { ...r, attaches: [...r.attaches, { id: `tmp-${Date.now()}`, storage_path: path, mime: file.type }] }
+      ? { ...r, hw_id: null, body: '', status: null, dirty: false, error: null,
+          attaches: [], pendingFiles: [] }
       : r))
   }
 
@@ -324,14 +460,6 @@ export default function Admin() {
                         className={'period-card' + (s.status === 'published' ? ' published' : '')}>
                         <div className="period-card-header">
                           <span className="period-num">حصة {s.period}</span>
-                          {s.subject && (
-                            <span className="subject-chip"
-                              style={s.subject.color
-                                ? { background: s.subject.color + '33', borderColor: s.subject.color }
-                                : {}}>
-                              {s.subject.name}
-                            </span>
-                          )}
                           {s.teacher && <span className="teacher-name">{s.teacher.full_name}</span>}
                           {s.status && (
                             <span className={'status-badge ' + s.status}>
@@ -340,16 +468,70 @@ export default function Admin() {
                           )}
                         </div>
 
+                        {/* Subject dropdown — works without timetable */}
+                        <select
+                          className="admin-select subject-select"
+                          value={s.selectedSubjectId ?? ''}
+                          onChange={e => setSlots(p => p.map((r, j) =>
+                            j === i ? { ...r, selectedSubjectId: e.target.value ? Number(e.target.value) : null, error: null } : r))}
+                        >
+                          <option value="">-- اختر المادة --</option>
+                          {subjects.map(sub => (
+                            <option key={sub.id} value={sub.id}>{sub.name}</option>
+                          ))}
+                        </select>
+
                         <textarea className="hw-textarea" rows={3} placeholder="نص الواجب…"
                           value={s.body}
                           onChange={e => setSlots(p => p.map((r, j) =>
                             j === i ? { ...r, body: e.target.value, dirty: true } : r))} />
 
+                        {s.error && <p className="slot-error" role="alert">{s.error}</p>}
+                        {s.uploading && <p className="slot-uploading">جارٍ رفع المرفق…</p>}
+
+                        {/* Committed attachments */}
                         {s.attaches.length > 0 && (
-                          <div className="attachments">
-                            {s.attaches.map((a, ai) => (
-                              <span key={ai} className="attach-link">
+                          <div className="attachments" aria-label="مرفقات محفوظة">
+                            {s.attaches.map((a) => (
+                              <span key={a.id} className="attach-item">
                                 {a.mime.startsWith('image/') ? '🖼' : '📄'} {a.storage_path.split('/').pop()}
+                                <button
+                                  className="attach-del"
+                                  title="حذف المرفق"
+                                  disabled={s.uploading}
+                                  onClick={() => deleteAttachment(i, a.id, a.storage_path)}
+                                >✕</button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Pending attachments — per-file status: معلق / جارٍ الرفع / فشل */}
+                        {s.pendingFiles.length > 0 && (
+                          <div className="attachments" aria-label="مرفقات معلقة">
+                            {s.pendingFiles.map((pf, fi) => (
+                              <span key={fi} className={
+                                'attach-item attach-pending' + (pf.status === 'failed' ? ' attach-failed' : '')
+                              }>
+                                {pf.file.type.startsWith('image/') ? '🖼' : '📄'} {pf.file.name}
+                                <span className="attach-pending-label">
+                                  {pf.status === 'uploading' ? 'جارٍ الرفع'
+                                    : pf.status === 'failed' ? 'فشل'
+                                    : 'معلق'}
+                                </span>
+                                {pf.status === 'failed' && s.hw_id && (
+                                  <button
+                                    className="attach-retry"
+                                    title="إعادة المحاولة"
+                                    onClick={() => retryUpload(i, pf.file, s.hw_id!)}
+                                  >↺</button>
+                                )}
+                                <button
+                                  className="attach-del"
+                                  title="إزالة"
+                                  disabled={pf.status === 'uploading'}
+                                  onClick={() => removePendingFile(i, fi)}
+                                >✕</button>
                               </span>
                             ))}
                           </div>
@@ -366,15 +548,39 @@ export default function Admin() {
                             onClick={() => saveSlot(i, true)}>
                             {s.saving ? '…' : 'نشر'}
                           </button>
-                          {s.hw_id && (
-                            <label className="btn-attach" title="إرفاق ملف">
-                              📎
-                              <input type="file" hidden
-                                onChange={e => { if (e.target.files?.[0]) uploadFile(i, e.target.files[0]) }} />
+
+                          {/* Three separate attachment actions */}
+                          <div className="attach-actions">
+                            <label className="btn-attach" title="إرفاق صورة من المعرض">
+                              🖼
+                              <input type="file" accept="image/*" hidden
+                                onChange={e => {
+                                  if (e.target.files?.[0]) handleFileSelect(i, e.target.files[0])
+                                  e.target.value = ''
+                                }} />
                             </label>
-                          )}
+                            <label className="btn-attach" title="التقاط صورة">
+                              📷
+                              <input type="file" accept="image/*" capture="environment" hidden
+                                onChange={e => {
+                                  if (e.target.files?.[0]) handleFileSelect(i, e.target.files[0])
+                                  e.target.value = ''
+                                }} />
+                            </label>
+                            <label className="btn-attach" title="إرفاق مستند PDF أو Word">
+                              📄
+                              <input type="file"
+                                accept="application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                hidden
+                                onChange={e => {
+                                  if (e.target.files?.[0]) handleFileSelect(i, e.target.files[0])
+                                  e.target.value = ''
+                                }} />
+                            </label>
+                          </div>
+
                           {s.hw_id && (
-                            <button className="btn-del" onClick={() => deleteHw(i)} title="حذف">✕</button>
+                            <button className="btn-del" onClick={() => deleteHw(i)} title="حذف الواجب">✕</button>
                           )}
                         </div>
                       </div>

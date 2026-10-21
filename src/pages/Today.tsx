@@ -4,8 +4,10 @@ import { supabase } from '../lib/supabase'
 import { ExportButton } from '../components/ExportButton'
 import { HomeworkCard } from '../components/HomeworkCard'
 import { DateNavigator } from '../components/DateNavigator'
+import { Toast, useToast } from '../components/Toast'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
+import { exportA4PDF } from '../utils/exportA4'
 
 // ── types ────────────────────────────────────────────────────────────────────
 interface Child {
@@ -13,7 +15,20 @@ interface Child {
   full_name: string
   section_id: number
   section_label: string
+  section_letter: string
 }
+
+/** Subject list for A4 export — must match exportA4.ts SUBJECTS order */
+const A4_SUBJECTS = [
+  'التربية الإسلامية',
+  'اللغة العربية',
+  'اللغة الإنجليزية',
+  'الكيمياء',
+  'الفيزياء',
+  'الأحياء',
+  'الرياضيات',
+  'جرائم حزب البعث',
+] as const
 
 interface SRow extends HwItem {
   due_date: string
@@ -65,6 +80,10 @@ export default function Today() {
 
   // ── push state ────────────────────────────────────────────────────────────
   const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
+
+  // ── A4 PDF export state ───────────────────────────────────────────────────
+  const [exporting, setExporting] = useState(false)
+  const { toast, show: showToast, clear: clearToast } = useToast()
 
   // ── signed URLs for attachments ───────────────────────────────────────────
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
@@ -126,6 +145,7 @@ export default function Today() {
         full_name: r.student.full_name,
         section_id: r.student.section.id,
         section_label: `${r.student.section.stage.name} ${r.student.section.stage.branch} ‏/ ${r.student.section.letter}`,
+        section_letter: r.student.section.letter,
       })),
     )
     setChildrenLoaded(true)
@@ -218,6 +238,40 @@ export default function Today() {
       )
       setPushOpt('granted')
     } catch { /* user denied */ }
+  }
+
+  // ── A4 PDF export ─────────────────────────────────────────────────────────
+  async function handleExportA4PDF() {
+    if (!child) return
+    setExporting(true)
+    try {
+      const homeworkBySubject: Record<string, string> = {}
+      A4_SUBJECTS.forEach(s => { homeworkBySubject[s] = '' })
+      hw.forEach(h => {
+        const name = h.subject?.name ?? ''
+        if (name && name in homeworkBySubject) homeworkBySubject[name] = h.body
+      })
+      // TODO: replace after published_by migration (see docs/implementation/ARCHITECTURE-AUDIT.md)
+      const publisherName = 'مسؤول المدرسة'
+      const blob = await exportA4PDF({
+        date: toISO(date),
+        classLabel: child.section_label,
+        section: child.section_letter,
+        homeworkBySubject,
+        publisherName,
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'واجباتي-' + toISO(date) + '.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('A4 PDF export failed', e)
+      showToast('فشل تصدير PDF — حاول مجدداً', 'error')
+    } finally {
+      setExporting(false)
+    }
   }
 
   // ── calendar cells ────────────────────────────────────────────────────────
@@ -396,23 +450,39 @@ export default function Today() {
 
           {/* section badge + export */}
           {child && (
-            <div className="section-bar" style={{ justifyContent: 'space-between' }}>
+            <div className="section-bar" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '.5rem' }}>
               <span className="badge">{child.section_label}</span>
-              {!loading && hw.length > 0 && (
-                <ExportButton
-                  data={{
-                    schoolName,
-                    sectionName: child.section_label,
-                    date: toISO(date),
-                    items: hw.map(h => ({
-                      period: h.period ?? 0,
-                      subject: h.subject?.name ?? '—',
-                      teacher: h.teacher?.full_name ?? '—',
-                      body: h.body,
-                    })),
+              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                {!loading && hw.length > 0 && (
+                  <ExportButton
+                    data={{
+                      schoolName,
+                      sectionName: child.section_label,
+                      date: toISO(date),
+                      items: hw.map(h => ({
+                        period: h.period ?? 0,
+                        subject: h.subject?.name ?? '—',
+                        teacher: h.teacher?.full_name ?? '—',
+                        body: h.body,
+                      })),
+                    }}
+                  />
+                )}
+                <button
+                  onClick={handleExportA4PDF}
+                  disabled={exporting || loading}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '.4rem',
+                    padding: '.5rem 1rem', background: 'var(--card2)',
+                    border: '1.5px solid var(--accent)', borderRadius: '.5rem',
+                    color: 'var(--accent)', cursor: (exporting || loading) ? 'wait' : 'pointer',
+                    fontSize: '.875rem', fontWeight: 600, fontFamily: 'inherit',
+                    opacity: (exporting || loading) ? 0.6 : 1, whiteSpace: 'nowrap',
                   }}
-                />
-              )}
+                >
+                  {exporting ? '⏳ جارٍ التصدير…' : '📄 تصدير PDF'}
+                </button>
+              </div>
             </div>
           )}
 
@@ -454,6 +524,9 @@ export default function Today() {
             </section>
           )}
         </>
+      )}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDone={clearToast} />
       )}
     </main>
   )

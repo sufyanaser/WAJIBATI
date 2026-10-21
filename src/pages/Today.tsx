@@ -236,7 +236,7 @@ export default function Today() {
     return (
       <main className="screen" dir="rtl">
         <div className="top-bar">
-          <h1 className="app-title">واجبات الرميلة</h1>
+          <h1 className="app-title">واجباتي</h1>
           <button
             className="icon-btn"
             onClick={handleLogout}
@@ -255,7 +255,7 @@ export default function Today() {
 
       {/* header */}
       <div className="top-bar">
-        <h1 className="app-title">واجبات الرميلة</h1>
+        <h1 className="app-title">واجباتي</h1>
         <button
           className="icon-btn"
           onClick={handleLogout}

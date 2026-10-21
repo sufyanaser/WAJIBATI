@@ -16,8 +16,9 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       manifest: {
-        name: 'واجبات الرميلة',
-        short_name: 'الرميلة',
+        name: 'واجباتي',
+        short_name: 'واجباتي',
+        description: 'واجباتي — متابعة الواجبات اليومية لطلاب اعدادية الرميلة للبنين',
         lang: 'ar', dir: 'rtl',
         start_url: '/', display: 'standalone',
         background_color: '#0F1E33', theme_color: '#1F3A5F',

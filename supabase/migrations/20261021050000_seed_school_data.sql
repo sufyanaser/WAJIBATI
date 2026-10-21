@@ -95,6 +95,13 @@ DECLARE
 
   d SMALLINT; p SMALLINT;
 BEGIN
+  -- Declaring dimensions does not allocate PostgreSQL arrays. Initialise them
+  -- before assigning individual [weekday][period] cells.
+  sci_subj  := array_fill(null::smallint, ARRAY[5,6]);
+  sci_teach := array_fill(null::int, ARRAY[5,6]);
+  art_subj  := array_fill(null::smallint, ARRAY[5,6]);
+  art_teach := array_fill(null::int, ARRAY[5,6]);
+
   -- resolve subject IDs
   SELECT id INTO sub_islam FROM subjects WHERE name='التربية الإسلامية';
   SELECT id INTO sub_ar    FROM subjects WHERE name='اللغة العربية';

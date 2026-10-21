@@ -149,6 +149,9 @@ export default function Today() {
         if (row.signedUrl) map[row.path] = row.signedUrl
       })
       setSignedUrls(map)
+    }).catch(e => {
+      console.error('signed URL generation failed', e)
+      showToast('فشل تحميل المرفقات — حاول مجدداً', 'error')
     })
   }, [hw])
 

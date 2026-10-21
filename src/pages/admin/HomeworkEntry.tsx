@@ -18,18 +18,26 @@ interface AttachmentChipsProps {
   period: number
   onUpload: (period: number, file: File) => Promise<{ ok: boolean; error?: string }>
   onDelete: (period: number, id: string, path: string) => Promise<{ ok: boolean; error?: string }>
+  showToast: (msg: string, type: 'error' | 'success' | 'info') => void
 }
 
-function AttachmentChips({ hwId, attachments, period, onUpload, onDelete }: AttachmentChipsProps) {
+function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showToast }: AttachmentChipsProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState<string | null>(null) // 'upload' | attachment id
+  const [failedFile, setFailedFile] = useState<{ file: File; error: string } | null>(null)
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return
     setBusy('upload')
     const result = await onUpload(period, files[0])
     setBusy(null)
-    if (!result.ok) alert(result.error ?? 'فشل الرفع')
+    if (inputRef.current) inputRef.current.value = ''
+    if (!result.ok) {
+      setFailedFile({ file: files[0], error: result.error ?? 'فشل الرفع' })
+      showToast(result.error ?? 'فشل الرفع', 'error')
+    } else {
+      setFailedFile(null)
+    }
   }
 
   async function handleDelete(id: string, path: string) {
@@ -65,6 +73,26 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete }: Atta
         style={{ display: 'none' }}
         onChange={e => handleFiles(e.target.files)}
       />
+      {failedFile && (
+        <button
+          className="he-retry-btn"
+          disabled={busy === 'upload'}
+          onClick={async () => {
+            setBusy('upload')
+            const result = await onUpload(period, failedFile.file)
+            setBusy(null)
+            if (inputRef.current) inputRef.current.value = ''
+            if (result.ok) {
+              setFailedFile(null)
+            } else {
+              setFailedFile(prev => prev ? { ...prev, error: result.error ?? 'فشل الرفع' } : null)
+              showToast(result.error ?? 'فشل الرفع', 'error')
+            }
+          }}
+        >
+          {busy === 'upload' ? '…' : '↩ أعد المحاولة'}
+        </button>
+      )}
       <button
         className="he-upload-btn"
         disabled={!hwId || busy === 'upload'}
@@ -251,6 +279,7 @@ export default function HomeworkEntry() {
                   period={slot.period}
                   onUpload={uploadAttachment}
                   onDelete={deleteAttachment}
+                  showToast={showToast}
                 />
               </div>
 

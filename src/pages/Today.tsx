@@ -235,7 +235,11 @@ export default function Today() {
       const homeworkBySubject: Record<string, string> = {}
       hw.forEach(h => {
         const name = h.subject?.name ?? ''
-        if (name) homeworkBySubject[name] = h.body
+        if (!name) return
+        const entry = h.period ? `(ح${h.period}) ${h.body}` : h.body
+        homeworkBySubject[name] = homeworkBySubject[name]
+          ? homeworkBySubject[name] + '\n' + entry
+          : entry
       })
       // TODO: replace after published_by migration (see docs/implementation/ARCHITECTURE-AUDIT.md)
       const publisherName = 'مسؤول المدرسة'

@@ -1,30 +1,32 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import type { CSSProperties } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ExportButton } from '../components/ExportButton'
+import { HomeworkCard } from '../components/HomeworkCard'
+import { DateNavigator } from '../components/DateNavigator'
+import { useHomework } from '../hooks/useHomework'
+import type { HwItem } from '../hooks/useHomework'
 
 // ── types ────────────────────────────────────────────────────────────────────
-interface Child { student_id: number; full_name: string; section_id: number; section_label: string }
-interface Attach { id: string; storage_path: string; mime: string }
-interface HwRow {
-  id: string; period: number | null; body: string
-  subject: { name: string; color: string | null } | null
-  teacher: { full_name: string } | null
-  attachments: Attach[]
+interface Child {
+  student_id: number
+  full_name: string
+  section_id: number
+  section_label: string
 }
-interface Notice { id: string; title: string; body: string | null; priority: number }
-interface SRow extends HwRow { due_date: string; section_id: number }
+
+interface SRow extends HwItem {
+  due_date: string
+  section_id: number
+}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-// Iraqi school week: Sun(0)–Thu(4); Fri(5) Sat(6) off
 const isSchool = (d: Date) => { const w = d.getDay(); return w !== 5 && w !== 6 }
 function stepDay(d: Date, dir: 1 | -1): Date {
   const r = new Date(d); do { r.setDate(r.getDate() + dir) } while (!isSchool(r)); return r
 }
 const toISO = (d: Date) => d.toLocaleDateString('en-CA') // YYYY-MM-DD local
-const arDay = (d: Date) =>
-  d.toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+
 function vapidKey(b64: string): ArrayBuffer {
   const pad = '='.repeat((4 - (b64.length % 4)) % 4)
   const bin = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'))
@@ -32,102 +34,102 @@ function vapidKey(b64: string): ArrayBuffer {
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
   return arr.buffer
 }
-const chipStyle = (color?: string | null): CSSProperties =>
-  color ? { background: color + '33', borderColor: color } : {}
 
 // ── component ─────────────────────────────────────────────────────────────────
 export default function Today() {
   const nav = useNavigate()
+
+  // ── auth / children state ─────────────────────────────────────────────────
   const [children, setChildren] = useState<Child[]>([])
+  const [childrenLoaded, setChildrenLoaded] = useState(false)
   const [idx, setIdx] = useState(0)
-  const [date, setDate] = useState<Date>(() => { const d = new Date(); return isSchool(d) ? d : stepDay(d, -1) })
-  const [hw, setHw] = useState<HwRow[]>([])
-  const [notices, setNotices] = useState<Notice[]>([])
-  const [loading, setLoading] = useState(true)
-  const [offline, setOffline] = useState(false)
-  const [search, setSearch] = useState('')
-  const [sRes, setSRes] = useState<SRow[]>([])
-  const [sLoad, setSLoad] = useState(false)
+  const [gid, setGid] = useState<string | null>(null)
+  const [schoolName, setSchoolName] = useState('اعدادية الرميلة للبنين')
+
+  // ── date state ────────────────────────────────────────────────────────────
+  const [date, setDate] = useState<Date>(() => {
+    const d = new Date()
+    return isSchool(d) ? d : stepDay(d, -1)
+  })
+
+  // ── calendar popup state ──────────────────────────────────────────────────
   const [showCal, setShowCal] = useState(false)
   const [calMo, setCalMo] = useState(() => new Date())
   const [hwDays, setHwDays] = useState<Set<string>>(new Set())
-  const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
-  const [gid, setGid] = useState<string | null>(null)
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
-  const [schoolName, setSchoolName] = useState('اعدادية الرميلة للبنين')
+
+  // ── search state ──────────────────────────────────────────────────────────
+  const [search, setSearch] = useState('')
+  const [sRes, setSRes] = useState<SRow[]>([])
+  const [sLoad, setSLoad] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // ── boot ────────────────────────────────────────────────────────────────────
+  // ── push state ────────────────────────────────────────────────────────────
+  const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
+
+  // ── signed URLs for attachments ───────────────────────────────────────────
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+
+  // ── current child ─────────────────────────────────────────────────────────
+  const child = children[idx] ?? null
+
+  // ── homework hook ─────────────────────────────────────────────────────────
+  const { items: hw, notices, loading, offline } = useHomework(
+    child?.section_id ?? null,
+    toISO(date),
+  )
+
+  // ── boot ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) { nav('/login'); return }
       bootstrap()
-      supabase.from('settings').select('value').eq('key', 'school').maybeSingle().then(({ data: s }) => {
-        if (s?.value && typeof s.value === 'object' && 'name' in s.value)
-          setSchoolName(String((s.value as { name: string }).name))
-      })
-      if (data.session && 'Notification' in window) {
+      supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'school')
+        .maybeSingle()
+        .then(({ data: s }) => {
+          if (s?.value && typeof s.value === 'object' && 'name' in s.value)
+            setSchoolName(String((s.value as { name: string }).name))
+        })
+      if ('Notification' in window) {
         if (Notification.permission === 'default') setPushOpt('pending')
         else if (Notification.permission === 'granted') setPushOpt('granted')
       }
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function bootstrap() {
-    type GS = { student_id: number; student: { full_name: string; section: { id: number; letter: string; stage: { name: string; branch: string } } } }
+    type GS = {
+      student_id: number
+      student: {
+        full_name: string
+        section: {
+          id: number
+          letter: string
+          stage: { name: string; branch: string }
+        }
+      }
+    }
     const [gsRes, gRes] = await Promise.all([
       supabase.from('guardian_students').select(
-        'student_id, student:students!inner(full_name, section:sections!inner(id, letter, stage:stages!inner(name, branch)))'
+        'student_id, student:students!inner(full_name, section:sections!inner(id, letter, stage:stages!inner(name, branch)))',
       ),
-      supabase.from('guardians').select('id').maybeSingle()
+      supabase.from('guardians').select('id').maybeSingle(),
     ])
     if (gRes.data) setGid((gRes.data as { id: string }).id)
     const rows = (gsRes.data ?? []) as unknown as GS[]
-    setChildren(rows.map(r => ({
-      student_id: r.student_id,
-      full_name: r.student.full_name,
-      section_id: r.student.section.id,
-      section_label: `${r.student.section.stage.name} ${r.student.section.stage.branch} ‏/ ${r.student.section.letter}`,
-    })))
-    if (!rows.length) setLoading(false)
+    setChildren(
+      rows.map(r => ({
+        student_id: r.student_id,
+        full_name: r.student.full_name,
+        section_id: r.student.section.id,
+        section_label: `${r.student.section.stage.name} ${r.student.section.stage.branch} ‏/ ${r.student.section.letter}`,
+      })),
+    )
+    setChildrenLoaded(true)
   }
-
-  // ── load day ─────────────────────────────────────────────────────────────────
-  const loadDay = useCallback(async (d: Date, sec: number) => {
-    setLoading(true); setOffline(false)
-    const iso = toISO(d)
-    const now = new Date().toISOString()
-    try {
-      const [hR, nR] = await Promise.all([
-        supabase.from('homework')
-          .select('id,period,body,subject:subjects(name,color),teacher:teachers(full_name),attachments(id,storage_path,mime)')
-          .eq('section_id', sec).eq('due_date', iso).eq('status', 'published').order('period'),
-        supabase.from('notices')
-          .select('id,title,body,priority')
-          .or(`section_id.is.null,section_id.eq.${sec}`)
-          .lte('publish_at', now)
-          .or(`expires_at.is.null,expires_at.gt.${now}`)
-          .order('priority', { ascending: false }).limit(10)
-      ])
-      if (hR.error) throw hR.error
-      const hwData = hR.data as unknown as HwRow[]
-      setHw(hwData)
-      setNotices((nR.data ?? []) as unknown as Notice[])
-      try { localStorage.setItem('rh_cache', JSON.stringify({ iso, sec, hw: hwData })) } catch { /* quota */ }
-      supabase.rpc('mark_read', { p_section: sec, p_day: iso }).then(() => { /* non-critical */ }, () => { /* ignore */ })
-    } catch {
-      try {
-        const c = JSON.parse(localStorage.getItem('rh_cache') ?? '{}') as { iso?: string; sec?: number; hw?: HwRow[] }
-        if (c.iso === iso && c.sec === sec && c.hw) { setHw(c.hw); setOffline(true) }
-        else setHw([])
-      } catch { setHw([]) }
-    }
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    if (!children.length) return
-    loadDay(date, children[idx].section_id)
-  }, [date, idx, children, loadDay])
 
   // ── signed URLs for attachments ───────────────────────────────────────────
   useEffect(() => {
@@ -145,17 +147,22 @@ export default function Today() {
 
   // ── calendar homework dots ────────────────────────────────────────────────
   useEffect(() => {
-    if (!showCal || !children.length) return
-    const sid = children[idx].section_id
+    if (!showCal || !child) return
+    const sid = child.section_id
     const y = calMo.getFullYear(), m = calMo.getMonth()
     const from = `${y}-${String(m + 1).padStart(2, '0')}-01`
     const to = `${y}-${String(m + 1).padStart(2, '0')}-${new Date(y, m + 1, 0).getDate()}`
-    supabase.from('homework').select('due_date')
-      .eq('section_id', sid).eq('status', 'published').gte('due_date', from).lte('due_date', to)
+    supabase
+      .from('homework')
+      .select('due_date')
+      .eq('section_id', sid)
+      .eq('status', 'published')
+      .gte('due_date', from)
+      .lte('due_date', to)
       .then(({ data }) =>
-        setHwDays(new Set((data ?? []).map((r: unknown) => (r as { due_date: string }).due_date)))
+        setHwDays(new Set((data ?? []).map((r: unknown) => (r as { due_date: string }).due_date))),
       )
-  }, [showCal, calMo, idx, children])
+  }, [showCal, calMo, child])
 
   // ── full-text search ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -164,14 +171,29 @@ export default function Today() {
     timer.current = setTimeout(async () => {
       setSLoad(true)
       const sids = children.map(c => c.section_id)
-      const { data } = await supabase.from('homework')
-        .select('id,due_date,period,body,section_id,subject:subjects(name,color),teacher:teachers(full_name),attachments(id,storage_path,mime)')
-        .in('section_id', sids).textSearch('search', search.trim())
-        .eq('status', 'published').order('due_date', { ascending: false }).limit(30)
+      const { data } = await supabase
+        .from('homework')
+        .select(
+          'id,due_date,period,body,section_id,subject:subjects(name,color),teacher:teachers(full_name),attachments(id,storage_path,mime)',
+        )
+        .in('section_id', sids)
+        .textSearch('search', search.trim())
+        .eq('status', 'published')
+        .order('due_date', { ascending: false })
+        .limit(30)
       setSRes((data ?? []) as unknown as SRow[])
       setSLoad(false)
     }, 400)
   }, [search, children])
+
+  // ── logout ────────────────────────────────────────────────────────────────
+  async function handleLogout() {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_AUTH_CACHES' })
+    }
+    await supabase.auth.signOut()
+    nav('/login')
+  }
 
   // ── push opt-in ───────────────────────────────────────────────────────────
   async function enablePush() {
@@ -179,13 +201,21 @@ export default function Today() {
     if (!k || !gid) return
     try {
       const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey(k) })
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKey(k),
+      })
       const j = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
-      await supabase.from('push_subscriptions').upsert({
-        guardian_id: gid, endpoint: j.endpoint,
-        p256dh: j.keys.p256dh, auth: j.keys.auth,
-        user_agent: navigator.userAgent,
-      }, { onConflict: 'endpoint' })
+      await supabase.from('push_subscriptions').upsert(
+        {
+          guardian_id: gid,
+          endpoint: j.endpoint,
+          p256dh: j.keys.p256dh,
+          auth: j.keys.auth,
+          user_agent: navigator.userAgent,
+        },
+        { onConflict: 'endpoint' },
+      )
       setPushOpt('granted')
     } catch { /* user denied */ }
   }
@@ -200,18 +230,24 @@ export default function Today() {
 
   const todISO = toISO(new Date())
   const selISO = toISO(date)
-  const child = children[idx]
 
-  // ── empty state ───────────────────────────────────────────────────────────
-  if (!loading && !children.length) return (
-    <main className="screen" dir="rtl">
-      <div className="top-bar">
-        <h1 className="app-title">واجبات الرميلة</h1>
-        <button className="icon-btn" onClick={() => supabase.auth.signOut().then(() => nav('/login'))}>خروج</button>
-      </div>
-      <p className="muted">لا أبناء مرتبطون بهذا الحساب</p>
-    </main>
-  )
+  // ── no children state ─────────────────────────────────────────────────────
+  if (childrenLoaded && !children.length) {
+    return (
+      <main className="screen" dir="rtl">
+        <div className="top-bar">
+          <h1 className="app-title">واجبات الرميلة</h1>
+          <button
+            className="icon-btn"
+            onClick={handleLogout}
+          >
+            خروج
+          </button>
+        </div>
+        <p className="muted">لا أبناء مرتبطون بهذا الحساب</p>
+      </main>
+    )
+  }
 
   // ── main render ───────────────────────────────────────────────────────────
   return (
@@ -220,7 +256,12 @@ export default function Today() {
       {/* header */}
       <div className="top-bar">
         <h1 className="app-title">واجبات الرميلة</h1>
-        <button className="icon-btn" onClick={() => supabase.auth.signOut().then(() => nav('/login'))}>خروج</button>
+        <button
+          className="icon-btn"
+          onClick={handleLogout}
+        >
+          خروج
+        </button>
       </div>
 
       {/* push opt-in banner */}
@@ -233,9 +274,16 @@ export default function Today() {
 
       {/* search bar */}
       <div className="search-row">
-        <input className="search-input" placeholder="بحث في الواجبات…" value={search}
-          onChange={e => setSearch(e.target.value)} inputMode="search" />
-        {search && <button className="icon-btn" onClick={() => setSearch('')}>✕</button>}
+        <input
+          className="search-input"
+          placeholder="بحث في الواجبات…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          inputMode="search"
+        />
+        {search && (
+          <button className="icon-btn" onClick={() => setSearch('')}>✕</button>
+        )}
       </div>
 
       {search.trim() ? (
@@ -244,12 +292,25 @@ export default function Today() {
           {sLoad && <p className="muted">جارٍ البحث…</p>}
           {!sLoad && !sRes.length && <p className="muted">لا نتائج</p>}
           {sRes.map(r => (
-            <article key={r.id} className="hw-card clickable"
-              onClick={() => { setDate(new Date(r.due_date + 'T00:00:00')); setSearch('') }}>
+            <article
+              key={r.id}
+              className="hw-card clickable"
+              onClick={() => { setDate(new Date(r.due_date + 'T00:00:00')); setSearch('') }}
+            >
               <div className="hw-header">
-                <span className="subject-chip" style={chipStyle(r.subject?.color)}>{r.subject?.name ?? '—'}</span>
+                <span
+                  className="subject-chip"
+                  style={r.subject?.color
+                    ? { background: r.subject.color + '33', borderColor: r.subject.color }
+                    : undefined}
+                >
+                  {r.subject?.name ?? '—'}
+                </span>
                 <span className="hw-date-label">
-                  {new Date(r.due_date + 'T00:00:00').toLocaleDateString('ar-IQ', { month: 'long', day: 'numeric' })}
+                  {new Date(r.due_date + 'T00:00:00').toLocaleDateString('ar-IQ', {
+                    month: 'long',
+                    day: 'numeric',
+                  })}
                 </span>
               </div>
               <p className="hw-body">{r.body}</p>
@@ -262,29 +323,43 @@ export default function Today() {
           {children.length > 1 && (
             <nav className="child-tabs">
               {children.map((c, i) => (
-                <button key={c.student_id} className={'tab' + (i === idx ? ' active' : '')}
-                  onClick={() => setIdx(i)}>{c.full_name}</button>
+                <button
+                  key={c.student_id}
+                  className={'tab' + (i === idx ? ' active' : '')}
+                  onClick={() => setIdx(i)}
+                >
+                  {c.full_name}
+                </button>
               ))}
             </nav>
           )}
 
           {/* date navigation */}
-          <div className="date-nav">
-            <button className="icon-btn" aria-label="يوم سابق" onClick={() => setDate(d => stepDay(d, -1))}>›</button>
-            <button className="date-label"
-              onClick={() => { setShowCal(v => !v); setCalMo(new Date(date)) }}>
-              {child ? arDay(date) : '…'}
-            </button>
-            <button className="icon-btn" aria-label="يوم تالٍ" onClick={() => setDate(d => stepDay(d, 1))}>‹</button>
-          </div>
+          <DateNavigator
+            date={date}
+            onChange={setDate}
+            onLabelClick={() => { setShowCal(v => !v); setCalMo(new Date(date)) }}
+          />
 
-          {/* archive calendar */}
+          {/* archive calendar popup */}
           {showCal && (
             <div className="cal-popup">
               <div className="cal-header">
-                <button onClick={() => setCalMo(m => { const r = new Date(m); r.setMonth(r.getMonth() - 1); return r })}>›</button>
+                <button
+                  onClick={() =>
+                    setCalMo(m => { const r = new Date(m); r.setMonth(r.getMonth() - 1); return r })
+                  }
+                >
+                  ›
+                </button>
                 <span>{calMo.toLocaleDateString('ar-IQ', { month: 'long', year: 'numeric' })}</span>
-                <button onClick={() => setCalMo(m => { const r = new Date(m); r.setMonth(r.getMonth() + 1); return r })}>‹</button>
+                <button
+                  onClick={() =>
+                    setCalMo(m => { const r = new Date(m); r.setMonth(r.getMonth() + 1); return r })
+                  }
+                >
+                  ‹
+                </button>
               </div>
               <div className="cal-grid">
                 {['أح', 'اث', 'ثل', 'أر', 'خم', 'جم', 'سب'].map(h => (
@@ -295,7 +370,9 @@ export default function Today() {
                   const iso = toISO(d)
                   const school = isSchool(d)
                   return (
-                    <button key={iso} disabled={!school}
+                    <button
+                      key={iso}
+                      disabled={!school}
                       className={
                         'cal-day' +
                         (!school ? ' off' : '') +
@@ -303,7 +380,11 @@ export default function Today() {
                         (iso === selISO ? ' sel' : '') +
                         (iso === todISO ? ' tod' : '')
                       }
-                      onClick={() => { setDate(new Date(d.getFullYear(), d.getMonth(), d.getDate())); setShowCal(false) }}>
+                      onClick={() => {
+                        setDate(new Date(d.getFullYear(), d.getMonth(), d.getDate()))
+                        setShowCal(false)
+                      }}
+                    >
                       {d.getDate()}
                       {hwDays.has(iso) && <span className="dot" />}
                     </button>
@@ -318,24 +399,28 @@ export default function Today() {
             <div className="section-bar" style={{ justifyContent: 'space-between' }}>
               <span className="badge">{child.section_label}</span>
               {!loading && hw.length > 0 && (
-                <ExportButton data={{
-                  schoolName,
-                  sectionName: child.section_label,
-                  date: toISO(date),
-                  items: hw.map(h => ({
-                    period: h.period ?? 0,
-                    subject: h.subject?.name ?? '—',
-                    teacher: h.teacher?.full_name ?? '—',
-                    body: h.body,
-                  })),
-                }} />
+                <ExportButton
+                  data={{
+                    schoolName,
+                    sectionName: child.section_label,
+                    date: toISO(date),
+                    items: hw.map(h => ({
+                      period: h.period ?? 0,
+                      subject: h.subject?.name ?? '—',
+                      teacher: h.teacher?.full_name ?? '—',
+                      body: h.body,
+                    })),
+                  }}
+                />
               )}
             </div>
           )}
 
-          {offline && <p className="offline-note">⚠️ عرض مؤقت بدون اتصال</p>}
+          {offline && (
+            <p className="offline-note">⚠️ عرض مؤقت بدون اتصال</p>
+          )}
 
-          {/* notices */}
+          {/* notices — latest 3 */}
           {notices.length > 0 && (
             <section className="notices">
               {notices.map(n => (
@@ -355,26 +440,16 @@ export default function Today() {
           ) : (
             <section className="hw-list">
               {hw.map(h => (
-                <article key={h.id} className="hw-card">
-                  <div className="hw-header">
-                    <span className="subject-chip" style={chipStyle(h.subject?.color)}>
-                      {h.subject?.name ?? '—'}
-                    </span>
-                    {h.period != null && <span className="period-badge">حصة {h.period}</span>}
-                    {h.teacher && <span className="teacher-name">{h.teacher.full_name}</span>}
-                  </div>
-                  <p className="hw-body">{h.body}</p>
-                  {h.attachments.length > 0 && (
-                    <div className="attachments">
-                      {h.attachments.map(a => (
-                        <a key={a.id} href={signedUrls[a.storage_path] ?? '#'}
-                          target="_blank" rel="noopener noreferrer" className="attach-link">
-                          {a.mime.startsWith('image/') ? '🖼' : '📄'} مرفق
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </article>
+                <HomeworkCard
+                  key={h.id}
+                  period={h.period}
+                  subject={h.subject?.name ?? '—'}
+                  teacher={h.teacher?.full_name ?? '—'}
+                  body={h.body}
+                  subjectColor={h.subject?.color}
+                  attachments={h.attachments}
+                  signedUrls={signedUrls}
+                />
               ))}
             </section>
           )}

@@ -1,17 +1,22 @@
 /// <reference lib="webworker" />
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
-import { registerRoute } from 'workbox-routing'
-import { NetworkFirst } from 'workbox-strategies'
 declare const self: ServiceWorkerGlobalScope
 
 cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Cache Supabase REST calls with NetworkFirst so last-viewed day is available offline
-registerRoute(
-  ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/'),
-  new NetworkFirst({ cacheName: 'supabase-rest', networkTimeoutSeconds: 5 })
-)
+// Delete auth-bound cache left by previous SW versions — guardian data must not
+// persist across sessions on shared devices.
+self.addEventListener('activate', (e) => {
+  e.waitUntil(caches.delete('supabase-rest'))
+})
+
+// Allow the app to explicitly clear guardian caches on logout / account switch.
+self.addEventListener('message', (e) => {
+  if ((e.data as { type?: string } | null)?.type === 'CLEAR_AUTH_CACHES') {
+    e.waitUntil(caches.delete('supabase-rest'))
+  }
+})
 
 self.addEventListener('push', (e) => {
   const data = e.data?.json() ?? {}

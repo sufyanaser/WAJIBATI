@@ -186,6 +186,15 @@ export default function Today() {
     }, 400)
   }, [search, children])
 
+  // ── logout ────────────────────────────────────────────────────────────────
+  async function handleLogout() {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_AUTH_CACHES' })
+    }
+    await supabase.auth.signOut()
+    nav('/login')
+  }
+
   // ── push opt-in ───────────────────────────────────────────────────────────
   async function enablePush() {
     const k = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
@@ -230,7 +239,7 @@ export default function Today() {
           <h1 className="app-title">واجبات الرميلة</h1>
           <button
             className="icon-btn"
-            onClick={() => supabase.auth.signOut().then(() => nav('/login'))}
+            onClick={handleLogout}
           >
             خروج
           </button>
@@ -249,7 +258,7 @@ export default function Today() {
         <h1 className="app-title">واجبات الرميلة</h1>
         <button
           className="icon-btn"
-          onClick={() => supabase.auth.signOut().then(() => nav('/login'))}
+          onClick={handleLogout}
         >
           خروج
         </button>

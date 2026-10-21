@@ -323,5 +323,170 @@ button:disabled { opacity: .45; cursor: default; }
 }
 .attach-link:hover { border-color: var(--accent); }
 
-/* ── login screen (existing) ──────────────────────────────────────────────── */
+/* ── login screen ─────────────────────────────────────────────────────────── */
 .login-title { text-align: center; color: var(--accent); }
+
+/* ── admin: selectors row ─────────────────────────────────────────────────── */
+.admin-selectors {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-select {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: .9rem;
+  cursor: pointer;
+  appearance: auto;
+}
+.admin-date {
+  flex: 1;
+  min-width: 130px;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: .9rem;
+}
+.admin-date::-webkit-calendar-picker-indicator { filter: invert(.7); cursor: pointer; }
+
+/* ── period list ──────────────────────────────────────────────────────────── */
+.period-list { display: grid; gap: 10px; }
+.period-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+.period-card.published { border-right: 3px solid #3ab56a; }
+.period-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.period-num {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.status-badge {
+  font-size: .78rem;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  margin-right: auto;
+}
+.status-badge.draft { background: #2a3a1a; color: #8bc34a; border-color: #3d5a1f; }
+.status-badge.published { background: #1a3a2a; color: #4caf82; border-color: #1f5a3d; }
+.status-badge.archived { background: #2a2a2a; color: var(--muted); border-color: var(--border); }
+
+/* ── hw textarea ──────────────────────────────────────────────────────────── */
+.hw-textarea {
+  width: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: .95rem;
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+.hw-textarea:focus { outline: none; border-color: var(--accent); }
+
+/* ── period action buttons ────────────────────────────────────────────────── */
+.period-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.btn-save {
+  background: var(--card2);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-save:disabled { opacity: .4; cursor: default; }
+.btn-publish {
+  background: #1a4a2a;
+  color: #4caf82;
+  border: 1px solid #1f5a3d;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-publish:disabled { opacity: .4; cursor: default; }
+.btn-attach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--fg);
+}
+.btn-del {
+  background: transparent;
+  color: var(--err);
+  border: 1px solid #5c1e1e;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: auto;
+}
+.btn-del:hover { background: #2a1010; }
+
+/* ── publish-all button ───────────────────────────────────────────────────── */
+.btn-publish-all {
+  width: 100%;
+  background: var(--accent);
+  color: #111;
+  border: 0;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: .01em;
+}
+.btn-publish-all:active { opacity: .85; }
+
+/* ── notice form ──────────────────────────────────────────────────────────── */
+.notice-form { display: grid; gap: 10px; }
+.notice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.notice-header strong { flex: 1; }

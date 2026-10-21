@@ -362,6 +362,8 @@ button:disabled { opacity: .45; cursor: default; }
 .attach-pending { opacity: .65; border-style: dashed; }
 .attach-failed { opacity: .85; border-color: #e53e3e; color: #e53e3e; }
 .attach-pending-label { font-size: .72rem; color: var(--muted); margin-right: 4px; }
+.attach-retry { background: none; border: 1px solid #e53e3e; color: #e53e3e; border-radius: 4px; padding: 0 5px; font-size: .85rem; cursor: pointer; margin-right: 4px; }
+.attach-retry:hover { background: rgba(229,83,75,.15); }
 
 /* ── login screen ─────────────────────────────────────────────────────────── */
 .login-title { text-align: center; color: var(--accent); }

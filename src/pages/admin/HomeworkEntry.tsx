@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAdminSection } from '../../hooks/useAdminSection'
-import PeriodRow from '../../components/admin/PeriodRow'
+import { DateNavigator } from '../../components/DateNavigator'
+import { Toast, useToast } from '../../components/Toast'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
@@ -11,31 +12,21 @@ interface Section { id: number; letter: string; stage: { name: string; branch: s
 // ── helpers ────────────────────────────────────────────────────────────────────
 
 const toISO = (d: Date) => d.toLocaleDateString('en-CA')
-const WEEKDAYS = [0, 1, 2, 3, 4]
 
-function isWeekend(iso: string) {
-  const day = new Date(iso + 'T00:00:00').getDay()
-  return day === 5 || day === 6
+function firstWorkday(d: Date): Date {
+  const day = d.getDay()
+  if (day === 5) return new Date(d.getTime() + 2 * 864e5)
+  if (day === 6) return new Date(d.getTime() + 864e5)
+  return d
 }
 
-// ── toast ──────────────────────────────────────────────────────────────────────
+// ── status badge ───────────────────────────────────────────────────────────────
 
-const toastStyle = (kind: 'ok' | 'warn' | 'err'): React.CSSProperties => ({
-  position: 'fixed',
-  bottom: 24,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  background: kind === 'ok' ? '#1a3a2a' : kind === 'warn' ? '#2a2a10' : '#2a1010',
-  color: kind === 'ok' ? '#4caf82' : kind === 'warn' ? '#E8B04A' : '#E5534B',
-  border: `1px solid ${kind === 'ok' ? '#1f5a3d' : kind === 'warn' ? '#5a4a1f' : '#5c1e1e'}`,
-  borderRadius: 12,
-  padding: '12px 24px',
-  fontSize: '.95rem',
-  fontWeight: 600,
-  zIndex: 9999,
-  whiteSpace: 'nowrap',
-  pointerEvents: 'none',
-})
+function StatusDot({ status }: { status: 'draft' | 'published' | 'archived' | null }) {
+  if (status === 'published') return <span className="he-status he-status--published">منشور</span>
+  if (status === 'draft') return <span className="he-status he-status--draft">مسودة</span>
+  return <span className="he-status he-status--empty">فارغ</span>
+}
 
 // ── component ──────────────────────────────────────────────────────────────────
 
@@ -44,10 +35,10 @@ export default function HomeworkEntry() {
   const [ready, setReady] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
   const [secId, setSecId] = useState<number | null>(null)
-  const [date, setDate] = useState(toISO(new Date()))
-  const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'warn' | 'err' } | null>(null)
+  const [date, setDate] = useState<Date>(() => firstWorkday(new Date()))
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const { toast, show: showToast, clear: clearToast } = useToast()
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -71,33 +62,22 @@ export default function HomeworkEntry() {
       })
   }, [ready])
 
-  useEffect(() => {
-    const day = new Date(date + 'T00:00:00').getDay()
-    if (day === 5) setDate(toISO(new Date(new Date(date).getTime() + 2 * 864e5)))
-    else if (day === 6) setDate(toISO(new Date(new Date(date).getTime() + 864e5)))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   const { periods, loading, setBodies, save, publish } = useAdminSection(
     secId !== null ? String(secId) : '',
-    date,
+    toISO(date),
   )
-
-  function showToast(msg: string, kind: 'ok' | 'warn' | 'err') {
-    setToast({ msg, kind })
-    setTimeout(() => setToast(null), 4000)
-  }
 
   async function handleSaveDraft() {
     setSaving(true)
     try {
       const result = await save()
       if (result.failed > 0) {
-        showToast(`حُفظ ${result.saved} — فشل ${result.failed}: ${result.errors[0]}`, 'warn')
+        showToast(`حُفظ ${result.saved} — فشل ${result.failed}: ${result.errors[0]}`, 'error')
       } else {
-        showToast(`تم حفظ ${result.saved} كمسودة`, 'ok')
+        showToast('تم الحفظ ✓', 'success')
       }
     } catch {
-      showToast('خطأ أثناء الحفظ', 'err')
+      showToast('خطأ أثناء الحفظ', 'error')
     }
     setSaving(false)
   }
@@ -107,16 +87,16 @@ export default function HomeworkEntry() {
     try {
       const result = await publish()
       if (result.saved === 0) {
-        showToast('لم يُنشر أي واجب — ' + (result.errors[0] ?? ''), 'err')
+        showToast('لم يُنشر أي واجب — ' + (result.errors[0] ?? ''), 'error')
       } else if (result.failed > 0) {
-        showToast(`نُشر ${result.saved} — فشل ${result.failed}`, 'warn')
+        showToast(`نُشر ${result.saved} — فشل ${result.failed}`, 'error')
       } else if (!result.pushSent) {
-        showToast(`تم النشر (${result.saved}) — فشل إرسال الإشعار`, 'warn')
+        showToast(`تم النشر (${result.saved}) — فشل إرسال الإشعار`, 'info')
       } else {
-        showToast(`تم النشر وإرسال الإشعارات (${result.saved})`, 'ok')
+        showToast(`تم النشر وإرسال الإشعارات (${result.saved})`, 'success')
       }
     } catch {
-      showToast('خطأ أثناء النشر', 'err')
+      showToast('خطأ أثناء النشر', 'error')
     }
     setPublishing(false)
   }
@@ -129,91 +109,90 @@ export default function HomeworkEntry() {
     )
   }
 
-  const weekend = isWeekend(date)
-  const sec = sections.find(s => s.id === secId)
-  const sectionLabel = sec ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}` : ''
-
   return (
-    <div dir="rtl" style={{ display: 'grid', gap: 12 }}>
-      <div className="admin-selectors">
-        <select
-          className="admin-select"
-          value={secId ?? ''}
-          onChange={e => setSecId(Number(e.target.value))}
-        >
-          {sections.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.stage.name} {s.stage.branch} / {s.letter}
-            </option>
-          ))}
-        </select>
+    <div dir="rtl" className="homework-entry">
 
-        <input
-          type="date"
-          className="admin-date"
-          value={date}
-          min="2020-01-01"
-          onChange={e => {
-            const val = e.target.value
-            if (!WEEKDAYS.includes(new Date(val + 'T00:00:00').getDay())) return
-            setDate(val)
-          }}
-        />
+      {/* ── Section Selector ──────────────────────────────────── */}
+      <select
+        className="admin-select"
+        value={secId ?? ''}
+        onChange={e => setSecId(Number(e.target.value))}
+        aria-label="اختر الشعبة"
+      >
+        {sections.map(s => (
+          <option key={s.id} value={s.id}>
+            {s.stage.name} {s.stage.branch} / {s.letter}
+          </option>
+        ))}
+      </select>
+
+      {/* ── Date Navigator ────────────────────────────────────── */}
+      <DateNavigator date={date} onChange={setDate} />
+
+      {/* ── Sticky Batch Action Bar ───────────────────────────── */}
+      <div className="he-action-bar">
+        <button
+          className="he-btn-draft"
+          disabled={saving || publishing || loading}
+          onClick={handleSaveDraft}
+        >
+          {saving ? '…' : 'حفظ مسودة'}
+        </button>
+        <button
+          className="btn-publish-all he-btn-publish"
+          disabled={saving || publishing || loading}
+          onClick={handlePublish}
+        >
+          {publishing ? '…' : 'نشر الكل'}
+        </button>
       </div>
 
-      {sectionLabel && (
-        <p style={{ margin: 0, fontSize: '.88rem', color: 'var(--muted)' }}>
-          الشعبة: <strong style={{ color: 'var(--fg)' }}>{sectionLabel}</strong>
-        </p>
-      )}
-
-      {weekend && (
-        <p className="muted">هذا اليوم عطلة (جمعة أو سبت) — اختر يوماً من الأحد إلى الخميس</p>
-      )}
-
-      {!weekend && loading && (
+      {/* ── Timetable Grid ────────────────────────────────────── */}
+      {loading ? (
         <p className="muted">جارٍ التحميل…</p>
+      ) : (
+        <div className="he-timetable">
+          {periods.map(slot => (
+            <div key={slot.period} className="he-period-row">
+
+              {/* RIGHT cell — period meta */}
+              <div className="he-period-meta">
+                <span className="he-period-num">حصة {slot.period}</span>
+                {slot.subject && (
+                  <span className="he-subject-name">{slot.subject}</span>
+                )}
+                {slot.teacher && (
+                  <span className="he-teacher-name">{slot.teacher}</span>
+                )}
+                <StatusDot status={slot.status} />
+              </div>
+
+              {/* LEFT cell — textarea */}
+              <div className="he-period-input">
+                <textarea
+                  className="hw-textarea he-hw-textarea"
+                  rows={2}
+                  placeholder="نص الواجب…"
+                  value={slot.body}
+                  onChange={e => setBodies({ [slot.period]: e.target.value })}
+                  dir="rtl"
+                />
+              </div>
+
+            </div>
+          ))}
+        </div>
       )}
 
-      {!weekend && !loading && (
-        <>
-          <div className="period-list">
-            {periods.map(slot => (
-              <PeriodRow
-                key={slot.period}
-                period={slot.period}
-                subject={slot.subject}
-                teacher={slot.teacher}
-                value={slot.body}
-                status={slot.status}
-                onChange={v => setBodies({ [slot.period]: v })}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: 'grid', gap: 8 }}>
-            <button
-              className="btn-save"
-              style={{ width: '100%', padding: 14, fontSize: '1rem', borderRadius: 14 }}
-              disabled={saving || publishing}
-              onClick={handleSaveDraft}
-            >
-              {saving ? '…' : 'حفظ كمسودة'}
-            </button>
-            <button
-              className="btn-publish-all"
-              disabled={saving || publishing}
-              onClick={handlePublish}
-            >
-              {publishing ? '…' : 'نشر وإرسال إشعار'}
-            </button>
-          </div>
-        </>
-      )}
-
+      {/* ── Toast ────────────────────────────────────────────── */}
       {toast && (
-        <div style={toastStyle(toast.kind)}>{toast.msg}</div>
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDone={clearToast}
+        />
       )}
+
     </div>
   )
 }

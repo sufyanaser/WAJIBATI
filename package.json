@@ -10,7 +10,7 @@
     "lint": "tsc --noEmit",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --linked > src/lib/database.types.ts",
-    "fn:deploy": "supabase functions deploy send-push"
+    "fn:deploy": "supabase functions deploy send-push && supabase functions deploy import-guardians && supabase functions deploy reset-pin"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

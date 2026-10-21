@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ExportButton } from '../components/ExportButton'
-import { HomeworkCard } from '../components/HomeworkCard'
 import { DateNavigator } from '../components/DateNavigator'
+import { Toast, useToast } from '../components/Toast'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
+import { exportA4PNG } from '../utils/exportA4'
 
 // ── types ────────────────────────────────────────────────────────────────────
 interface Child {
@@ -13,6 +14,7 @@ interface Child {
   full_name: string
   section_id: number
   section_label: string
+  section_letter: string
 }
 
 interface SRow extends HwItem {
@@ -65,6 +67,10 @@ export default function Today() {
 
   // ── push state ────────────────────────────────────────────────────────────
   const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
+
+  // ── A4 PDF export state ───────────────────────────────────────────────────
+  const [exporting, setExporting] = useState(false)
+  const { toast, show: showToast, clear: clearToast } = useToast()
 
   // ── signed URLs for attachments ───────────────────────────────────────────
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
@@ -126,6 +132,7 @@ export default function Today() {
         full_name: r.student.full_name,
         section_id: r.student.section.id,
         section_label: `${r.student.section.stage.name} ${r.student.section.stage.branch} ‏/ ${r.student.section.letter}`,
+        section_letter: r.student.section.letter,
       })),
     )
     setChildrenLoaded(true)
@@ -220,6 +227,43 @@ export default function Today() {
     } catch { /* user denied */ }
   }
 
+  // ── A4 PDF export ─────────────────────────────────────────────────────────
+  async function handleExportA4PDF() {
+    if (!child) return
+    setExporting(true)
+    try {
+      const homeworkBySubject: Record<string, string> = {}
+      hw.forEach(h => {
+        const name = h.subject?.name ?? ''
+        if (!name) return
+        const entry = h.period ? `(ح${h.period}) ${h.body}` : h.body
+        homeworkBySubject[name] = homeworkBySubject[name]
+          ? homeworkBySubject[name] + '\n' + entry
+          : entry
+      })
+      // TODO: replace after published_by migration (see docs/implementation/ARCHITECTURE-AUDIT.md)
+      const publisherName = 'مسؤول المدرسة'
+      const blob = await exportA4PNG({
+        date: toISO(date),
+        classLabel: child.section_label,
+        section: child.section_letter,
+        homeworkBySubject,
+        publisherName,
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'واجباتي-' + toISO(date) + '.png'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      console.error('A4 export failed', e)
+      showToast('فشل التصدير — حاول مجدداً', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   // ── calendar cells ────────────────────────────────────────────────────────
   function calCells(): (Date | null)[] {
     const y = calMo.getFullYear(), m = calMo.getMonth()
@@ -230,6 +274,13 @@ export default function Today() {
 
   const todISO = toISO(new Date())
   const selISO = toISO(date)
+
+  // ── Arabic-formatted today's date ────────────────────────────────────────
+  const todayArabic = new Date().toLocaleDateString('ar-IQ', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 
   // ── no children state ─────────────────────────────────────────────────────
   if (childrenLoaded && !children.length) {
@@ -253,18 +304,19 @@ export default function Today() {
   return (
     <main className="screen today" dir="rtl">
 
-      {/* header */}
-      <div className="top-bar">
-        <h1 className="app-title">واجباتي</h1>
-        <button
-          className="icon-btn"
-          onClick={handleLogout}
-        >
-          خروج
-        </button>
-      </div>
+      {/* ── header ─────────────────────────────────────────────────────── */}
+      <header className="today-header">
+        <div className="today-header-top">
+          <div className="today-header-titles">
+            <h1 className="app-title">واجباتي</h1>
+            <p className="school-subtitle">{schoolName}</p>
+          </div>
+          <button className="icon-btn" onClick={handleLogout}>خروج</button>
+        </div>
+        <p className="today-date-display">{todayArabic}</p>
+      </header>
 
-      {/* push opt-in banner */}
+      {/* ── push opt-in banner ─────────────────────────────────────────── */}
       {pushOpt === 'pending' && (
         <div className="push-banner">
           <span>فعّل الإشعارات لتصلك الواجبات فور نشرها</span>
@@ -272,7 +324,7 @@ export default function Today() {
         </div>
       )}
 
-      {/* search bar */}
+      {/* ── search bar ─────────────────────────────────────────────────── */}
       <div className="search-row">
         <input
           className="search-input"
@@ -287,7 +339,7 @@ export default function Today() {
       </div>
 
       {search.trim() ? (
-        /* ── search results ── */
+        /* ── search results ───────────────────────────────────────────── */
         <section className="hw-list">
           {sLoad && <p className="muted">جارٍ البحث…</p>}
           {!sLoad && !sRes.length && <p className="muted">لا نتائج</p>}
@@ -319,7 +371,7 @@ export default function Today() {
         </section>
       ) : (
         <>
-          {/* child selector tabs */}
+          {/* ── child selector tabs ────────────────────────────────────── */}
           {children.length > 1 && (
             <nav className="child-tabs">
               {children.map((c, i) => (
@@ -334,14 +386,14 @@ export default function Today() {
             </nav>
           )}
 
-          {/* date navigation */}
+          {/* ── date navigation ─────────────────────────────────────────── */}
           <DateNavigator
             date={date}
             onChange={setDate}
             onLabelClick={() => { setShowCal(v => !v); setCalMo(new Date(date)) }}
           />
 
-          {/* archive calendar popup */}
+          {/* ── archive calendar popup ──────────────────────────────────── */}
           {showCal && (
             <div className="cal-popup">
               <div className="cal-header">
@@ -394,25 +446,41 @@ export default function Today() {
             </div>
           )}
 
-          {/* section badge + export */}
+          {/* ── section badge + export ──────────────────────────────────── */}
           {child && (
-            <div className="section-bar" style={{ justifyContent: 'space-between' }}>
+            <div className="section-bar section-bar-between">
               <span className="badge">{child.section_label}</span>
-              {!loading && hw.length > 0 && (
-                <ExportButton
-                  data={{
-                    schoolName,
-                    sectionName: child.section_label,
-                    date: toISO(date),
-                    items: hw.map(h => ({
-                      period: h.period ?? 0,
-                      subject: h.subject?.name ?? '—',
-                      teacher: h.teacher?.full_name ?? '—',
-                      body: h.body,
-                    })),
+              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                {!loading && hw.length > 0 && (
+                  <ExportButton
+                    data={{
+                      schoolName,
+                      sectionName: child.section_label,
+                      date: toISO(date),
+                      items: hw.map(h => ({
+                        period: h.period ?? 0,
+                        subject: h.subject?.name ?? '—',
+                        teacher: h.teacher?.full_name ?? '—',
+                        body: h.body,
+                      })),
+                    }}
+                  />
+                )}
+                <button
+                  onClick={handleExportA4PDF}
+                  disabled={exporting || loading}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '.4rem',
+                    padding: '.5rem 1rem', background: 'var(--card2)',
+                    border: '1.5px solid var(--accent)', borderRadius: '.5rem',
+                    color: 'var(--accent)', cursor: (exporting || loading) ? 'wait' : 'pointer',
+                    fontSize: '.875rem', fontWeight: 600, fontFamily: 'inherit',
+                    opacity: (exporting || loading) ? 0.6 : 1, whiteSpace: 'nowrap',
                   }}
-                />
-              )}
+                >
+                  {exporting ? '⏳ جارٍ التصدير…' : '🖼 تصدير صورة A4'}
+                </button>
+              </div>
             </div>
           )}
 
@@ -420,7 +488,7 @@ export default function Today() {
             <p className="offline-note">⚠️ عرض مؤقت بدون اتصال</p>
           )}
 
-          {/* notices — latest 3 */}
+          {/* ── notices — latest 3 ─────────────────────────────────────── */}
           {notices.length > 0 && (
             <section className="notices">
               {notices.map(n => (
@@ -432,29 +500,84 @@ export default function Today() {
             </section>
           )}
 
-          {/* homework list */}
+          {/* ── homework list ──────────────────────────────────────────── */}
           {loading ? (
-            <p className="muted">جارٍ التحميل…</p>
+            /* skeleton loading */
+            <section className="hw-list" aria-busy="true" aria-label="جارٍ التحميل">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="hw-skeleton">
+                  <div className="skel-line skel-short" />
+                  <div className="skel-line skel-long" />
+                  <div className="skel-line skel-medium" />
+                </div>
+              ))}
+            </section>
           ) : hw.length === 0 ? (
-            <p className="muted">لا واجبات لهذا اليوم</p>
+            /* empty state */
+            <div className="empty-state">
+              <span className="empty-icon" aria-hidden="true">📚</span>
+              <p className="empty-msg">لا توجد واجبات لهذا اليوم</p>
+            </div>
           ) : (
+            /* subject cards */
             <section className="hw-list">
               {hw.map(h => (
-                <HomeworkCard
-                  key={h.id}
-                  period={h.period}
-                  subject={h.subject?.name ?? '—'}
-                  teacher={h.teacher?.full_name ?? '—'}
-                  body={h.body}
-                  subjectColor={h.subject?.color}
-                  attachments={h.attachments}
-                  signedUrls={signedUrls}
-                />
+                <article key={h.id} className="hw-card" dir="rtl">
+                  <div className="hw-card-top">
+                    {h.period != null && (
+                      <span
+                        className="hw-period-circle"
+                        aria-label={`الحصة ${h.period}`}
+                      >
+                        {h.period}
+                      </span>
+                    )}
+                    <span
+                      className="hw-subject-name"
+                      style={h.subject?.color
+                        ? { background: h.subject.color + '33', borderColor: h.subject.color }
+                        : undefined}
+                    >
+                      {h.subject?.name ?? '—'}
+                    </span>
+                    <span className="hw-read-check" aria-label="تمت القراءة">✓</span>
+                  </div>
+                  {h.teacher && (
+                    <p className="hw-teacher-row">{h.teacher.full_name}</p>
+                  )}
+                  <p className="hw-body">{h.body}</p>
+                  {h.attachments.length > 0 && (
+                    <div className="attachments">
+                      {h.attachments.map(a => (
+                        <a
+                          key={a.id}
+                          href={signedUrls[a.storage_path] ?? '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attach-badge"
+                        >
+                          <span aria-hidden="true">
+                            {a.mime.startsWith('image/') ? '🖼' : '📄'}
+                          </span>
+                          <span>مرفق</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </article>
               ))}
             </section>
           )}
         </>
       )}
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onDone={clearToast} />
+      )}
+
+      {/* ── bottom sticky archive bar ───────────────────────────────────── */}
+      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
+        <Link to="/archive" className="archive-link">الأرشيف</Link>
+      </nav>
     </main>
   )
 }

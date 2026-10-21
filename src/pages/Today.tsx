@@ -58,9 +58,8 @@ export default function Today() {
   // ── boot ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) { nav('/login'); return }
       bootstrap()
-      if ('Notification' in window) {
+      if (data.session && 'Notification' in window) {
         if (Notification.permission === 'default') setPushOpt('pending')
         else if (Notification.permission === 'granted') setPushOpt('granted')
       }

@@ -760,6 +760,8 @@ button:disabled { opacity: .45; cursor: default; }
 .he-period-input {
   padding: 8px;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .he-hw-textarea {
   flex: 1;
@@ -771,6 +773,64 @@ button:disabled { opacity: .45; cursor: default; }
 }
 .he-hw-textarea:focus {
   background: var(--card2) !important;
+}
+
+/* ── attachment chips ────────────────────────────────────────────────────── */
+.he-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 4px;
+  align-items: center;
+}
+.he-attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full, 9999px);
+  padding: 3px 8px 3px 4px;
+  font-size: .78rem;
+  color: var(--fg);
+  max-width: 200px;
+}
+.he-attach-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.he-attach-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.he-attach-del:hover { color: var(--danger, #e55); }
+.he-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-full, 9999px);
+  padding: 3px 10px;
+  font-size: .78rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.he-upload-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.he-upload-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
 }
 
 /* ── row status badges ───────────────────────────────────────────────────── */

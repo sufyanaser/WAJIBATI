@@ -1,13 +1,81 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAdminSection } from '../../hooks/useAdminSection'
+import type { AttachmentRow } from '../../hooks/useAdminSection'
 import { DateNavigator } from '../../components/DateNavigator'
 import { Toast, useToast } from '../../components/Toast'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
+
+// ── AttachmentRow subcomponent ─────────────────────────────────────────────────
+
+interface AttachmentChipsProps {
+  hwId: string | null
+  attachments: AttachmentRow[]
+  period: number
+  onUpload: (period: number, file: File) => Promise<{ ok: boolean; error?: string }>
+  onDelete: (period: number, id: string, path: string) => Promise<{ ok: boolean; error?: string }>
+}
+
+function AttachmentChips({ hwId, attachments, period, onUpload, onDelete }: AttachmentChipsProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState<string | null>(null) // 'upload' | attachment id
+
+  async function handleFiles(files: FileList | null) {
+    if (!files?.length) return
+    setBusy('upload')
+    const result = await onUpload(period, files[0])
+    setBusy(null)
+    if (!result.ok) alert(result.error ?? 'فشل الرفع')
+  }
+
+  async function handleDelete(id: string, path: string) {
+    setBusy(id)
+    await onDelete(period, id, path)
+    setBusy(null)
+  }
+
+  const label = (mime: string, path: string) => {
+    const name = path.split('/').pop() ?? 'مرفق'
+    return mime.startsWith('image/') ? `🖼 ${name}` : `📄 ${name}`
+  }
+
+  return (
+    <div className="he-attachments">
+      {attachments.map(a => (
+        <span key={a.id} className="he-attach-chip">
+          <span className="he-attach-label">{label(a.mime, a.storage_path)}</span>
+          <button
+            className="he-attach-del"
+            disabled={busy === a.id}
+            onClick={() => handleDelete(a.id, a.storage_path)}
+            aria-label="حذف المرفق"
+          >
+            {busy === a.id ? '…' : '×'}
+          </button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        style={{ display: 'none' }}
+        onChange={e => handleFiles(e.target.files)}
+      />
+      <button
+        className="he-upload-btn"
+        disabled={!hwId || busy === 'upload'}
+        title={!hwId ? 'احفظ الواجب أولاً لإضافة مرفقات' : undefined}
+        onClick={() => inputRef.current?.click()}
+      >
+        {busy === 'upload' ? '…' : '+ مرفق'}
+      </button>
+    </div>
+  )
+}
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -62,7 +130,7 @@ export default function HomeworkEntry() {
       })
   }, [ready])
 
-  const { periods, loading, setBodies, save, publish } = useAdminSection(
+  const { periods, loading, setBodies, save, publish, uploadAttachment, deleteAttachment } = useAdminSection(
     secId !== null ? String(secId) : '',
     toISO(date),
   )
@@ -167,7 +235,7 @@ export default function HomeworkEntry() {
                 <StatusDot status={slot.status} />
               </div>
 
-              {/* LEFT cell — textarea */}
+              {/* LEFT cell — textarea + attachments */}
               <div className="he-period-input">
                 <textarea
                   className="hw-textarea he-hw-textarea"
@@ -176,6 +244,13 @@ export default function HomeworkEntry() {
                   value={slot.body}
                   onChange={e => setBodies({ [slot.period]: e.target.value })}
                   dir="rtl"
+                />
+                <AttachmentChips
+                  hwId={slot.hw_id}
+                  attachments={slot.attachments}
+                  period={slot.period}
+                  onUpload={uploadAttachment}
+                  onDelete={deleteAttachment}
                 />
               </div>
 

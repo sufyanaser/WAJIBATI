@@ -158,10 +158,32 @@ export default function HomeworkEntry() {
       })
   }, [ready])
 
+  const [publishingPeriod, setPublishingPeriod] = useState<number | null>(null)
+
   const { periods, loading, setBodies, save, publish, uploadAttachment, deleteAttachment } = useAdminSection(
     secId !== null ? String(secId) : '',
     toISO(date),
   )
+
+  async function handlePublishPeriod(period: number, hwId: string) {
+    setPublishingPeriod(period)
+    try {
+      const { error } = await supabase
+        .from('homework')
+        .update({ status: 'published' })
+        .eq('id', hwId)
+      if (error) {
+        showToast(`فشل نشر الحصة ${period}: ${error.message}`, 'error')
+      } else {
+        showToast(`تم نشر الحصة ${period} ✓`, 'success')
+        // reload section data by triggering save with existing body
+        await save()
+      }
+    } catch {
+      showToast('خطأ أثناء نشر الحصة', 'error')
+    }
+    setPublishingPeriod(null)
+  }
 
   async function handleSaveDraft() {
     setSaving(true)
@@ -243,6 +265,27 @@ export default function HomeworkEntry() {
         </button>
       </div>
 
+      {/* ── Status Summary Bar ────────────────────────────────── */}
+      {!loading && periods.length > 0 && (() => {
+        const published = periods.filter(p => p.status === 'published').length
+        const draft = periods.filter(p => p.status === 'draft').length
+        const empty = periods.filter(p => !p.status).length
+        return (
+          <div style={{
+            display: 'flex', gap: 10, flexWrap: 'wrap',
+            padding: '8px 12px',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            fontSize: '.8rem',
+          }}>
+            {published > 0 && <span className="he-status he-status--published">{published} منشور</span>}
+            {draft > 0 && <span className="he-status he-status--draft">{draft} مسودة</span>}
+            {empty > 0 && <span className="he-status he-status--empty">{empty} فارغ</span>}
+          </div>
+        )
+      })()}
+
       {/* ── Timetable Grid ────────────────────────────────────── */}
       {loading ? (
         <p className="muted">جارٍ التحميل…</p>
@@ -261,6 +304,17 @@ export default function HomeworkEntry() {
                   <span className="he-teacher-name">{slot.teacher}</span>
                 )}
                 <StatusDot status={slot.status} />
+                {slot.hw_id && slot.status === 'draft' && (
+                  <button
+                    className="he-btn-publish"
+                    style={{ fontSize: '.72rem', padding: '3px 8px', marginTop: 4 }}
+                    disabled={publishingPeriod === slot.period || saving || publishing}
+                    onClick={() => void handlePublishPeriod(slot.period, slot.hw_id!)}
+                    title="نشر هذه الحصة فقط"
+                  >
+                    {publishingPeriod === slot.period ? '…' : 'نشر'}
+                  </button>
+                )}
               </div>
 
               {/* LEFT cell — textarea + attachments */}

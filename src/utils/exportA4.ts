@@ -36,28 +36,34 @@ export interface ExportA4Options {
 const A4_W = 1588
 const A4_H = 2246
 
-/** Subjects rendered in this exact order */
-const SUBJECTS = [
+/** Preferred subject order — names match the `subjects` table exactly */
+const SUBJECT_ORDER = [
   'التربية الإسلامية',
   'اللغة العربية',
-  'اللغة الإنجليزية',
+  'اللغة الإنكليزية',
+  'الرياضيات',
   'الكيمياء',
   'الفيزياء',
   'الأحياء',
-  'الرياضيات',
-  'جرائم حزب البعث',
-] as const
+  'الحاسوب',
+  'جرائم البعث',
+  'التاريخ',
+  'الجغرافية',
+]
 
 /** Unicode text icons per subject (no SVG — avoids rendering issues) */
 const SUBJECT_ICON: Record<string, string> = {
-  'التربية الإسلامية':  '☽',
-  'اللغة العربية':      '✒',
-  'اللغة الإنجليزية':  '🔤',
-  'الكيمياء':           '⚗',
-  'الفيزياء':           '⚛',
-  'الأحياء':            '🌿',
-  'الرياضيات':          '∑',
-  'جرائم حزب البعث':   '📖',
+  'التربية الإسلامية': '☽',
+  'اللغة العربية':     '✒',
+  'اللغة الإنكليزية': '🔤',
+  'الرياضيات':         '∑',
+  'الكيمياء':          '⚗',
+  'الفيزياء':          '⚛',
+  'الأحياء':           '🌿',
+  'الحاسوب':           '💻',
+  'جرائم البعث':       '📖',
+  'التاريخ':           '📜',
+  'الجغرافية':         '🗺',
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +164,13 @@ function buildA4Html(opts: ExportA4Options): string {
   `
 
   // --- Subject table ---
-  const rows = SUBJECTS.map(subject => {
+  // Order by SUBJECT_ORDER, then append any extra subjects not in that list
+  const subjectKeys = Object.keys(opts.homeworkBySubject)
+  const orderedSubjects = [
+    ...SUBJECT_ORDER.filter(s => subjectKeys.includes(s)),
+    ...subjectKeys.filter(s => !SUBJECT_ORDER.includes(s)),
+  ]
+  const rows = orderedSubjects.map(subject => {
     const hw = opts.homeworkBySubject[subject] ?? ''
     const icon = SUBJECT_ICON[subject] ?? '•'
     return `

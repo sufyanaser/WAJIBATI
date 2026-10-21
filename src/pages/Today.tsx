@@ -6,7 +6,7 @@ import { DateNavigator } from '../components/DateNavigator'
 import { Toast, useToast } from '../components/Toast'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
-import { exportA4PDF } from '../utils/exportA4'
+import { exportA4PNG } from '../utils/exportA4'
 
 // ── types ────────────────────────────────────────────────────────────────────
 interface Child {
@@ -16,18 +16,6 @@ interface Child {
   section_label: string
   section_letter: string
 }
-
-/** Subject list for A4 export — must match exportA4.ts SUBJECTS order */
-const A4_SUBJECTS = [
-  'التربية الإسلامية',
-  'اللغة العربية',
-  'اللغة الإنجليزية',
-  'الكيمياء',
-  'الفيزياء',
-  'الأحياء',
-  'الرياضيات',
-  'جرائم حزب البعث',
-] as const
 
 interface SRow extends HwItem {
   due_date: string
@@ -245,14 +233,13 @@ export default function Today() {
     setExporting(true)
     try {
       const homeworkBySubject: Record<string, string> = {}
-      A4_SUBJECTS.forEach(s => { homeworkBySubject[s] = '' })
       hw.forEach(h => {
         const name = h.subject?.name ?? ''
-        if (name && name in homeworkBySubject) homeworkBySubject[name] = h.body
+        if (name) homeworkBySubject[name] = h.body
       })
       // TODO: replace after published_by migration (see docs/implementation/ARCHITECTURE-AUDIT.md)
       const publisherName = 'مسؤول المدرسة'
-      const blob = await exportA4PDF({
+      const blob = await exportA4PNG({
         date: toISO(date),
         classLabel: child.section_label,
         section: child.section_letter,
@@ -262,12 +249,12 @@ export default function Today() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'واجباتي-' + toISO(date) + '.pdf'
+      a.download = 'واجباتي-' + toISO(date) + '.png'
       a.click()
       URL.revokeObjectURL(url)
     } catch (e) {
-      console.error('A4 PDF export failed', e)
-      showToast('فشل تصدير PDF — حاول مجدداً', 'error')
+      console.error('A4 export failed', e)
+      showToast('فشل التصدير — حاول مجدداً', 'error')
     } finally {
       setExporting(false)
     }
@@ -487,7 +474,7 @@ export default function Today() {
                     opacity: (exporting || loading) ? 0.6 : 1, whiteSpace: 'nowrap',
                   }}
                 >
-                  {exporting ? '⏳ جارٍ التصدير…' : '📄 تصدير PDF'}
+                  {exporting ? '⏳ جارٍ التصدير…' : '🖼 تصدير صورة A4'}
                 </button>
               </div>
             </div>

@@ -78,10 +78,11 @@ DBPASS=... SUPABASE_ACCESS_TOKEN=... ./scripts/bootstrap.sh   # infra, idempoten
 - `npm run build` green before any commit.
 
 ## 8. Status (2026-10-21)
-- [x] Scaffold, schema + RLS + storage, `send-push`, CI, Vercel config, bootstrap script, PWA icons (placeholder)
-- [?] `bootstrap.sh` run by owner — UNVERIFIED: confirm GitHub repo `sufyanaser/rumaila-homework`, Supabase project `rumaila-homework` ACTIVE_HEALTHY + migration applied, `send-push` deployed, Vercel project `rumaila-homework` (team `nasai`) production deployment READY
+- [x] Scaffold, schema + RLS + storage, `send-push`, CI, Vercel config, bootstrap script
+- [x] Demo seed migration (`20261021020000_seed_demo.sql`) — 7 sections, 5 demo guardians (PINs 111111–555555, change before production)
+- [x] Phase 4: Edge Functions `import-guardians` + `reset-pin`; Admin استيراد tab with CSV upload + PIN reset UI
+- [x] Real school logo icons (icon-192/512, apple-touch-icon) — merged PR #4
+- [x] Cleanup: Cloudflare D1 `rumaila-homework-db` + R2 `rumaila-homework-uploads` deleted
+- [?] `bootstrap.sh` run by owner — UNVERIFIED: confirm Supabase project `rumaila-homework` ACTIVE_HEALTHY + migration applied, `send-push`/`import-guardians`/`reset-pin` deployed (`npm run fn:deploy`), Vercel project production READY
 - [ ] Guardian UI: Today (by date, per child/section), date picker + archive, search, notices, mark_read, push opt-in
-- [ ] Admin UI: login, homework CRUD per section/day (quick entry from timetable), attachments upload, notices, publish → call `send-push`
-- [ ] Admin tools: import students/guardians from .ods/.csv, guardian PIN generation/reset (service-role script or edge fn)
-- [ ] Real school logo icons
-- Cleanup: Cloudflare D1 `rumaila-homework-db` + R2 `rumaila-homework-uploads` created earlier, unused → delete
+- [ ] Admin UI: homework CRUD per section/day (quick entry from timetable), attachments upload, notices, publish → call `send-push`

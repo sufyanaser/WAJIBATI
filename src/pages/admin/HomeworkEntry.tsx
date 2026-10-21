@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAdminSection } from '../../hooks/useAdminSection'
 import PeriodRow from '../../components/admin/PeriodRow'
@@ -40,8 +39,6 @@ const toastStyle = (kind: 'ok' | 'warn' | 'err'): React.CSSProperties => ({
 // ── component ──────────────────────────────────────────────────────────────────
 
 export default function HomeworkEntry() {
-  const nav = useNavigate()
-  const [ready, setReady] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
   const [secId, setSecId] = useState<number | null>(null)
   const [date, setDate] = useState(toISO(new Date()))
@@ -50,16 +47,6 @@ export default function HomeworkEntry() {
   const [publishing, setPublishing] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) { nav('/admin/login'); return }
-      const { data: adm } = await supabase.from('admins').select('role').eq('user_id', data.session.user.id).maybeSingle()
-      if (!adm) { await supabase.auth.signOut(); nav('/admin/login'); return }
-      setReady(true)
-    })
-  }, [nav])
-
-  useEffect(() => {
-    if (!ready) return
     supabase.from('sections')
       .select('id, letter, stage:stages(name, branch)')
       .order('letter')
@@ -69,7 +56,7 @@ export default function HomeworkEntry() {
           setSecId((data[0] as unknown as Section).id)
         }
       })
-  }, [ready])
+  }, [])
 
   useEffect(() => {
     const day = new Date(date + 'T00:00:00').getDay()
@@ -119,14 +106,6 @@ export default function HomeworkEntry() {
       showToast('خطأ أثناء النشر', 'err')
     }
     setPublishing(false)
-  }
-
-  if (!ready) {
-    return (
-      <div style={{ padding: 24 }} dir="rtl">
-        <p className="muted">جارٍ التحقق…</p>
-      </div>
-    )
   }
 
   const weekend = isWeekend(date)

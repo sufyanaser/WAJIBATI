@@ -16,7 +16,7 @@ const shell: React.CSSProperties = {
 const navLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
   display: 'inline-block',
   background: isActive ? 'var(--accent)' : 'var(--card)',
-  color: isActive ? '#111' : 'var(--fg)',
+  color: isActive ? 'var(--bg)' : 'var(--fg)',
   border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
   borderRadius: 20,
   padding: '8px 16px',

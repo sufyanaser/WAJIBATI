@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { fetchSubjects } from '../lib/subjects'
@@ -50,6 +50,10 @@ export default function Admin() {
   const [sectionLabel, setSectionLabel] = useState('')
 
   const [subjects, setSubjects] = useState<Subject[]>([])
+
+  // upload/save in-flight guards (ref-based to avoid React state race conditions)
+  const uploadingFiles = useRef(new Set<File>())
+  const savingSlots = useRef(new Set<number>())
 
   // import tab state
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: { row: number; message: string }[] } | null>(null)
@@ -143,6 +147,9 @@ export default function Admin() {
   // ── attachment upload ─────────────────────────────────────────────────────────
   async function uploadFile(slotIdx: number, file: File, hwId: string): Promise<void> {
     if (!secId) return
+    // Prevent duplicate upload of the same File object (ref-based guard, React state is async)
+    if (uploadingFiles.current.has(file)) return
+    uploadingFiles.current.add(file)
     setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
       ...r, uploading: true, error: null,
       pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'uploading' as const } : pf),
@@ -151,6 +158,7 @@ export default function Admin() {
     const { error: storErr } = await supabase.storage
       .from('attachments').upload(path, file, { upsert: true })
     if (storErr) {
+      uploadingFiles.current.delete(file)
       setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
         ...r, uploading: false, error: storErr.message,
         pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'failed' as const } : pf),
@@ -163,12 +171,14 @@ export default function Admin() {
     if (dbErr || !row) {
       // Storage succeeded but DB failed — clean up orphaned storage object
       await supabase.storage.from('attachments').remove([path])
+      uploadingFiles.current.delete(file)
       setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
         ...r, uploading: false, error: dbErr?.message ?? 'فشل حفظ المرفق في قاعدة البيانات',
         pendingFiles: r.pendingFiles.map(pf => pf.file === file ? { ...pf, status: 'failed' as const } : pf),
       }))
       return
     }
+    uploadingFiles.current.delete(file)
     const newAttId = (row as { id: string }).id
     setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
       ...r, uploading: false, error: null,
@@ -220,6 +230,17 @@ export default function Admin() {
       : r))
   }
 
+  function retryUpload(slotIdx: number, file: File, hwId: string) {
+    if (uploadingFiles.current.has(file)) return  // already retrying
+    setSlots(p => p.map((r, j) => j !== slotIdx ? r : {
+      ...r,
+      pendingFiles: r.pendingFiles.map(pf =>
+        pf.file === file ? { ...pf, status: 'pending' as const } : pf
+      ),
+    }))
+    void uploadFile(slotIdx, file, hwId)
+  }
+
   // ── save / publish slot ───────────────────────────────────────────────────────
   async function saveSlot(i: number, publish: boolean) {
     if (!secId) return
@@ -229,6 +250,9 @@ export default function Admin() {
       setSlots(p => p.map((r, j) => j === i ? { ...r, error: 'يجب اختيار المادة' } : r))
       return
     }
+    // Ref-based guard: prevents double-save even if React state hasn't propagated yet
+    if (savingSlots.current.has(i)) return
+    savingSlots.current.add(i)
     setSlots(p => p.map((r, j) => j === i ? { ...r, saving: true, error: null } : r))
 
     const payload = {
@@ -243,20 +267,26 @@ export default function Admin() {
     if (newId) {
       const { error: updErr } = await supabase.from('homework').update(payload).eq('id', newId)
       if (updErr) {
+        savingSlots.current.delete(i)
         setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false, error: updErr.message } : r))
         return
       }
     } else {
       const { data, error: insErr } = await supabase.from('homework').insert(payload).select('id').single()
       if (insErr || !data) {
+        savingSlots.current.delete(i)
         setSlots(p => p.map((r, j) => j === i ? { ...r, saving: false, error: insErr?.message ?? 'خطأ في الحفظ' } : r))
         return
       }
       newId = (data as { id: string }).id
     }
 
-    // Capture pending+failed files before state update
-    const pendingToUpload = slots[i].pendingFiles.filter(pf => pf.status !== 'uploading')
+    savingSlots.current.delete(i)
+
+    // Capture files not already in flight (React status flag + ref guard)
+    const pendingToUpload = slots[i].pendingFiles.filter(pf =>
+      pf.status !== 'uploading' && !uploadingFiles.current.has(pf.file)
+    )
 
     setSlots(p => p.map((r, j) => j === i
       ? { ...r, saving: false, dirty: false, error: null,
@@ -264,7 +294,8 @@ export default function Admin() {
           status: publish ? 'published' : 'draft' }
       : r))
 
-    // Send push immediately once the homework text is saved — attachments are optional (Rule 3)
+    // Push fires right after DB save — attachments must not delay guardian notification (Rule 3)
+    // Only fires when homework is successfully saved with published status
     if (publish && newId) {
       supabase.functions.invoke('send-push', {
         body: {
@@ -276,7 +307,7 @@ export default function Admin() {
       }).catch(() => { /* non-critical */ })
     }
 
-    // Flush queued and retry failed files after push (non-blocking for notification)
+    // Flush queued/failed files after push (non-blocking for notification)
     if (newId && pendingToUpload.length > 0) {
       for (const pf of pendingToUpload) {
         await uploadFile(i, pf.file, newId)
@@ -287,7 +318,8 @@ export default function Admin() {
   async function publishAll() {
     for (let i = 0; i < slots.length; i++) {
       const sl = slots[i]
-      if (sl.body.trim() && !sl.saving && !sl.uploading) {
+      // !sl.uploading intentionally removed: text publish is independent of optional attachment uploads
+      if (sl.body.trim() && !sl.saving) {
         await saveSlot(i, true)
       }
     }
@@ -487,6 +519,13 @@ export default function Admin() {
                                     : pf.status === 'failed' ? 'فشل'
                                     : 'معلق'}
                                 </span>
+                                {pf.status === 'failed' && s.hw_id && (
+                                  <button
+                                    className="attach-retry"
+                                    title="إعادة المحاولة"
+                                    onClick={() => retryUpload(i, pf.file, s.hw_id!)}
+                                  >↺</button>
+                                )}
                                 <button
                                   className="attach-del"
                                   title="إزالة"

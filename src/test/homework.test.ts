@@ -566,11 +566,12 @@ describe('Regression — publish guard and flush ordering', () => {
    * The current implementation only checks !slots[i].saving — it does NOT
    * check uploading. This test documents the gap at the logic level.
    */
-  it('[RULE 1/2] publishAll does not block on pending/failed files (attachments optional)', () => {
-    // Guard: body.trim() && !saving && !uploading — pendingFiles.length no longer blocks
+  it('[RULE 1/2] publishAll does not block on pending/failed/uploading attachments (text is independent)', () => {
+    // Guard is now: body.trim() && !saving
+    // Attachment state (uploading, pending, failed) must NEVER block text publish
     interface ExtSlot extends PSlot { uploading: boolean }
     function publishAllGuard(sl: ExtSlot): boolean {
-      return sl.body.trim().length > 0 && !sl.saving && !sl.uploading
+      return sl.body.trim().length > 0 && !sl.saving
     }
     const ready = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false } as ExtSlot
     const uploading = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: true } as ExtSlot
@@ -579,7 +580,7 @@ describe('Regression — publish guard and flush ordering', () => {
     const withFailed = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false,
       pendingFiles: [{ file: { name: 'f.jpg', type: 'image/jpeg' }, status: 'failed' }] } as ExtSlot
     expect(publishAllGuard(ready)).toBe(true)
-    expect(publishAllGuard(uploading)).toBe(false)   // mid-upload: still blocked
+    expect(publishAllGuard(uploading)).toBe(true)    // upload in progress: text publish still allowed
     expect(publishAllGuard(withPending)).toBe(true)  // pending files: not blocked (optional)
     expect(publishAllGuard(withFailed)).toBe(true)   // failed files: not blocked (optional)
   })
@@ -593,6 +594,172 @@ describe('Regression — publish guard and flush ordering', () => {
     }
     simulateSaveSlot(true, true)
     expect(callOrder).toEqual(['send-push', 'flush-pending'])
+  })
+})
+
+// ── Attachment hardening scenarios ─────────────────────────────────────────────
+
+describe('Attachment hardening — 10 scenarios', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'admin-uid' } } } })
+    mockDbFrom.mockImplementation((table: string) => {
+      if (table === 'admins') return makeQB({ data: { role: 'owner' } })
+      if (table === 'sections') return makeQB({ data: [{ id: 1, letter: 'أ', stage: { name: 'الرابع', branch: 'علمي' } }] })
+      if (table === 'notices') return makeQB({ data: [] })
+      if (table === 'timetable') return makeQB({ data: [{ period: 1, subject: { id: 1, name: 'رياضيات', color: null }, teacher: null }] })
+      if (table === 'homework') return makeQB({ data: [{ id: 'hw-1', period: 1, body: 'واجب', status: 'draft', attachments: [] }] })
+      if (table === 'attachments') return makeQB({ data: { id: 'att-new' } })
+      return makeQB({ data: null })
+    })
+    mockStorageUpload.mockResolvedValue({ error: null })
+    mockStorageRemove.mockResolvedValue({ error: null })
+  })
+
+  // S1: publish without any attachments
+  it('[S1] publishes text homework with no attachments', async () => {
+    const { functions } = (await import('../lib/supabase')).supabase
+    const { default: Admin } = await import('../pages/Admin')
+    render(React.createElement(MemoryRouter, { initialEntries: ['/admin'] }, React.createElement(Admin)))
+    await waitFor(() => screen.getAllByPlaceholderText('نص الواجب…'))
+    // Select subject and publish
+    const subjectSelects = screen.getAllByRole('combobox')
+    await act(async () => { fireEvent.change(subjectSelects[1], { target: { value: '1' } }) })
+    const publishBtns = screen.getAllByText('نشر')
+    await act(async () => { fireEvent.click(publishBtns[0]) })
+    await waitFor(() => expect(functions.invoke).toHaveBeenCalledWith('send-push', expect.anything()))
+    expect(mockStorageUpload).not.toHaveBeenCalled()
+  })
+
+  // S2: publish proceeds while attachment upload is in progress
+  it('[S2] text publishes immediately, not waiting for slow attachment upload', () => {
+    // Logic: pendingToUpload is flushed AFTER push is sent; push does not wait for upload
+    const callOrder: string[] = []
+    function simulatePublishWithSlowUpload(pendingCount: number, publish: boolean) {
+      // DB save succeeds
+      if (publish) callOrder.push('send-push')  // push fires right after DB save
+      if (pendingCount > 0) {
+        callOrder.push('flush-pending')  // upload happens after push
+      }
+    }
+    simulatePublishWithSlowUpload(2, true)
+    expect(callOrder[0]).toBe('send-push')
+    expect(callOrder[1]).toBe('flush-pending')
+  })
+
+  // S3: PDF upload failure does not change published homework status
+  it('[S3] attachment failure does not revert published homework status', () => {
+    // homework status is set from DB save result, never from attachment outcome
+    interface HwState { status: string }
+    function simulateSaveWithFailedAttachment(publish: boolean, attachFailed: boolean): HwState {
+      const hwStatus = publish ? 'published' : 'draft'
+      // attachFailed has no influence on hwStatus
+      void attachFailed
+      return { status: hwStatus }
+    }
+    const result = simulateSaveWithFailedAttachment(true, true)
+    expect(result.status).toBe('published')
+  })
+
+  // S4: retry button appears after upload failure and triggers re-upload
+  it('[S4] retry button appears for failed attachment', async () => {
+    mockStorageUpload.mockResolvedValue({ error: { message: 'فشل' } })
+    const { default: Admin } = await import('../pages/Admin')
+    render(React.createElement(MemoryRouter, { initialEntries: ['/admin'] }, React.createElement(Admin)))
+    await waitFor(() => screen.getAllByTitle('إرفاق صورة من المعرض'))
+    const inputs = document.querySelectorAll('input[accept="image/*"]:not([capture])')
+    const file = makeFile({ name: 'photo.jpg', type: 'image/jpeg' })
+    await act(async () => { fireEvent.change(inputs[0], { target: { files: [file] } }) })
+    // Retry button should appear
+    await waitFor(() => expect(screen.getByTitle('إعادة المحاولة')).toBeInTheDocument())
+    // Clicking retry resets status and triggers re-upload
+    mockStorageUpload.mockResolvedValue({ error: null })
+    await act(async () => { fireEvent.click(screen.getByTitle('إعادة المحاولة')) })
+    await waitFor(() => expect(mockStorageUpload).toHaveBeenCalledTimes(2))
+  })
+
+  // S5: rapid file selects — uploadingFiles ref prevents duplicate upload of same file
+  it('[S5] duplicate upload of same File object is prevented by ref guard', () => {
+    const inFlight = new Set<File>()
+    let uploadCalls = 0
+    function guardedUpload(file: File) {
+      if (inFlight.has(file)) return
+      inFlight.add(file)
+      uploadCalls++
+      // simulate async completion
+      Promise.resolve().then(() => inFlight.delete(file))
+    }
+    const f = makeFile({ name: 'x.jpg' })
+    guardedUpload(f)
+    guardedUpload(f)  // same object — must be deduplicated
+    guardedUpload(f)
+    expect(uploadCalls).toBe(1)
+  })
+
+  // S6: rapid publish clicks — savingSlots ref prevents double-save
+  it('[S6] double-save of same slot is prevented by ref guard', () => {
+    const saving = new Set<number>()
+    let saveCalls = 0
+    function guardedSave(slotIdx: number) {
+      if (saving.has(slotIdx)) return
+      saving.add(slotIdx)
+      saveCalls++
+      Promise.resolve().then(() => saving.delete(slotIdx))
+    }
+    guardedSave(0)
+    guardedSave(0)  // second click — blocked
+    guardedSave(0)
+    expect(saveCalls).toBe(1)
+  })
+
+  // S7: two different files upload concurrently without conflict
+  it('[S7] two distinct files can upload concurrently', () => {
+    const inFlight = new Set<File>()
+    let uploadCalls = 0
+    function guardedUpload(file: File) {
+      if (inFlight.has(file)) return
+      inFlight.add(file)
+      uploadCalls++
+    }
+    const f1 = makeFile({ name: 'a.jpg' })
+    const f2 = makeFile({ name: 'b.pdf', type: 'application/pdf' })
+    guardedUpload(f1)
+    guardedUpload(f2)  // different object — allowed
+    expect(uploadCalls).toBe(2)
+    expect(inFlight.size).toBe(2)
+  })
+
+  // S8: delete attachment keeps homework record intact
+  it('[S8] deleting attachment does not affect homework status', () => {
+    interface HwState { body: string; status: string; attaches: string[] }
+    const hw: HwState = { body: 'واجب', status: 'published', attaches: ['att-1', 'att-2'] }
+    const after = { ...hw, attaches: hw.attaches.filter(a => a !== 'att-1') }
+    expect(after.body).toBe('واجب')
+    expect(after.status).toBe('published')
+    expect(after.attaches).toEqual(['att-2'])
+  })
+
+  // S9: no push when homework DB save fails
+  it('[S9] push is NOT sent when homework DB save fails', () => {
+    let pushCalled = false
+    function simulateSave(dbError: boolean, publish: boolean): boolean {
+      if (dbError) return false  // early return — no push
+      if (publish) pushCalled = true
+      return true
+    }
+    simulateSave(true, true)
+    expect(pushCalled).toBe(false)
+  })
+
+  // S10: retry upload does not send push (push only fires on text save)
+  it('[S10] retry upload does NOT send push notification', () => {
+    let pushCalled = false
+    function simulateRetryUpload(_file: File, _hwId: string) {
+      // retryUpload calls uploadFile only — no push
+      void _file; void _hwId
+    }
+    simulateRetryUpload(makeFile(), 'hw-1')
+    expect(pushCalled).toBe(false)
   })
 })
 

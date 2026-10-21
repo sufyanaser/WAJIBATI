@@ -481,6 +481,23 @@ button:disabled { opacity: .45; cursor: default; }
 }
 .btn-publish-all:active { opacity: .85; }
 
+/* ── import tab ──────────────────────────────────────────────────────────── */
+.import-section { display: grid; gap: 10px; }
+.import-heading { margin: 0; font-size: 1rem; font-weight: 700; color: var(--fg); }
+.import-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.import-result {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+.import-stat { margin: 0; font-size: .9rem; }
+.import-errors { display: grid; gap: 4px; margin-top: 4px; }
+.import-err-title { margin: 0; font-size: .85rem; font-weight: 700; color: var(--err); }
+.import-err-row { margin: 0; font-size: .83rem; color: var(--err); direction: rtl; }
+
 /* ── notice form ──────────────────────────────────────────────────────────── */
 .notice-form { display: grid; gap: 10px; }
 .notice-header {

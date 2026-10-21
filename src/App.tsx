@@ -1,9 +1,12 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Today from './pages/Today'
 import Archive from './pages/Archive'
 import AdminLogin from './pages/AdminLogin'
-import Admin from './pages/Admin'
+import AdminShell from './pages/admin/AdminShell'
+import HomeworkEntry from './pages/admin/HomeworkEntry'
+import NoticesPage from './pages/admin/NoticesPage'
+import ImportPage from './pages/admin/ImportPage'
 
 export default function App() {
   return (
@@ -12,7 +15,12 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/archive" element={<Archive />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/*" element={<Admin />} />
+        <Route path="/admin" element={<AdminShell />}>
+          <Route index element={<Navigate to="homework" replace />} />
+          <Route path="homework" element={<HomeworkEntry />} />
+          <Route path="notices" element={<NoticesPage />} />
+          <Route path="import" element={<ImportPage />} />
+        </Route>
         <Route path="/*" element={<Today />} />
       </Routes>
     </BrowserRouter>

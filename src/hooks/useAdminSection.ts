@@ -27,12 +27,23 @@ export interface PeriodSlot {
   status: 'draft' | 'published' | 'archived' | null
 }
 
+export interface SaveResult {
+  saved: number
+  failed: number
+  errors: string[]
+}
+
+export interface PublishResult extends SaveResult {
+  pushSent: boolean
+  pushError?: string
+}
+
 export interface UseAdminSectionResult {
   periods: PeriodSlot[]
   loading: boolean
   setBodies: (bodies: Record<number, string>) => void
-  save: () => Promise<void>
-  publish: () => Promise<void>
+  save: () => Promise<SaveResult>
+  publish: () => Promise<PublishResult>
 }
 
 // ── hook ───────────────────────────────────────────────────────────────────────
@@ -43,8 +54,6 @@ export function useAdminSection(
 ): UseAdminSectionResult {
   const [periods, setPeriods] = useState<PeriodSlot[]>([])
   const [loading, setLoading] = useState(false)
-
-  // bodies are stored as an override map so callers can edit without re-fetching
   const [bodyOverrides, setBodyOverrides] = useState<Record<number, string>>({})
 
   const load = useCallback(async () => {
@@ -96,7 +105,6 @@ export function useAdminSection(
     void load()
   }, [load])
 
-  // merge body overrides for consumers
   const periodsWithOverrides = periods.map(p => ({
     ...p,
     body: bodyOverrides[p.period] !== undefined ? bodyOverrides[p.period] : p.body,
@@ -106,13 +114,23 @@ export function useAdminSection(
     setBodyOverrides(prev => ({ ...prev, ...bodies }))
   }
 
-  async function upsertAll(status: 'draft' | 'published') {
+  async function upsertAll(status: 'draft' | 'published'): Promise<SaveResult> {
     const sid = Number(sectionId)
     const merged = periodsWithOverrides
+    const result: SaveResult = { saved: 0, failed: 0, errors: [] }
+    const savedPeriods = new Set<number>()
+    const newIds: Record<number, string> = {}
 
     for (const slot of merged) {
       const body = slot.body.trim()
       if (!body) continue
+
+      // subject_id is NOT NULL in DB — skip slots without a timetable entry
+      if (!slot.subject_id) {
+        result.failed++
+        result.errors.push(`حصة ${slot.period}: لا توجد مادة في الجدول الدراسي`)
+        continue
+      }
 
       const payload = {
         section_id: sid,
@@ -125,43 +143,71 @@ export function useAdminSection(
       }
 
       if (slot.hw_id) {
-        await supabase.from('homework').update(payload).eq('id', slot.hw_id)
+        const { error } = await supabase
+          .from('homework')
+          .update(payload)
+          .eq('id', slot.hw_id)
+        if (error) {
+          result.failed++
+          result.errors.push(`حصة ${slot.period}: ${error.message}`)
+          continue
+        }
       } else {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('homework')
           .insert(payload)
           .select('id')
           .single()
-        const newId = (data as { id: string } | null)?.id ?? null
-        setPeriods(prev =>
-          prev.map(p =>
-            p.period === slot.period ? { ...p, hw_id: newId, status } : p,
-          ),
-        )
+        if (error || !data) {
+          result.failed++
+          result.errors.push(`حصة ${slot.period}: ${error?.message ?? 'خطأ غير معروف'}`)
+          continue
+        }
+        newIds[slot.period] = (data as { id: string }).id
       }
+
+      savedPeriods.add(slot.period)
+      result.saved++
     }
 
-    // refresh status flags without discarding body overrides
+    // Update local state only for successfully saved periods
     setPeriods(prev =>
       prev.map(p => {
-        const body = bodyOverrides[p.period] !== undefined
-          ? bodyOverrides[p.period]
-          : p.body
-        return body.trim() ? { ...p, status } : p
+        if (!savedPeriods.has(p.period)) return p
+        const body = bodyOverrides[p.period] !== undefined ? bodyOverrides[p.period] : p.body
+        const updates: Partial<PeriodSlot> = { status }
+        if (newIds[p.period]) updates.hw_id = newIds[p.period]
+        return body.trim() ? { ...p, ...updates } : p
       }),
     )
+
+    return result
   }
 
-  async function save() {
-    await upsertAll('draft')
+  async function save(): Promise<SaveResult> {
+    return upsertAll('draft')
   }
 
-  async function publish() {
-    await upsertAll('published')
-    const sid = Number(sectionId)
-    supabase.functions
-      .invoke('send-push', { body: { section_id: sid, date } })
-      .catch(() => { /* non-critical */ })
+  async function publish(): Promise<PublishResult> {
+    const saveResult = await upsertAll('published')
+
+    if (saveResult.saved === 0) {
+      return { ...saveResult, pushSent: false, pushError: 'لم يُحفظ أي واجب' }
+    }
+
+    try {
+      const sid = Number(sectionId)
+      const { error } = await supabase.functions.invoke('send-push', {
+        body: { section_id: sid, date },
+      })
+      if (error) {
+        return { ...saveResult, pushSent: false, pushError: error.message }
+      }
+      return { ...saveResult, pushSent: true }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'خطأ في الإشعارات'
+      return { ...saveResult, pushSent: false, pushError: msg }
+    }
   }
 
   return { periods: periodsWithOverrides, loading, setBodies, save, publish }

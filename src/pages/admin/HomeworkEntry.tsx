@@ -11,7 +11,7 @@ interface Section { id: number; letter: string; stage: { name: string; branch: s
 // ── helpers ────────────────────────────────────────────────────────────────────
 
 const toISO = (d: Date) => d.toLocaleDateString('en-CA')
-const WEEKDAYS = [0, 1, 2, 3, 4] // Sun–Thu
+const WEEKDAYS = [0, 1, 2, 3, 4]
 
 function isWeekend(iso: string) {
   const day = new Date(iso + 'T00:00:00').getDay()
@@ -20,14 +20,14 @@ function isWeekend(iso: string) {
 
 // ── toast ──────────────────────────────────────────────────────────────────────
 
-const toastStyle = (kind: 'ok' | 'err'): React.CSSProperties => ({
+const toastStyle = (kind: 'ok' | 'warn' | 'err'): React.CSSProperties => ({
   position: 'fixed',
   bottom: 24,
   left: '50%',
   transform: 'translateX(-50%)',
-  background: kind === 'ok' ? '#1a3a2a' : '#2a1010',
-  color: kind === 'ok' ? '#4caf82' : '#E5534B',
-  border: `1px solid ${kind === 'ok' ? '#1f5a3d' : '#5c1e1e'}`,
+  background: kind === 'ok' ? '#1a3a2a' : kind === 'warn' ? '#2a2a10' : '#2a1010',
+  color: kind === 'ok' ? '#4caf82' : kind === 'warn' ? '#E8B04A' : '#E5534B',
+  border: `1px solid ${kind === 'ok' ? '#1f5a3d' : kind === 'warn' ? '#5a4a1f' : '#5c1e1e'}`,
   borderRadius: 12,
   padding: '12px 24px',
   fontSize: '.95rem',
@@ -45,11 +45,10 @@ export default function HomeworkEntry() {
   const [sections, setSections] = useState<Section[]>([])
   const [secId, setSecId] = useState<number | null>(null)
   const [date, setDate] = useState(toISO(new Date()))
-  const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null)
+  const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'warn' | 'err' } | null>(null)
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
 
-  // ── auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) { nav('/admin/login'); return }
@@ -59,7 +58,6 @@ export default function HomeworkEntry() {
     })
   }, [nav])
 
-  // ── load sections ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!ready) return
     supabase.from('sections')
@@ -73,30 +71,31 @@ export default function HomeworkEntry() {
       })
   }, [ready])
 
-  // ── advance date to nearest weekday on load ────────────────────────────────
   useEffect(() => {
     const day = new Date(date + 'T00:00:00').getDay()
     if (day === 5) setDate(toISO(new Date(new Date(date).getTime() + 2 * 864e5)))
     else if (day === 6) setDate(toISO(new Date(new Date(date).getTime() + 864e5)))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── hook: timetable + homework ─────────────────────────────────────────────
   const { periods, loading, setBodies, save, publish } = useAdminSection(
     secId !== null ? String(secId) : '',
     date,
   )
 
-  // ── handlers ───────────────────────────────────────────────────────────────
-  function showToast(msg: string, kind: 'ok' | 'err') {
+  function showToast(msg: string, kind: 'ok' | 'warn' | 'err') {
     setToast({ msg, kind })
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 4000)
   }
 
   async function handleSaveDraft() {
     setSaving(true)
     try {
-      await save()
-      showToast('تم الحفظ كمسودة', 'ok')
+      const result = await save()
+      if (result.failed > 0) {
+        showToast(`حُفظ ${result.saved} — فشل ${result.failed}: ${result.errors[0]}`, 'warn')
+      } else {
+        showToast(`تم حفظ ${result.saved} كمسودة`, 'ok')
+      }
     } catch {
       showToast('خطأ أثناء الحفظ', 'err')
     }
@@ -106,15 +105,22 @@ export default function HomeworkEntry() {
   async function handlePublish() {
     setPublishing(true)
     try {
-      await publish()
-      showToast('تم النشر وإرسال الإشعارات', 'ok')
+      const result = await publish()
+      if (result.saved === 0) {
+        showToast('لم يُنشر أي واجب — ' + (result.errors[0] ?? ''), 'err')
+      } else if (result.failed > 0) {
+        showToast(`نُشر ${result.saved} — فشل ${result.failed}`, 'warn')
+      } else if (!result.pushSent) {
+        showToast(`تم النشر (${result.saved}) — فشل إرسال الإشعار`, 'warn')
+      } else {
+        showToast(`تم النشر وإرسال الإشعارات (${result.saved})`, 'ok')
+      }
     } catch {
       showToast('خطأ أثناء النشر', 'err')
     }
     setPublishing(false)
   }
 
-  // ── not authorized yet ─────────────────────────────────────────────────────
   if (!ready) {
     return (
       <div style={{ padding: 24 }} dir="rtl">
@@ -124,14 +130,11 @@ export default function HomeworkEntry() {
   }
 
   const weekend = isWeekend(date)
-
-  // section label for display
   const sec = sections.find(s => s.id === secId)
   const sectionLabel = sec ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}` : ''
 
   return (
     <div dir="rtl" style={{ display: 'grid', gap: 12 }}>
-      {/* selectors */}
       <div className="admin-selectors">
         <select
           className="admin-select"

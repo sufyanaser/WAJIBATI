@@ -798,3 +798,156 @@ button:disabled { opacity: .45; cursor: default; }
   color: var(--success);
   border-color: var(--success);
 }
+
+/* ── guardian today page ──────────────────────────────────────────────────── */
+
+/* header */
+.today-header {
+  display: grid;
+  gap: var(--space-2);
+}
+.today-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.today-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.school-subtitle {
+  margin: 0;
+  font-size: var(--font-size-xs, .75rem);
+  color: var(--muted);
+  line-height: 1.3;
+}
+.today-date-display {
+  margin: 0;
+  font-size: var(--font-size-sm, .875rem);
+  color: var(--muted);
+  padding-bottom: 2px;
+}
+
+/* section-bar variant with space-between */
+.section-bar-between { justify-content: space-between; }
+
+/* skeleton loading */
+@keyframes skel-pulse {
+  0%, 100% { opacity: .35; }
+  50%       { opacity: .65; }
+}
+.hw-skeleton {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  animation: skel-pulse 1.6s ease-in-out infinite;
+}
+.skel-line {
+  height: 13px;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--faint);
+}
+.skel-short  { width: 42%; }
+.skel-long   { width: 100%; }
+.skel-medium { width: 68%; }
+
+/* empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) 0;
+  text-align: center;
+}
+.empty-icon { font-size: 2.4rem; line-height: 1; }
+.empty-msg  { margin: 0; color: var(--muted); font-size: var(--font-size-base, 1rem); }
+
+/* redesigned homework card top row */
+.hw-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.hw-period-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--color-text-inverse, #0F1E33);
+  border-radius: var(--radius-full, 9999px);
+  width: 28px;
+  height: 28px;
+  font-size: .82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.hw-subject-name {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full, 9999px);
+  padding: 3px 12px;
+  font-size: var(--font-size-sm, .875rem);
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--card2);
+}
+.hw-read-check {
+  color: var(--success);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-right: auto;
+  flex-shrink: 0;
+}
+.hw-teacher-row {
+  margin: 0;
+  font-size: var(--font-size-xs, .75rem);
+  color: var(--muted);
+}
+
+/* attachment badge */
+.attach-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  padding: 5px 10px;
+  font-size: var(--font-size-xs, .84rem);
+  color: var(--fg);
+  text-decoration: none;
+  transition: border-color var(--transition-fast, 150ms ease);
+}
+.attach-badge:hover { border-color: var(--accent); }
+
+/* bottom sticky archive bar — add bottom padding to .today */
+.today { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+.bottom-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  background: var(--card);
+  border-top: 2px solid var(--accent);
+  padding: var(--space-3) var(--space-4) env(safe-area-inset-bottom);
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+}
+.archive-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: var(--font-size-sm, .9rem);
+  font-weight: 700;
+  padding: var(--space-2) var(--space-6);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-full, 9999px);
+  transition: background var(--transition-fast, 150ms ease);
+}
+.archive-link:hover { background: var(--accent-dim); }

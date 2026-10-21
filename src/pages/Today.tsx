@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ExportButton } from '../components/ExportButton'
-import { HomeworkCard } from '../components/HomeworkCard'
 import { DateNavigator } from '../components/DateNavigator'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
@@ -231,6 +230,13 @@ export default function Today() {
   const todISO = toISO(new Date())
   const selISO = toISO(date)
 
+  // ── Arabic-formatted today's date ────────────────────────────────────────
+  const todayArabic = new Date().toLocaleDateString('ar-IQ', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
   // ── no children state ─────────────────────────────────────────────────────
   if (childrenLoaded && !children.length) {
     return (
@@ -253,18 +259,19 @@ export default function Today() {
   return (
     <main className="screen today" dir="rtl">
 
-      {/* header */}
-      <div className="top-bar">
-        <h1 className="app-title">واجباتي</h1>
-        <button
-          className="icon-btn"
-          onClick={handleLogout}
-        >
-          خروج
-        </button>
-      </div>
+      {/* ── header ─────────────────────────────────────────────────────── */}
+      <header className="today-header">
+        <div className="today-header-top">
+          <div className="today-header-titles">
+            <h1 className="app-title">واجباتي</h1>
+            <p className="school-subtitle">{schoolName}</p>
+          </div>
+          <button className="icon-btn" onClick={handleLogout}>خروج</button>
+        </div>
+        <p className="today-date-display">{todayArabic}</p>
+      </header>
 
-      {/* push opt-in banner */}
+      {/* ── push opt-in banner ─────────────────────────────────────────── */}
       {pushOpt === 'pending' && (
         <div className="push-banner">
           <span>فعّل الإشعارات لتصلك الواجبات فور نشرها</span>
@@ -272,7 +279,7 @@ export default function Today() {
         </div>
       )}
 
-      {/* search bar */}
+      {/* ── search bar ─────────────────────────────────────────────────── */}
       <div className="search-row">
         <input
           className="search-input"
@@ -287,7 +294,7 @@ export default function Today() {
       </div>
 
       {search.trim() ? (
-        /* ── search results ── */
+        /* ── search results ───────────────────────────────────────────── */
         <section className="hw-list">
           {sLoad && <p className="muted">جارٍ البحث…</p>}
           {!sLoad && !sRes.length && <p className="muted">لا نتائج</p>}
@@ -319,7 +326,7 @@ export default function Today() {
         </section>
       ) : (
         <>
-          {/* child selector tabs */}
+          {/* ── child selector tabs ────────────────────────────────────── */}
           {children.length > 1 && (
             <nav className="child-tabs">
               {children.map((c, i) => (
@@ -334,14 +341,14 @@ export default function Today() {
             </nav>
           )}
 
-          {/* date navigation */}
+          {/* ── date navigation ─────────────────────────────────────────── */}
           <DateNavigator
             date={date}
             onChange={setDate}
             onLabelClick={() => { setShowCal(v => !v); setCalMo(new Date(date)) }}
           />
 
-          {/* archive calendar popup */}
+          {/* ── archive calendar popup ──────────────────────────────────── */}
           {showCal && (
             <div className="cal-popup">
               <div className="cal-header">
@@ -394,9 +401,9 @@ export default function Today() {
             </div>
           )}
 
-          {/* section badge + export */}
+          {/* ── section badge + export ──────────────────────────────────── */}
           {child && (
-            <div className="section-bar" style={{ justifyContent: 'space-between' }}>
+            <div className="section-bar section-bar-between">
               <span className="badge">{child.section_label}</span>
               {!loading && hw.length > 0 && (
                 <ExportButton
@@ -420,7 +427,7 @@ export default function Today() {
             <p className="offline-note">⚠️ عرض مؤقت بدون اتصال</p>
           )}
 
-          {/* notices — latest 3 */}
+          {/* ── notices — latest 3 ─────────────────────────────────────── */}
           {notices.length > 0 && (
             <section className="notices">
               {notices.map(n => (
@@ -432,29 +439,81 @@ export default function Today() {
             </section>
           )}
 
-          {/* homework list */}
+          {/* ── homework list ──────────────────────────────────────────── */}
           {loading ? (
-            <p className="muted">جارٍ التحميل…</p>
+            /* skeleton loading */
+            <section className="hw-list" aria-busy="true" aria-label="جارٍ التحميل">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="hw-skeleton">
+                  <div className="skel-line skel-short" />
+                  <div className="skel-line skel-long" />
+                  <div className="skel-line skel-medium" />
+                </div>
+              ))}
+            </section>
           ) : hw.length === 0 ? (
-            <p className="muted">لا واجبات لهذا اليوم</p>
+            /* empty state */
+            <div className="empty-state">
+              <span className="empty-icon" aria-hidden="true">📚</span>
+              <p className="empty-msg">لا توجد واجبات لهذا اليوم</p>
+            </div>
           ) : (
+            /* subject cards */
             <section className="hw-list">
               {hw.map(h => (
-                <HomeworkCard
-                  key={h.id}
-                  period={h.period}
-                  subject={h.subject?.name ?? '—'}
-                  teacher={h.teacher?.full_name ?? '—'}
-                  body={h.body}
-                  subjectColor={h.subject?.color}
-                  attachments={h.attachments}
-                  signedUrls={signedUrls}
-                />
+                <article key={h.id} className="hw-card" dir="rtl">
+                  <div className="hw-card-top">
+                    {h.period != null && (
+                      <span
+                        className="hw-period-circle"
+                        aria-label={`الحصة ${h.period}`}
+                      >
+                        {h.period}
+                      </span>
+                    )}
+                    <span
+                      className="hw-subject-name"
+                      style={h.subject?.color
+                        ? { background: h.subject.color + '33', borderColor: h.subject.color }
+                        : undefined}
+                    >
+                      {h.subject?.name ?? '—'}
+                    </span>
+                    <span className="hw-read-check" aria-label="تمت القراءة">✓</span>
+                  </div>
+                  {h.teacher && (
+                    <p className="hw-teacher-row">{h.teacher.full_name}</p>
+                  )}
+                  <p className="hw-body">{h.body}</p>
+                  {h.attachments.length > 0 && (
+                    <div className="attachments">
+                      {h.attachments.map(a => (
+                        <a
+                          key={a.id}
+                          href={signedUrls[a.storage_path] ?? '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attach-badge"
+                        >
+                          <span aria-hidden="true">
+                            {a.mime.startsWith('image/') ? '🖼' : '📄'}
+                          </span>
+                          <span>مرفق</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </article>
               ))}
             </section>
           )}
         </>
       )}
+
+      {/* ── bottom sticky archive bar ───────────────────────────────────── */}
+      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
+        <Link to="/archive" className="archive-link">الأرشيف</Link>
+      </nav>
     </main>
   )
 }

@@ -306,8 +306,7 @@ export default function HomeworkEntry() {
                 <StatusDot status={slot.status} />
                 {slot.hw_id && slot.status === 'draft' && (
                   <button
-                    className="he-btn-publish"
-                    style={{ fontSize: '.72rem', padding: '3px 8px', marginTop: 4 }}
+                    className="he-btn-publish he-btn-publish--sm"
                     disabled={publishingPeriod === slot.period || saving || publishing}
                     onClick={() => void handlePublishPeriod(slot.period, slot.hw_id!)}
                     title="نشر هذه الحصة فقط"

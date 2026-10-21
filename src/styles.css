@@ -1,89 +1,6 @@
 /* ===== Wajibati Design Tokens ===== */
-:root {
-  /* Brand palette — dark navy */
-  --color-bg-primary: #0F1E33;
-  --color-bg-secondary: #1F3A5F;
-  --color-bg-card: #162740;
-  --color-bg-elevated: #1A2F4A;
-  --color-accent: #E8B04A;
-  --color-accent-hover: #D49A38;
-  --color-accent-active: #C08830;
-
-  /* Text */
-  --color-text-primary: #F0F4F8;
-  --color-text-secondary: #A0AEC0;
-  --color-text-muted: #718096;
-  --color-text-inverse: #0F1E33;
-
-  /* Semantic */
-  --color-success: #48BB78;
-  --color-success-bg: rgba(72, 187, 120, 0.12);
-  --color-error: #FC8181;
-  --color-error-bg: rgba(252, 129, 129, 0.12);
-  --color-warning: #F6AD55;
-  --color-warning-bg: rgba(246, 173, 85, 0.12);
-  --color-info: #63B3ED;
-
-  /* Border & Surface */
-  --color-border: #2D4A6B;
-  --color-border-focus: #E8B04A;
-  --color-shadow: rgba(0, 0, 0, 0.4);
-
-  /* Spacing scale */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-
-  /* Typography */
-  --font-family-arabic: 'Cairo', 'Tajawal', system-ui, sans-serif;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-  --line-height-tight: 1.3;
-  --line-height-normal: 1.6;
-  --line-height-relaxed: 1.8;
-
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-}
-
-/* Light theme override */
-[data-theme="light"] {
-  --color-bg-primary: #F7F9FC;
-  --color-bg-secondary: #E8EEF5;
-  --color-bg-card: #FFFFFF;
-  --color-bg-elevated: #F0F4F8;
-  --color-text-primary: #1A2B3C;
-  --color-text-secondary: #4A5568;
-  --color-text-muted: #718096;
-  --color-text-inverse: #F0F4F8;
-  --color-border: #CBD5E0;
-  --color-border-focus: #E8B04A;
-  --color-shadow: rgba(0, 0, 0, 0.1);
-}
-
+/* Primary palette: --bg/--card/--accent — used throughout.
+   Spacing / typography / radius helpers below are used in CSS via var(). */
 :root {
   /* ── base palette ─────────────────────── */
   --bg:       #08152A;
@@ -106,6 +23,19 @@
   --role-admin:   #3D84C8;
   --role-guardian:#8B5CF6;
   --role-system:  #14B8A6;
+  /* ── spacing ──────────────────────────── */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px; --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px; --space-10: 40px; --space-12: 48px;
+  /* ── typography ───────────────────────── */
+  --font-size-xs: 0.75rem; --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem; --font-size-2xl: 1.5rem;
+  /* ── radius ───────────────────────────── */
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --radius-xl: 16px; --radius-full: 9999px;
+  /* ── transitions ──────────────────────── */
+  --transition-fast: 150ms ease; --transition-base: 250ms ease;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -714,9 +644,27 @@ button:disabled { opacity: .45; cursor: default; }
 .he-btn-draft:disabled { opacity: .4; cursor: default; }
 .he-btn-draft:hover:not(:disabled) { background: var(--card2); }
 .he-btn-publish {
-  border-radius: 12px !important;
-  padding: 12px !important;
-  font-size: .9rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #08152A;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+.he-btn-publish:hover:not(:disabled) { opacity: .88; }
+.he-btn-publish:disabled { opacity: .4; cursor: default; }
+.he-btn-publish--sm {
+  font-size: .72rem;
+  padding: 3px 8px;
+  border-radius: 8px;
+  margin-top: 4px;
 }
 
 /* ── timetable grid ──────────────────────────────────────────────────────── */
@@ -737,7 +685,7 @@ button:disabled { opacity: .45; cursor: default; }
   flex-direction: column;
   gap: 4px;
   padding: 12px 14px;
-  border-left: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
   min-width: 88px;
   max-width: 120px;
 }
@@ -1063,3 +1011,133 @@ button:disabled { opacity: .45; cursor: default; }
 .master-list article > div:last-child { display: flex; gap: 6px; }
 .master-list small { display: block; color: var(--muted); margin-top: 4px; }
 .icon-btn.danger { color: #fca5a5; border-color: rgba(239,68,68,.45); }
+
+/* ── dashboard stat cards ────────────────────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.dash-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 16px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  color: var(--fg);
+  font: inherit;
+}
+.dash-card:hover { border-color: var(--accent); background: var(--card2); }
+.dash-card__icon { font-size: 2rem; line-height: 1; }
+.dash-card__label { font-weight: 700; font-size: .95rem; }
+.dash-card__stat { font-size: .78rem; color: var(--muted); }
+
+/* ── archive page ────────────────────────────────────────────────────────── */
+.archive-wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px env(safe-area-inset-bottom);
+  display: grid;
+  gap: 14px;
+}
+.archive-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.archive-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.archive-tabs::-webkit-scrollbar { display: none; }
+.archive-tab {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  color: var(--muted);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+.archive-tab.active {
+  background: var(--accent);
+  color: #08152A;
+  border-color: var(--accent);
+}
+.archive-entry {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+.archive-entry__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.archive-entry__date {
+  font-size: .78rem;
+  color: var(--muted);
+}
+.archive-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: .78rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--accent);
+}
+
+/* ── mobile responsive ───────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  body { font-size: 16px; }
+
+  /* admin timetable: stack meta above textarea */
+  .he-period-row {
+    grid-template-columns: 1fr;
+  }
+  .he-period-meta {
+    border-inline-end: none;
+    border-bottom: 1px solid var(--border);
+    max-width: none;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .he-period-num { font-size: .82rem; }
+
+  /* action bar: full-width sticky, slightly smaller */
+  .he-action-bar { gap: 6px; }
+  .he-btn-draft, .he-btn-publish { padding: 10px 8px; font-size: .85rem; }
+
+  /* admin section selector */
+  .admin-select { font-size: .88rem; }
+
+  /* dash cards: 2 columns on mobile */
+  .dash-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* master-data entity list: wrap smaller */
+  .master-entities button, .master-mode button { padding: 8px 10px; font-size: .82rem; }
+}

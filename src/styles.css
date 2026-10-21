@@ -1047,3 +1047,19 @@ button:disabled { opacity: .45; cursor: default; }
 .master-steps p { margin: 5px 0; }
 .master-confirm { display: flex; align-items: flex-start; gap: 10px; margin: 14px 0; line-height: 1.6; cursor: pointer; }
 .master-confirm input { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }
+.master-data { display: grid; gap: 14px; }
+.master-mode, .master-entities { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.master-mode button, .master-entities button { border: 1px solid var(--border); background: var(--card); color: var(--fg); border-radius: 12px; padding: 10px 14px; white-space: nowrap; font: inherit; cursor: pointer; }
+.master-mode button.active, .master-entities button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 700; }
+.master-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.master-toolbar h2 { margin: 0; }
+.master-form { display: grid; gap: 12px; padding: 14px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+.master-form label { display: grid; gap: 6px; font-weight: 700; }
+.master-form input, .master-form select { min-height: 44px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--fg); padding: 8px 10px; font: inherit; }
+.master-form-actions { display: flex; gap: 8px; }
+.master-form-actions button { flex: 1; min-height: 44px; }
+.master-list { display: grid; gap: 8px; }
+.master-list article { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.master-list article > div:last-child { display: flex; gap: 6px; }
+.master-list small { display: block; color: var(--muted); margin-top: 4px; }
+.icon-btn.danger { color: #fca5a5; border-color: rgba(239,68,68,.45); }

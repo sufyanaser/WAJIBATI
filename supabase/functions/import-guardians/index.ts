@@ -10,6 +10,11 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const ANON_KEY    = Deno.env.get('SUPABASE_ANON_KEY')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, content-type',
+}
+
 // ── simple CSV parser (handles quoted fields) ─────────────────────────────────
 function parseCSV(text: string): string[][] {
   const rows: string[][] = []
@@ -33,25 +38,27 @@ function parseCSV(text: string): string[][] {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
+
   // ── auth guard ──────────────────────────────────────────────────────────────
   const auth = req.headers.get('Authorization') ?? ''
   const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: auth } } })
   const { data: isAdmin } = await userClient.rpc('is_admin')
-  if (!isAdmin) return new Response('forbidden', { status: 403 })
+  if (!isAdmin) return new Response('forbidden', { status: 403, headers: CORS })
 
   // ── parse multipart ─────────────────────────────────────────────────────────
   let csvText: string
   try {
     const form = await req.formData()
     const file = form.get('file')
-    if (!file || typeof file === 'string') return new Response('missing file', { status: 400 })
+    if (!file || typeof file === 'string') return new Response('missing file', { status: 400, headers: CORS })
     csvText = await (file as File).text()
   } catch {
-    return new Response('invalid multipart', { status: 400 })
+    return new Response('invalid multipart', { status: 400, headers: CORS })
   }
 
   const rows = parseCSV(csvText)
-  if (rows.length < 2) return new Response('empty CSV', { status: 400 })
+  if (rows.length < 2) return new Response('empty CSV', { status: 400, headers: CORS })
 
   // ── header → index map ──────────────────────────────────────────────────────
   const header = rows[0].map(h => h.toLowerCase().replace(/\s+/g, '_'))
@@ -67,11 +74,23 @@ Deno.serve(async (req) => {
   if ([iStudent, iStage, iBranch, iSection, iGuardian, iPhone, iPin].includes(-1)) {
     return new Response(
       'CSV missing required columns: student_name, stage, branch, section, guardian_name, phone, pin',
-      { status: 400 },
+      { status: 400, headers: CORS },
     )
   }
 
   const db = createClient(SUPABASE_URL, SERVICE_KEY)
+
+  // ── pre-fetch all auth users once (with pagination) ─────────────────────────
+  const existingByEmail = new Map<string, string>() // email → user_id
+  let page = 1
+  while (true) {
+    const { data: list } = await db.auth.admin.listUsers({ page, perPage: 1000 })
+    for (const u of list?.users ?? []) {
+      if (u.email) existingByEmail.set(u.email, u.id)
+    }
+    if (!list?.users?.length || list.users.length < 1000) break
+    page++
+  }
 
   // ── cache sections for the current academic year ────────────────────────────
   const { data: sectionsRaw } = await db
@@ -118,13 +137,11 @@ Deno.serve(async (req) => {
     const email = `${phone.replace('+', '')}@guardian.rumaila.local`
 
     try {
-      // ── upsert auth user ──────────────────────────────────────────────────
-      const { data: existing } = await db.auth.admin.listUsers()
-      const existingUser = (existing?.users ?? []).find(u => u.email === email)
-
       let userId: string
-      if (existingUser) {
-        userId = existingUser.id
+      const existingUserId = existingByEmail.get(email)
+
+      if (existingUserId) {
+        userId = existingUserId
         skipped++
       } else {
         const { data: newUser, error: authErr } = await db.auth.admin.createUser({
@@ -136,35 +153,36 @@ Deno.serve(async (req) => {
           errors.push({ row: rowNum, message: authErr?.message ?? 'فشل إنشاء حساب المستخدم' }); continue
         }
         userId = newUser.user.id
-
-        // ── upsert student ──────────────────────────────────────────────────
-        const { data: stRow, error: stErr } = await db
-          .from('students')
-          .upsert({ full_name: studentName, section_id: sectionId }, { onConflict: 'full_name,section_id' })
-          .select('id').single()
-        if (stErr || !stRow) {
-          errors.push({ row: rowNum, message: stErr?.message ?? 'فشل إنشاء الطالب' }); continue
-        }
-
-        // ── upsert guardian ─────────────────────────────────────────────────
-        const { data: gRow, error: gErr } = await db
-          .from('guardians')
-          .upsert({ user_id: userId, full_name: guardianName, phone }, { onConflict: 'phone' })
-          .select('id').single()
-        if (gErr || !gRow) {
-          errors.push({ row: rowNum, message: gErr?.message ?? 'فشل إنشاء ولي الأمر' }); continue
-        }
-
-        // ── guardian_students link ──────────────────────────────────────────
-        await db.from('guardian_students')
-          .upsert({ guardian_id: gRow.id, student_id: stRow.id, relation: 'أب' }, { onConflict: 'guardian_id,student_id' })
-
+        existingByEmail.set(email, userId)
         created++
       }
+
+      // ── upsert student (always, even for existing guardians) ───────────────
+      const { data: stRow, error: stErr } = await db
+        .from('students')
+        .upsert({ full_name: studentName, section_id: sectionId }, { onConflict: 'full_name,section_id' })
+        .select('id').single()
+      if (stErr || !stRow) {
+        errors.push({ row: rowNum, message: stErr?.message ?? 'فشل إنشاء الطالب' }); continue
+      }
+
+      // ── upsert guardian ────────────────────────────────────────────────────
+      const { data: gRow, error: gErr } = await db
+        .from('guardians')
+        .upsert({ user_id: userId, full_name: guardianName, phone }, { onConflict: 'phone' })
+        .select('id').single()
+      if (gErr || !gRow) {
+        errors.push({ row: rowNum, message: gErr?.message ?? 'فشل إنشاء ولي الأمر' }); continue
+      }
+
+      // ── guardian_students link ─────────────────────────────────────────────
+      await db.from('guardian_students')
+        .upsert({ guardian_id: gRow.id, student_id: stRow.id, relation: 'أب' }, { onConflict: 'guardian_id,student_id' })
+
     } catch (e: any) {
       errors.push({ row: rowNum, message: e?.message ?? 'خطأ غير متوقع' })
     }
   }
 
-  return Response.json({ created, skipped, errors })
+  return Response.json({ created, skipped, errors }, { headers: CORS })
 })

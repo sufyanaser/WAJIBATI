@@ -6,3 +6,8 @@ supabase/.temp/
 *.tsbuildinfo
 .claude/
 docs/reference/
+
+# Playwright
+test-results/
+e2e-report/
+e2e/screenshots/

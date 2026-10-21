@@ -356,7 +356,11 @@ button:disabled { opacity: .45; cursor: default; }
   line-height: 1;
 }
 .slot-error { color: var(--err); font-size: .84rem; margin: 4px 0 0; }
+.slot-uploading { color: var(--muted); font-size: .84rem; margin: 4px 0 0; }
 .subject-select { width: 100%; margin-bottom: 6px; }
+.attach-actions { display: flex; gap: 4px; }
+.attach-pending { opacity: .65; border-style: dashed; }
+.attach-pending-label { font-size: .72rem; color: var(--muted); margin-right: 4px; }
 
 /* ── login screen ─────────────────────────────────────────────────────────── */
 .login-title { text-align: center; color: var(--accent); }

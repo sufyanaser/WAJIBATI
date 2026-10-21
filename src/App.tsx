@@ -7,6 +7,7 @@ import AdminShell from './pages/admin/AdminShell'
 import HomeworkEntry from './pages/admin/HomeworkEntry'
 import NoticesPage from './pages/admin/NoticesPage'
 import ImportPage from './pages/admin/ImportPage'
+import MasterDataPage from './pages/admin/MasterDataPage'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="homework" element={<HomeworkEntry />} />
           <Route path="notices" element={<NoticesPage />} />
           <Route path="import" element={<ImportPage />} />
+          <Route path="master-data" element={<MasterDataPage />} />
         </Route>
         <Route path="/*" element={<Today />} />
       </Routes>

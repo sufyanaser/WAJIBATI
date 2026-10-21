@@ -70,7 +70,7 @@ export default function AdminShell() {
       >
         <NavLink to="/admin/homework" style={navLinkStyle} end>واجبات</NavLink>
         <NavLink to="/admin/notices" style={navLinkStyle}>إشعارات</NavLink>
-        <NavLink to="/admin/import" style={navLinkStyle}>استيراد</NavLink>
+        <NavLink to="/admin/master-data" style={navLinkStyle}>بيانات المدرسة</NavLink>
       </nav>
 
       {/* routed content */}

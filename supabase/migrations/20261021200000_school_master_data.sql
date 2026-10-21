@@ -57,7 +57,9 @@ alter table school_import_batches enable row level security;
 alter table school_import_audit enable row level security;
 
 create policy school_accounts_staff_read on school_account_profiles for select using (is_staff());
-create policy school_accounts_admin_write on school_account_profiles for all using (is_admin()) with check (is_admin());
+create policy school_accounts_owner_write on school_account_profiles for all
+  using (exists (select 1 from admins where user_id = auth.uid() and role = 'owner'))
+  with check (exists (select 1 from admins where user_id = auth.uid() and role = 'owner'));
 create policy school_batches_owner_read on school_import_batches for select
   using (created_by = auth.uid() and is_admin());
 create policy school_batches_owner_insert on school_import_batches for insert

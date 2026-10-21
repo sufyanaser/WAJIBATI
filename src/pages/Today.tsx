@@ -82,6 +82,7 @@ export default function Today() {
       section_id: r.student.section.id,
       section_label: `${r.student.section.stage.name} ${r.student.section.stage.branch} ‏/ ${r.student.section.letter}`,
     })))
+    if (!rows.length) setLoading(false)
   }
 
   // ── load day ─────────────────────────────────────────────────────────────────

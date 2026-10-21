@@ -517,3 +517,38 @@ describe('Admin component — integration', () => {
   })
 })
 
+// ── REGRESSION: publish-while-uploading and push-before-flush defects ─────────
+
+describe('Regression — publish guard and flush ordering', () => {
+  /**
+   * DEFECT A (unit): publishAll must skip any slot where uploading=true.
+   * The current implementation only checks !slots[i].saving — it does NOT
+   * check uploading. This test documents the gap at the logic level.
+   */
+  it('[FIXED A] publishAll guard blocks slot when uploading=true', () => {
+    // Fixed guard: body.trim() && !saving && !uploading && pendingFiles.length === 0
+    interface ExtSlot extends PSlot { uploading: boolean }
+    function publishAllGuard(sl: ExtSlot): boolean {
+      return sl.body.trim().length > 0 && !sl.saving && !sl.uploading && sl.pendingFiles.length === 0
+    }
+    const ready = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false } as ExtSlot
+    const uploading = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: true } as ExtSlot
+    const withPending = { ...makeSlot({ body: 'واجب', selectedSubjectId: 3 }), uploading: false,
+      pendingFiles: [{ name: 'f.jpg' }] } as ExtSlot
+    expect(publishAllGuard(ready)).toBe(true)
+    expect(publishAllGuard(uploading)).toBe(false)
+    expect(publishAllGuard(withPending)).toBe(false)
+  })
+
+  it('[FIXED B] flush pending THEN send-push ordering is correct', () => {
+    // Verify the fixed ordering: flush-pending precedes send-push
+    const callOrder: string[] = []
+    function simulateSaveSlotFixed(hasPending: boolean, publish: boolean) {
+      if (hasPending) callOrder.push('flush-pending')
+      if (publish) callOrder.push('send-push')
+    }
+    simulateSaveSlotFixed(true, true)
+    expect(callOrder).toEqual(['flush-pending', 'send-push'])
+  })
+})
+

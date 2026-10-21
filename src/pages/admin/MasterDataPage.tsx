@@ -25,6 +25,7 @@ export default function MasterDataPage() {
         <NavLink to="/admin/master-data/subjects" style={tabStyle}>المواد</NavLink>
         <NavLink to="/admin/master-data/sections" style={tabStyle}>الشعب</NavLink>
         <NavLink to="/admin/master-data/timetable" style={tabStyle}>الجدول الدراسي</NavLink>
+        <NavLink to="/admin/master-data/guardians" style={tabStyle}>أولياء الأمور</NavLink>
       </nav>
 
       {isRoot && (
@@ -35,6 +36,7 @@ export default function MasterDataPage() {
             { to: '/admin/master-data/subjects', label: 'المواد الدراسية', icon: '📚' },
             { to: '/admin/master-data/sections', label: 'الشعب', icon: '🏫' },
             { to: '/admin/master-data/timetable', label: 'الجدول الدراسي', icon: '🗓' },
+            { to: '/admin/master-data/guardians', label: 'أولياء الأمور', icon: '👨‍👩‍👧' },
           ].map(item => (
             <NavLink
               key={item.to}

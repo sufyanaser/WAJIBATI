@@ -14,6 +14,7 @@ import StudentsPage from './pages/admin/StudentsPage'
 import SubjectsPage from './pages/admin/SubjectsPage'
 import SectionsPage from './pages/admin/SectionsPage'
 import TimetablePage from './pages/admin/TimetablePage'
+import GuardiansPage from './pages/admin/GuardiansPage'
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="sections" element={<SectionsPage />} />
             <Route path="timetable" element={<TimetablePage />} />
+            <Route path="guardians" element={<GuardiansPage />} />
           </Route>
         </Route>
         <Route path="/*" element={<Today />} />

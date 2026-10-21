@@ -16,7 +16,7 @@ const shell: React.CSSProperties = {
 const navLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
   display: 'inline-block',
   background: isActive ? 'var(--accent)' : 'var(--card)',
-  color: isActive ? '#111' : 'var(--fg)',
+  color: isActive ? 'var(--bg)' : 'var(--fg)',
   border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
   borderRadius: 20,
   padding: '8px 16px',
@@ -42,6 +42,12 @@ export default function AdminShell() {
     nav('/admin/login')
   }
 
+  // Strip @admin.rumaila.local suffix to show the plain username.
+  // Falls back to the raw email for legacy accounts not on this convention.
+  const displayName = user?.email
+    ? user.email.replace(/@admin\.rumaila\.local$/, '')
+    : null
+
   return (
     <main style={shell} dir="rtl">
       {/* top bar */}
@@ -50,10 +56,10 @@ export default function AdminShell() {
         <button className="icon-btn" onClick={handleLogout}>خروج</button>
       </div>
 
-      {/* user email */}
-      {user && (
+      {/* logged-in user */}
+      {displayName && (
         <p style={{ margin: 0, fontSize: '.82rem', color: 'var(--muted)' }}>
-          {user.email}
+          {displayName}
         </p>
       )}
 
@@ -70,7 +76,7 @@ export default function AdminShell() {
       >
         <NavLink to="/admin/homework" style={navLinkStyle} end>واجبات</NavLink>
         <NavLink to="/admin/notices" style={navLinkStyle}>إشعارات</NavLink>
-        <NavLink to="/admin/import" style={navLinkStyle}>استيراد</NavLink>
+        <NavLink to="/admin/master-data" style={navLinkStyle}>بيانات المدرسة</NavLink>
       </nav>
 
       {/* routed content */}

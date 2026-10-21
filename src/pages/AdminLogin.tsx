@@ -16,9 +16,19 @@ export default function AdminLogin() {
     // Plain usernames (e.g. 'admin') resolve via @admin.rumaila.local convention.
     // Legacy full-email inputs pass through unchanged.
     const email = username.includes('@') ? username : usernameToAdminEmail(username)
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass })
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password: pass })
     if (error) { setErr('اسم المستخدم أو كلمة المرور غير صحيحة'); setBusy(false); return }
-    const { data } = await supabase.from('admins').select('role').maybeSingle()
+    const userId = authData.user?.id
+    const { data, error: adminsErr } = await supabase
+      .from('admins')
+      .select('role')
+      .eq('user_id', userId!)
+      .maybeSingle()
+    if (adminsErr) {
+      console.error('admins query error:', adminsErr)
+      setErr('خطأ في النظام أثناء التحقق من الصلاحية')
+      setBusy(false); return
+    }
     if (!data) {
       await supabase.auth.signOut()
       setErr('ليس لديك صلاحية الدخول كمدير')

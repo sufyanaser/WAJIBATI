@@ -52,7 +52,7 @@ export default function HomeworkEntry() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) { nav('/admin/login'); return }
-      const { data: adm } = await supabase.from('admins').select('role').maybeSingle()
+      const { data: adm } = await supabase.from('admins').select('role').eq('user_id', data.session.user.id).maybeSingle()
       if (!adm) { await supabase.auth.signOut(); nav('/admin/login'); return }
       setReady(true)
     })

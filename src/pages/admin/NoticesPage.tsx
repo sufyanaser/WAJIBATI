@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
@@ -9,6 +10,7 @@ interface Notice {
 }
 
 export default function NoticesPage() {
+  const nav = useNavigate()
   const [sections, setSections] = useState<Section[]>([])
   const [notices, setNotices] = useState<Notice[]>([])
   const [nTitle, setNTitle] = useState('')
@@ -17,6 +19,14 @@ export default function NoticesPage() {
   const [nSec, setNSec] = useState<number | ''>('')
   const [nExpires, setNExpires] = useState('')
   const [nSaving, setNSaving] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { nav('/admin/login'); return }
+      const { data: adm } = await supabase.from('admins').select('role').eq('user_id', data.session.user.id).maybeSingle()
+      if (!adm) { await supabase.auth.signOut(); nav('/admin/login'); return }
+    })
+  }, [nav])
 
   useEffect(() => {
     supabase.from('sections')

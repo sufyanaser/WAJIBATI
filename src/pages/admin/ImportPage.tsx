@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
 interface ImportResult {
@@ -8,12 +9,21 @@ interface ImportResult {
 }
 
 export default function ImportPage() {
+  const nav = useNavigate()
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [importing, setImporting] = useState(false)
   const [resetPhone, setResetPhone] = useState('')
   const [resetPin, setResetPin] = useState('')
   const [resetMsg, setResetMsg] = useState('')
   const [resetting, setResetting] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { nav('/admin/login'); return }
+      const { data: adm } = await supabase.from('admins').select('role').eq('user_id', data.session.user.id).maybeSingle()
+      if (!adm) { await supabase.auth.signOut(); nav('/admin/login'); return }
+    })
+  }, [nav])
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]

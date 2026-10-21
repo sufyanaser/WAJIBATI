@@ -238,7 +238,11 @@ describe('useAdminSection — publish', () => {
     expect(pubResult!.saved).toBe(1)
     expect(pubResult!.pushSent).toBe(true)
     expect(mockFunctions.invoke).toHaveBeenCalledWith('send-push', expect.objectContaining({
-      body: { section_id: 1, date: '2026-10-21' },
+      body: expect.objectContaining({
+        section_id: 1,
+        title: 'واجبات الرميلة',
+        url: '/',
+      }),
     }))
   })
 

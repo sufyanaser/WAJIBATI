@@ -197,8 +197,14 @@ export function useAdminSection(
 
     try {
       const sid = Number(sectionId)
+      const pushBody = saveResult.saved === 1 ? 'واجب واحد جديد' : `${saveResult.saved} واجبات جديدة`
       const { error } = await supabase.functions.invoke('send-push', {
-        body: { section_id: sid, date },
+        body: {
+          section_id: sid,
+          title: 'واجبات الرميلة',
+          body: `${pushBody} بتاريخ ${date}`,
+          url: '/',
+        },
       })
       if (error) {
         return { ...saveResult, pushSent: false, pushError: error.message }

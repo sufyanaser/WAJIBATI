@@ -164,7 +164,7 @@ function buildExportCard(data: HomeworkExportData): HTMLElement {
 
     <!-- Footer -->
     <div style="text-align:center;padding:8px 18px;font-size:9px;color:#aaa;border-top:1px solid #ddd;margin-top:10px">
-      واجبات الرميلة · ${data.schoolName}
+      واجباتي · ${data.schoolName}
     </div>
   `
 

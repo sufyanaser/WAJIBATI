@@ -52,14 +52,14 @@ export default function Login() {
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem' }}>
           <img
             src="/icon-192.png"
-            alt="واجبات الرميلة"
+            alt="واجباتي"
             width={72}
             height={72}
             style={{ borderRadius: '1rem', boxShadow: '0 4px 16px rgba(0,0,0,.4)' }}
           />
           <div>
             <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '.01em' }}>
-              واجبات الرميلة
+              واجباتي
             </h1>
             <p style={{ margin: '.2rem 0 0', fontSize: '.85rem', color: 'var(--muted)' }}>
               اعدادية الرميلة للبنين

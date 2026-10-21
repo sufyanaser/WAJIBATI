@@ -248,17 +248,6 @@ export default function Admin() {
       newId = (data as { id: string }).id
     }
 
-    if (publish && newId) {
-      supabase.functions.invoke('send-push', {
-        body: {
-          section_id: secId,
-          title: `واجبات ${sectionLabel}`,
-          body: `حصة ${s.period}: ${s.body.slice(0, 80)}`,
-          url: '/',
-        },
-      }).catch(() => { /* non-critical */ })
-    }
-
     // Capture pending files before clearing state
     const pendingToUpload = slots[i].pendingFiles
 
@@ -269,17 +258,32 @@ export default function Admin() {
           pendingFiles: [] }
       : r))
 
-    // Flush pending files now that hw_id exists
+    // Flush pending files now that hw_id exists — BEFORE sending push notification
     if (newId && pendingToUpload.length > 0) {
       for (const file of pendingToUpload) {
         await uploadFile(i, file, newId)
       }
     }
+
+    // Send push only after all attachments are committed
+    if (publish && newId) {
+      supabase.functions.invoke('send-push', {
+        body: {
+          section_id: secId,
+          title: `واجبات ${sectionLabel}`,
+          body: `حصة ${s.period}: ${s.body.slice(0, 80)}`,
+          url: '/',
+        },
+      }).catch(() => { /* non-critical */ })
+    }
   }
 
   async function publishAll() {
     for (let i = 0; i < slots.length; i++) {
-      if (slots[i].body.trim() && !slots[i].saving) await saveSlot(i, true)
+      const sl = slots[i]
+      if (sl.body.trim() && !sl.saving && !sl.uploading && sl.pendingFiles.length === 0) {
+        await saveSlot(i, true)
+      }
     }
   }
 

@@ -42,26 +42,18 @@ function getSubjectIcon(subject: string): string {
   return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`
 }
 
-async function loadHtml2Canvas(): Promise<(el: HTMLElement, opts?: object) => Promise<HTMLCanvasElement>> {
-  if ((window as any).html2canvas) return (window as any).html2canvas
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
-    s.onload = () => resolve((window as any).html2canvas)
-    s.onerror = reject
-    document.head.appendChild(s)
+// Local offline rendering utilities (bundled via npm, zero CDN dependencies)
+async function renderCardToCanvas(card: HTMLElement): Promise<HTMLCanvasElement> {
+  const { toCanvas } = await import('html-to-image')
+  return toCanvas(card, {
+    backgroundColor: '#ffffff',
+    pixelRatio: 2,
   })
 }
 
-async function loadJsPDF(): Promise<new (opts: object) => any> {
-  if ((window as any).jspdf?.jsPDF) return (window as any).jspdf.jsPDF
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-    s.onload = () => resolve((window as any).jspdf?.jsPDF)
-    s.onerror = reject
-    document.head.appendChild(s)
-  })
+async function loadBundledJsPDF(): Promise<typeof import('jspdf').jsPDF> {
+  const mod = await import('jspdf')
+  return mod.jsPDF || (mod as any).default?.jsPDF || (mod as any).default
 }
 
 function gridCols(count: number): number {
@@ -172,16 +164,10 @@ function buildExportCard(data: HomeworkExportData): HTMLElement {
 }
 
 export async function exportAsImage(data: HomeworkExportData): Promise<void> {
-  const html2canvas = await loadHtml2Canvas()
   const card = buildExportCard(data)
   document.body.appendChild(card)
   try {
-    const canvas = await html2canvas(card, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true,
-      logging: false,
-    })
+    const canvas = await renderCardToCanvas(card)
     const link = document.createElement('a')
     link.download = `واجبات-${data.sectionName}-${data.date}.png`
     link.href = canvas.toDataURL('image/png')
@@ -192,16 +178,13 @@ export async function exportAsImage(data: HomeworkExportData): Promise<void> {
 }
 
 export async function exportAsPDF(data: HomeworkExportData): Promise<void> {
-  const [html2canvas, JsPDF] = await Promise.all([loadHtml2Canvas(), loadJsPDF()])
   const card = buildExportCard(data)
   document.body.appendChild(card)
   try {
-    const canvas = await html2canvas(card, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true,
-      logging: false,
-    })
+    const [canvas, JsPDF] = await Promise.all([
+      renderCardToCanvas(card),
+      loadBundledJsPDF(),
+    ])
     const imgData = canvas.toDataURL('image/png')
     const pdf = new JsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' })
     const pdfW = pdf.internal.pageSize.getWidth()

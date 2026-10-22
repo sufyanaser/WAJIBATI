@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "export:html": "node scripts/build-single-html.mjs",
     "lint": "tsc --noEmit",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --linked > src/lib/database.types.ts",
@@ -43,6 +44,7 @@
     "typescript": "^5.5.4",
     "vite": "^5.4.0",
     "vite-plugin-pwa": "^0.20.1",
+    "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^2.1.9"
   }
 }

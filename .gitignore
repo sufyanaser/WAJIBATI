@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-single/
+wajibati.html
 .env
 .env.local
 supabase/.temp/

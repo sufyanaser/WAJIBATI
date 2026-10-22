@@ -38,6 +38,7 @@ export default function App() {
             <Route path="notices" element={<NoticesPage />} />
             <Route path="import" element={<ImportPage />} />
             <Route path="master-data" element={<MasterDataPage />} />
+            <Route path="database" element={<MasterDataPage />} />
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="teachers" element={<TeachersPage />} />
             <Route path="sections" element={<SectionsPage />} />

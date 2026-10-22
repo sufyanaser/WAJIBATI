@@ -60,7 +60,7 @@ describe('AdminShell — Reengineered Dashboard Layout', () => {
     })
   })
 
-  it('renders all 8 main school workflow sections in the sidebar', async () => {
+  it('renders all 6 canonical school workflow sections in the sidebar', async () => {
     render(
       <MemoryRouter initialEntries={['/admin/dashboard']}>
         <Routes>
@@ -75,14 +75,12 @@ describe('AdminShell — Reengineered Dashboard Layout', () => {
       expect(screen.getByText('لوحة المؤشرات والملخص')).toBeInTheDocument()
     })
 
-    // Verify all 8 workflow sections exist in the navigation
+    // Verify all 6 canonical workflow sections exist in the navigation
     expect(screen.getByRole('link', { name: 'الرئيسية' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'الواجبات اليومية' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'الجدول الدراسي' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'الهيئة التدريسية' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'الطلاب والشعب' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'الإشعارات المدرسية' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'الاستيراد والبيانات' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'الإعلانات والتنبيهات' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'قاعدة البيانات المدرسية' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'الإعدادات والصلاحيات' })).toBeInTheDocument()
 
     // Verify user display name and owner role badge

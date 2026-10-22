@@ -11,6 +11,7 @@ import {
   BellIcon,
   ImportIcon,
   SettingsIcon,
+  DatabaseIcon,
   LogOutIcon,
   MenuIcon,
   ChevronRightIcon,
@@ -29,7 +30,7 @@ export interface AdminCtx {
 const AdminContext = createContext<AdminCtx>({ user: null, role: 'viewer', ready: false })
 export const useAdmin = () => useContext(AdminContext)
 
-// ── 8 Main School Workflow Sections ────────────────────────────────────────────
+// ── 6 Canonical School Workflow Sections (V2 Architecture) ────────────────────
 
 interface NavSection {
   id: string
@@ -60,43 +61,34 @@ const NAV_SECTIONS: NavSection[] = [
     icon: CalendarIcon,
   },
   {
-    id: 'faculty',
-    label: 'الهيئة التدريسية',
-    to: '/admin/teachers',
-    icon: UsersIcon,
-    matchPrefixes: ['/admin/teachers', '/admin/subjects'],
-    subLinks: [
-      { to: '/admin/teachers', label: 'المعلمون' },
-      { to: '/admin/subjects', label: 'المواد الدراسية' },
-    ],
-  },
-  {
-    id: 'students',
-    label: 'الطلاب والشعب',
-    to: '/admin/students',
-    icon: GraduationCapIcon,
-    matchPrefixes: ['/admin/students', '/admin/sections', '/admin/guardians'],
-    subLinks: [
-      { to: '/admin/students', label: 'دليل الطلاب' },
-      { to: '/admin/sections', label: 'الشعب الدراسية' },
-      { to: '/admin/guardians', label: 'أولياء الأمور' },
-    ],
-  },
-  {
     id: 'notices',
-    label: 'الإشعارات المدرسية',
+    label: 'الإعلانات والتنبيهات',
     to: '/admin/notices',
     icon: BellIcon,
   },
   {
-    id: 'data-import',
-    label: 'الاستيراد والبيانات',
-    to: '/admin/import',
-    icon: ImportIcon,
-    matchPrefixes: ['/admin/import', '/admin/master-data'],
+    id: 'database',
+    label: 'قاعدة البيانات المدرسية',
+    to: '/admin/master-data',
+    icon: DatabaseIcon,
+    matchPrefixes: [
+      '/admin/master-data',
+      '/admin/database',
+      '/admin/students',
+      '/admin/sections',
+      '/admin/guardians',
+      '/admin/teachers',
+      '/admin/subjects',
+      '/admin/import',
+    ],
     subLinks: [
-      { to: '/admin/import', label: 'استيراد Excel' },
-      { to: '/admin/master-data', label: 'سجل الجداول الشامل' },
+      { to: '/admin/students', label: 'دليل الطلاب' },
+      { to: '/admin/sections', label: 'الشعب الدراسية' },
+      { to: '/admin/guardians', label: 'أولياء الأمور' },
+      { to: '/admin/teachers', label: 'المعلمون' },
+      { to: '/admin/subjects', label: 'المواد الدراسية' },
+      { to: '/admin/master-data', label: 'سجل البيانات الشامل' },
+      { to: '/admin/import', label: 'الاستيراد الجماعي' },
     ],
   },
   {
@@ -113,14 +105,14 @@ function getPageMeta(pathname: string): { section: string; title: string } {
   if (pathname.startsWith('/admin/dashboard')) return { section: 'الرئيسية', title: 'لوحة المؤشرات والملخص' }
   if (pathname.startsWith('/admin/homework')) return { section: 'الواجبات اليومية', title: 'إدخال ونشر الواجبات' }
   if (pathname.startsWith('/admin/timetable')) return { section: 'الجدول الدراسي', title: 'الجدول الأسبوعي وتوزيع الحصص' }
-  if (pathname.startsWith('/admin/teachers')) return { section: 'الهيئة التدريسية', title: 'سجل المعلمين وتوزيع المواد' }
-  if (pathname.startsWith('/admin/subjects')) return { section: 'الهيئة التدريسية', title: 'دليل المواد الدراسية' }
-  if (pathname.startsWith('/admin/students')) return { section: 'الطلاب والشعب', title: 'دليل الطلاب وقوائم الفصول' }
-  if (pathname.startsWith('/admin/sections')) return { section: 'الطلاب والشعب', title: 'إدارة الشعب والمراحل' }
-  if (pathname.startsWith('/admin/guardians')) return { section: 'الطلاب والشعب', title: 'سجل أولياء الأمور والربط' }
-  if (pathname.startsWith('/admin/notices')) return { section: 'الإشعارات المدرسية', title: 'التعميمات والتنبيهات المدرسية' }
-  if (pathname.startsWith('/admin/import')) return { section: 'الاستيراد والبيانات', title: 'استيراد بيانات المدرسة الرئيسية' }
-  if (pathname.startsWith('/admin/master-data')) return { section: 'الاستيراد والبيانات', title: 'سجل البيانات الشامل وقاعدة البيانات' }
+  if (pathname.startsWith('/admin/notices')) return { section: 'الإعلانات والتنبيهات', title: 'التعميمات والتنبيهات المدرسية' }
+  if (pathname.startsWith('/admin/teachers')) return { section: 'قاعدة البيانات المدرسية', title: 'سجل المعلمين وتوزيع المواد' }
+  if (pathname.startsWith('/admin/subjects')) return { section: 'قاعدة البيانات المدرسية', title: 'دليل المواد الدراسية' }
+  if (pathname.startsWith('/admin/students')) return { section: 'قاعدة البيانات المدرسية', title: 'دليل الطلاب وقوائم الفصول' }
+  if (pathname.startsWith('/admin/sections')) return { section: 'قاعدة البيانات المدرسية', title: 'إدارة الشعب والمراحل' }
+  if (pathname.startsWith('/admin/guardians')) return { section: 'قاعدة البيانات المدرسية', title: 'سجل أولياء الأمور والربط' }
+  if (pathname.startsWith('/admin/import')) return { section: 'قاعدة البيانات المدرسية', title: 'استيراد بيانات المدرسة الرئيسية' }
+  if (pathname.startsWith('/admin/master-data') || pathname.startsWith('/admin/database')) return { section: 'قاعدة البيانات المدرسية', title: 'مركز السجلات وقاعدة البيانات المدرسية' }
   if (pathname.startsWith('/admin/settings')) return { section: 'الإعدادات والصلاحيات', title: 'إدارة الحسابات وبيئة التشغيل' }
   return { section: 'لوحة الإدارة', title: 'إدارة النظام' }
 }

@@ -32,6 +32,8 @@ import {
   ChevronRightIcon,
   EyeIcon,
   EyeOffIcon,
+  MenuIcon,
+  SettingsIcon,
 } from '../Icons'
 
 describe('Unified Icons Component Library', () => {
@@ -66,9 +68,11 @@ describe('Unified Icons Component Library', () => {
     { name: 'ChevronRightIcon', Component: ChevronRightIcon },
     { name: 'EyeIcon', Component: EyeIcon },
     { name: 'EyeOffIcon', Component: EyeOffIcon },
+    { name: 'MenuIcon', Component: MenuIcon },
+    { name: 'SettingsIcon', Component: SettingsIcon },
   ]
 
-  it('renders all 30 icons with correct SVG attributes', () => {
+  it('renders all 32 icons with correct SVG attributes', () => {
     for (const { name, Component } of iconList) {
       const { container } = render(<Component />)
       const svg = container.querySelector('svg')

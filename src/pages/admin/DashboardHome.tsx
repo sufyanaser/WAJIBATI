@@ -7,6 +7,7 @@ import {
   BookIcon,
   CalendarIcon,
   ShieldIcon,
+  BellIcon,
   FamilyIcon,
 } from '../../components/Icons'
 
@@ -31,12 +32,12 @@ interface AssignmentRow {
 // ── nav cards ──────────────────────────────────────────────────────────────────
 
 const navCards = [
-  { label: 'الطلاب',               icon: GraduationCapIcon, route: '/admin/master-data?entity=students',   statKey: 'students' as const },
-  { label: 'المدرسون',             icon: UsersIcon,          route: '/admin/master-data?entity=teachers',   statKey: 'teachers' as const },
-  { label: 'الواجبات',             icon: BookIcon,           route: '/admin/homework',                       statKey: 'homeworkToday' as const },
-  { label: 'الجدول الدراسي',       icon: CalendarIcon,       route: '/admin/master-data?entity=timetable',  statKey: 'sections' as const },
-  { label: 'الحسابات والصلاحيات', icon: ShieldIcon,         route: '/admin/import',                        statKey: 'noticesActive' as const },
-  { label: 'أولياء الأمور',        icon: FamilyIcon,         route: '/admin/master-data?entity=guardians', statKey: 'guardians' as const },
+  { label: 'الطلاب والشعب',        icon: GraduationCapIcon, route: '/admin/students',  statKey: 'students' as const },
+  { label: 'الهيئة التدريسية',     icon: UsersIcon,          route: '/admin/teachers',  statKey: 'teachers' as const },
+  { label: 'الواجبات اليومية',     icon: BookIcon,           route: '/admin/homework',  statKey: 'homeworkToday' as const },
+  { label: 'الجدول الدراسي',       icon: CalendarIcon,       route: '/admin/timetable', statKey: 'sections' as const },
+  { label: 'الإشعارات المدرسية',   icon: BellIcon,           route: '/admin/notices',   statKey: 'noticesActive' as const },
+  { label: 'الإعدادات والصلاحيات', icon: ShieldIcon,         route: '/admin/settings',  statKey: 'guardians' as const },
 ]
 
 const statLabels: Record<keyof Stats, string> = {

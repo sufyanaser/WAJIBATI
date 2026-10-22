@@ -18,6 +18,7 @@ const SectionsPage = lazy(() => import('./pages/admin/SectionsPage'))
 const TimetablePage = lazy(() => import('./pages/admin/TimetablePage'))
 const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'))
 const GuardiansPage = lazy(() => import('./pages/admin/GuardiansPage'))
+const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'))
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="timetable" element={<TimetablePage />} />
             <Route path="students" element={<StudentsPage />} />
             <Route path="guardians" element={<GuardiansPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="/*" element={<Today />} />
         </Routes>

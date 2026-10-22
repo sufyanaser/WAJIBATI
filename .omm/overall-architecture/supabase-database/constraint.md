@@ -1,0 +1,3 @@
+- All 16 public tables must have RLS enabled with explicit policies.
+- Helper functions must declare SECURITY DEFINER with fixed search_path = public.
+- Timetable constraints: weekday between 0 and 4, period between 1 and 6.

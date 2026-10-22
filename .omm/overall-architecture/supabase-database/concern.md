@@ -1,0 +1,1 @@
+- Deep RLS joins (guardian -> guardian_students -> students -> sections) can become query bottlenecks without proper composite foreign key indexes.

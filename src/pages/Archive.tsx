@@ -43,10 +43,10 @@ function excerpt(text: string, max = 120): string {
 // ── Skeleton loader ───────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="archive-entry">
-      <div className="archive-skel archive-skel--w45" />
-      <div className="archive-skel archive-skel--w80" style={{ animationDelay: '.15s' }} />
-      <div className="archive-skel archive-skel--w60" style={{ animationDelay: '.3s' }} />
+    <div className="archive-entry hw-skeleton">
+      <div className="archive-skel archive-skel--w45 skel-line skel-short" />
+      <div className="archive-skel archive-skel--w80 skel-line skel-long" style={{ animationDelay: '.15s' }} />
+      <div className="archive-skel archive-skel--w60 skel-line skel-medium" style={{ animationDelay: '.3s' }} />
     </div>
   )
 }
@@ -192,21 +192,28 @@ export default function Archive() {
     [nav]
   )
 
+  const currentSectionLabel = sections.find(s => s.id === selectedSection)?.label ?? 'إعدادية الرميلة للبنين'
+
   return (
-    <main dir="rtl" className="archive-wrap">
+    <main dir="rtl" className="archive-wrap screen today">
       {/* header */}
-      <header className="archive-sticky-head">
-        <div>
-          <h1 className="archive-title">أرشيف الواجبات</h1>
-          {sections.length > 0 && selectedSection !== null && (
-            <p className="archive-section-label">
-              {sections.find(s => s.id === selectedSection)?.label ?? ''}
-            </p>
-          )}
-        </div>
-        <div className="archive-head-actions">
-          <button className="icon-btn" onClick={() => nav('/')}>اليوم</button>
-          <button className="icon-btn" onClick={signOut}>خروج</button>
+      <header className="archive-sticky-head today-header">
+        <div className="today-header-top" style={{ width: '100%' }}>
+          <div className="brand-identity">
+            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
+            <div className="today-header-titles">
+              <h1 className="archive-title app-title">أرشيف الواجبات</h1>
+              <p className="archive-section-label school-subtitle">{currentSectionLabel}</p>
+            </div>
+          </div>
+          <div className="archive-head-actions">
+            <button type="button" className="icon-btn" onClick={() => nav('/')}>
+              اليوم
+            </button>
+            <button type="button" className="icon-btn" onClick={signOut}>
+              خروج
+            </button>
+          </div>
         </div>
       </header>
 
@@ -223,12 +230,13 @@ export default function Archive() {
 
         {/* section selector (only if multiple children) */}
         {sections.length > 1 && (
-          <nav className="archive-tabs">
+          <nav className="archive-tabs child-tabs" aria-label="اختر الشعبة">
             {sections.map(s => (
               <button
                 key={s.id}
-                className={`archive-tab${selectedSection === s.id ? ' archive-tab--active' : ''}`}
+                type="button"
                 onClick={() => handleSectionChange(s.id)}
+                className={`archive-tab tab${selectedSection === s.id ? ' archive-tab--active active' : ''}`}
               >
                 {s.label}
               </button>
@@ -238,7 +246,7 @@ export default function Archive() {
 
         {/* content */}
         {(loading || searching) && items.length === 0 ? (
-          <div className="archive-list">
+          <div className="archive-list hw-list" aria-busy="true" aria-label="جارٍ التحميل">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -251,31 +259,40 @@ export default function Archive() {
           />
         ) : (
           <>
-            <div className="archive-list">
+            <div className="archive-list hw-list">
               {items.map(item => (
-                <article key={item.id} className="archive-entry">
-                  <p className="archive-entry__date">{arDate(item.due_date)}</p>
-                  <div className="archive-chips">
+                <article key={item.id} className="archive-entry hw-card">
+                  <p className="archive-entry__date" style={{ margin: 0, fontSize: '.82rem', color: 'var(--accent)', fontWeight: 700 }}>
+                    📅 {arDate(item.due_date)}
+                  </p>
+                  <div className="archive-chips hw-header">
+                    {item.period != null && (
+                      <span className="archive-chip archive-chip--muted hw-period-circle" aria-label={`حصة ${item.period}`}>
+                        {item.period}
+                      </span>
+                    )}
                     {item.subject && (
-                      <span className="archive-chip" style={chipStyle(item.subject.color)}>
+                      <span className="archive-chip subject-chip" style={chipStyle(item.subject.color)}>
                         {item.subject.name}
                       </span>
                     )}
-                    {item.period != null && (
-                      <span className="archive-chip archive-chip--muted">حصة {item.period}</span>
-                    )}
                     {item.teacher && (
-                      <span className="archive-entry__teacher">{item.teacher.full_name}</span>
+                      <span className="archive-entry__teacher teacher-name">
+                        {item.teacher.full_name}
+                      </span>
                     )}
                   </div>
-                  <p className="archive-entry__body">{excerpt(item.body)}</p>
+                  <p className="archive-entry__body hw-body">
+                    {excerpt(item.body)}
+                  </p>
                 </article>
               ))}
             </div>
 
             {hasMore && (
               <button
-                className="archive-load-more"
+                type="button"
+                className="archive-load-more icon-btn"
                 onClick={loadMore}
                 disabled={loadingMore}
               >
@@ -285,6 +302,15 @@ export default function Archive() {
           </>
         )}
       </div>
+
+      {/* bottom bar */}
+      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
+        <div className="bottom-bar-inner">
+          <button type="button" className="archive-link" onClick={() => nav('/')}>
+            🏠 العودة إلى واجبات اليوم
+          </button>
+        </div>
+      </nav>
     </main>
   )
 }

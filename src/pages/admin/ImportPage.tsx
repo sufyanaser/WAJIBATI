@@ -66,32 +66,32 @@ export default function ImportPage() {
         <p><strong>٢.</strong> املأ البيانات ثم اختر الملف هنا. سنفحصه فقط.</p>
         <p><strong>٣.</strong> راجع النتيجة واضغط «تطبيق» إذا كانت صحيحة.</p>
       </div>
-      <a className="icon-btn master-template" href="/templates/school-master-data.xlsx" download>تنزيل ملف المدرسة الجاهز</a>
+      <a className="icon-btn master-template" href="/templates/school-master-data.xlsx" download>⬇ تنزيل ملف المدرسة الجاهز</a>
       <p className="master-warning">مهم: لا تكتب الرقم السري أو كلمة المرور في الملف.</p>
       <label className="btn-publish-all master-picker">
-        {busy ? 'جارٍ الفحص…' : 'اختر ملف Excel للمعاينة'}
+        {busy ? 'جارٍ الفحص…' : '📂 اختر ملف Excel للمعاينة'}
         <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden disabled={busy} onChange={e => { void handleFile(e.target.files?.[0]); e.target.value = '' }} />
       </label>
     </section>
     {preview && <section className="import-result">
-      <h3>معاينة الفروقات والتحقق</h3>
+      <h3 className="import-heading">معاينة الفروقات والتحقق</h3>
       <div className="master-counts">{MASTER_SHEETS.map(sheet => <span key={sheet}><strong>{sheet}</strong><br />إضافة {preview.differences?.[sheet]?.add ?? 0}، تحديث {preview.differences?.[sheet]?.update ?? 0}</span>)}</div>
-      {preview.valid ? <p className="master-ok">الملف صالح للتطبيق. لم تُغيّر أي بيانات بعد.</p> : <p className="err">يوجد {preview.issues.length} خطأ. أصلحها ثم أعد المعاينة.</p>}
-      {!!preview.issues.length && <div className="import-errors">{preview.issues.map((issue, i) => <p key={i}>ورقة {issue.sheet}، صف {issue.row}{issue.field ? `، ${issue.field}` : ''}: {issue.message}</p>)}</div>}
+      {preview.valid ? <p className="master-ok" role="status">الملف صالح للتطبيق. لم تُغيّر أي بيانات بعد.</p> : <p className="err" role="alert">يوجد {preview.issues.length} خطأ. أصلحها ثم أعد المعاينة.</p>}
+      {!!preview.issues.length && <div className="import-errors" role="alert">{preview.issues.map((issue, i) => <p key={i} className="import-err-row">ورقة {issue.sheet}، صف {issue.row}{issue.field ? `، ${issue.field}` : ''}: {issue.message}</p>)}</div>}
       {preview.valid && <label className="master-confirm"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} /> راجعت الملخص وأوافق على تحديث بيانات المدرسة.</label>}
-      <button className="btn-publish-all" disabled={busy || !confirmed || !preview.valid || !preview.batch_id || role !== 'owner'} onClick={() => void applyImport()}>
+      <button type="button" className="btn-publish-all" disabled={busy || !confirmed || !preview.valid || !preview.batch_id || role !== 'owner'} onClick={() => void applyImport()}>
         {role === 'owner' ? 'تطبيق الدفعة المصرح بها' : 'التطبيق متاح لمالك النظام فقط'}
       </button>
     </section>}
-    {message && <p className={message.startsWith('تم') ? 'master-ok' : 'err'}>{message}</p>}
+    {message && <p role="alert" className={message.startsWith('تم') ? 'master-ok' : 'err'}>{message}</p>}
     <hr className="import-divider" />
     <section className="import-section">
       <h2 className="import-heading">تغيير رمز دخول ولي الأمر</h2>
-      <p className="muted">هذه العملية منفصلة عن ملف Excel ولا تحفظ الرمز في بيانات المدرسة.</p>
-      <form className="notice-form" onSubmit={event => void resetGuardianPin(event)}>
-        <input placeholder="رقم الهاتف (+9647XXXXXXXXX)" value={resetPhone} onChange={e => setResetPhone(e.target.value)} dir="ltr" />
-        <input placeholder="الرمز الجديد (6 أرقام)" value={resetPin} maxLength={6} onChange={e => setResetPin(e.target.value.replace(/\D/g,''))} dir="ltr" />
-        <button type="submit" disabled={busy || !resetPhone || resetPin.length !== 6}>تحديث رمز الدخول</button>
+      <p className="muted" style={{ textAlign: 'right', padding: 0 }}>هذه العملية منفصلة عن ملف Excel ولا تحفظ الرمز في بيانات المدرسة.</p>
+      <form className="notice-form" style={{ padding: 0, border: 'none', boxShadow: 'none' }} onSubmit={event => void resetGuardianPin(event)}>
+        <input aria-label="رقم الهاتف" placeholder="رقم الهاتف (+9647XXXXXXXXX)" value={resetPhone} onChange={e => setResetPhone(e.target.value)} dir="ltr" />
+        <input aria-label="الرمز الجديد" placeholder="الرمز الجديد (6 أرقام)" value={resetPin} maxLength={6} onChange={e => setResetPin(e.target.value.replace(/\D/g,''))} dir="ltr" />
+        <button type="submit" className="btn-publish-all" disabled={busy || !resetPhone || resetPin.length !== 6}>تحديث رمز الدخول</button>
       </form>
     </section>
   </div>

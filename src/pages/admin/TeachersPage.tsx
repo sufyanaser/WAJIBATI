@@ -1,139 +1,222 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAdmin } from './AdminShell'
+import { Spinner } from '../../components/Spinner'
+import { Toast, useToast } from '../../components/Toast'
 
-interface Subject { id: number; name: string }
-interface Teacher {
+interface TeacherRow {
   id: number
+  external_key: string | null
   full_name: string
   phone: string | null
   active: boolean
-  subject_id: number | null
-  subject: Subject | null
+  subject: { id: number; name: string } | null
+  assignments: { section_label: string; subject_name: string }[]
 }
 
-const rowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr auto auto',
-  gap: 8,
-  alignItems: 'center',
-  padding: '10px 14px',
-  background: 'var(--card)',
-  border: '1px solid var(--border)',
-  borderRadius: 12,
-}
+interface SubjectOpt { id: number; name: string }
 
 export default function TeachersPage() {
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [subjects, setSubjects] = useState<Subject[]>([])
+  const { ready, role } = useAdmin()
+  const [teachers, setTeachers] = useState<TeacherRow[]>([])
+  const [subjects, setSubjects] = useState<SubjectOpt[]>([])
   const [loading, setLoading] = useState(true)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<TeacherRow | null>(null)
+  const [fullName, setFullName] = useState('')
   const [subjectId, setSubjectId] = useState<number | ''>('')
+  const [phone, setPhone] = useState('')
   const [saving, setSaving] = useState(false)
-  const [editId, setEditId] = useState<number | null>(null)
-  const [err, setErr] = useState('')
+  const { toast, show: showToast, clear: clearToast } = useToast()
+
+  const canEdit = role === 'owner' || role === 'editor'
+
+  useEffect(() => {
+    if (!ready) return
+    void load()
+  }, [ready])
 
   async function load() {
-    const [t, s] = await Promise.all([
-      supabase.from('teachers')
-        .select('id, full_name, phone, active, subject_id, subject:subjects(id, name)')
-        .order('full_name'),
+    setLoading(true)
+    const [tR, sR, taR] = await Promise.all([
+      supabase.from('teachers').select('id, external_key, full_name, phone, active, subject:subjects(id, name)').order('full_name'),
       supabase.from('subjects').select('id, name').order('sort'),
+      supabase.from('teaching_assignments')
+        .select('teacher_id, subject:subjects(name), section:sections(letter, stage:stages(name, branch))')
+        .eq('active', true),
     ])
-    setTeachers((t.data ?? []) as unknown as Teacher[])
-    setSubjects((s.data ?? []) as Subject[])
+
+    setSubjects((sR.data ?? []) as SubjectOpt[])
+
+    type RawTA = {
+      teacher_id: number
+      subject: { name: string } | null
+      section: { letter: string; stage: { name: string; branch: string } } | null
+    }
+    const taList = (taR.data ?? []) as unknown as RawTA[]
+    const taByTeacher = new Map<number, { section_label: string; subject_name: string }[]>()
+    for (const ta of taList) {
+      if (!ta.section || !ta.subject) continue
+      const label = `${ta.section.stage.name} ${ta.section.stage.branch}/${ta.section.letter}`
+      const arr = taByTeacher.get(ta.teacher_id) ?? []
+      arr.push({ section_label: label, subject_name: ta.subject.name })
+      taByTeacher.set(ta.teacher_id, arr)
+    }
+
+    type RawT = {
+      id: number; external_key: string | null; full_name: string
+      phone: string | null; active: boolean
+      subject: { id: number; name: string } | null
+    }
+    const rawTeachers = (tR.data ?? []) as unknown as RawT[]
+    setTeachers(rawTeachers.map(t => ({
+      ...t,
+      assignments: taByTeacher.get(t.id) ?? [],
+    })))
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  function startAdd() {
+    setEditing(null)
+    setFullName('')
+    setSubjectId(subjects[0]?.id ?? '')
+    setPhone('')
+    setShowForm(true)
+  }
 
-  function startEdit(t: Teacher) {
-    setEditId(t.id)
-    setName(t.full_name)
+  function startEdit(t: TeacherRow) {
+    setEditing(t)
+    setFullName(t.full_name)
+    setSubjectId(t.subject?.id ?? '')
     setPhone(t.phone ?? '')
-    setSubjectId(t.subject_id ?? '')
-    setErr('')
+    setShowForm(true)
   }
 
-  function cancelEdit() {
-    setEditId(null); setName(''); setPhone(''); setSubjectId(''); setErr('')
-  }
-
-  async function save(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) { setErr('الاسم مطلوب'); return }
-    setSaving(true); setErr('')
+    if (!fullName.trim() || !subjectId) return
+    setSaving(true)
+
     const payload = {
-      full_name: name.trim(),
+      full_name: fullName.trim(),
+      subject_id: Number(subjectId),
       phone: phone.trim() || null,
-      subject_id: subjectId || null,
+      active: true,
     }
-    if (editId) {
-      const { error } = await supabase.from('teachers').update(payload).eq('id', editId)
-      if (error) { setErr(error.message); setSaving(false); return }
+
+    if (editing) {
+      const { error } = await supabase.from('teachers').update(payload).eq('id', editing.id)
+      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+      showToast('تم تعديل بيانات المدرس ✓', 'success')
     } else {
-      const { error } = await supabase.from('teachers').insert(payload)
-      if (error) { setErr(error.message); setSaving(false); return }
+      const extKey = `TEA-${Date.now().toString(36).toUpperCase()}`
+      const { error } = await supabase.from('teachers').insert({ ...payload, external_key: extKey })
+      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+      showToast('تمت إضافة المدرس ✓', 'success')
     }
-    cancelEdit(); await load(); setSaving(false)
+
+    setShowForm(false)
+    setEditing(null)
+    await load()
+    setSaving(false)
   }
 
-  async function toggleActive(t: Teacher) {
-    await supabase.from('teachers').update({ active: !t.active }).eq('id', t.id)
-    setTeachers(prev => prev.map(x => x.id === t.id ? { ...x, active: !x.active } : x))
+  async function toggleActive(t: TeacherRow) {
+    const newActive = !t.active
+    const { error } = await supabase.from('teachers').update({ active: newActive }).eq('id', t.id)
+    if (error) { showToast(`خطأ: ${error.message}`, 'error'); return }
+    showToast(newActive ? 'تم تفعيل المدرس' : 'تم تعطيل المدرس', 'info')
+    await load()
   }
+
+  if (!ready || loading) return <Spinner />
+
+  const activeCount = teachers.filter(t => t.active).length
 
   return (
-    <div dir="rtl" style={{ display: 'grid', gap: 12 }}>
-      <h2 style={{ margin: 0, fontSize: '1.1rem' }}>المدرسون</h2>
-
-      <form onSubmit={save} style={{ display: 'grid', gap: 8, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <input placeholder="اسم المدرس *" value={name} onChange={e => setName(e.target.value)} required />
-          <input placeholder="رقم الهاتف" value={phone} onChange={e => setPhone(e.target.value)} dir="ltr" />
+    <div className="dash-page" dir="rtl">
+      <div className="dash-toolbar">
+        <div>
+          <h2 className="dash-page-title">المدرسون</h2>
+          <span className="muted">{activeCount} مدرس فعّال من أصل {teachers.length}</span>
         </div>
-        <select value={subjectId} onChange={e => setSubjectId(e.target.value ? Number(e.target.value) : '')}>
-          <option value="">— المادة الرئيسية (اختياري) —</option>
-          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={saving} style={{ flex: 1 }}>
-            {saving ? '…' : editId ? 'حفظ التعديل' : 'إضافة مدرس'}
+        {canEdit && (
+          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
+            + إضافة مدرس
           </button>
-          {editId && (
-            <button type="button" className="icon-btn" onClick={cancelEdit}>إلغاء</button>
-          )}
-        </div>
-      </form>
+        )}
+      </div>
 
-      {loading
-        ? <p className="muted">جارٍ التحميل…</p>
-        : teachers.length === 0
-          ? <p className="muted">لا مدرسون مسجلون</p>
-          : (
-            <div style={{ display: 'grid', gap: 6 }}>
-              {teachers.map(t => (
-                <div key={t.id} style={{ ...rowStyle, opacity: t.active ? 1 : 0.5 }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{t.full_name}</div>
-                    <div style={{ fontSize: '.8rem', color: 'var(--muted)' }}>
-                      {t.subject?.name ?? '—'}{t.phone ? ` · ${t.phone}` : ''}
-                    </div>
-                  </div>
-                  <button className="icon-btn" style={{ fontSize: '.8rem' }} onClick={() => startEdit(t)}>تعديل</button>
-                  <button
-                    className="icon-btn"
-                    style={{ fontSize: '.8rem', color: t.active ? 'var(--muted)' : 'var(--accent)' }}
-                    onClick={() => toggleActive(t)}
-                  >
-                    {t.active ? 'تعطيل' : 'تفعيل'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )
-      }
+      {showForm && (
+        <form className="dash-form" onSubmit={handleSave}>
+          <h3 className="dash-form-title">{editing ? 'تعديل بيانات المدرس' : 'إضافة مدرس جديد'}</h3>
+          <div className="dash-form-grid">
+            <label>
+              <span>الاسم الكامل *</span>
+              <input value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="الاسم الثلاثي" />
+            </label>
+            <label>
+              <span>الاختصاص (المادة الأساسية) *</span>
+              <select className="admin-select" value={subjectId} onChange={e => setSubjectId(Number(e.target.value))} required>
+                <option value="">اختر المادة…</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>رقم الهاتف</span>
+              <input value={phone} onChange={e => setPhone(e.target.value)} dir="ltr" placeholder="+96478XXXXXXXX" />
+            </label>
+          </div>
+          <div className="dash-form-actions">
+            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
+            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+          </div>
+        </form>
+      )}
+
+      <div className="dash-table-wrap">
+        <table className="dash-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الاسم الكامل</th>
+              <th>الاختصاص</th>
+              <th>الشعب المسندة</th>
+              <th>الحالة</th>
+              {canEdit && <th>إجراءات</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {teachers.map((t, i) => (
+              <tr key={t.id} className={!t.active ? 'dash-row-inactive' : ''}>
+                <td className="muted">{i + 1}</td>
+                <td><strong>{t.full_name}</strong></td>
+                <td>{t.subject?.name ?? '—'}</td>
+                <td className="muted">
+                  {t.assignments.length > 0
+                    ? [...new Set(t.assignments.map(a => a.section_label))].join(' ، ')
+                    : '—'}
+                </td>
+                <td>
+                  <span className={`dash-badge ${t.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
+                    {t.active ? 'فعّال' : 'معطّل'}
+                  </span>
+                </td>
+                {canEdit && (
+                  <td style={{ display: 'flex', gap: 6 }}>
+                    <button type="button" className="icon-btn" onClick={() => startEdit(t)}>تعديل</button>
+                    <button type="button" className="icon-btn" onClick={() => void toggleActive(t)}>
+                      {t.active ? 'تعطيل' : 'تفعيل'}
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onDone={clearToast} />}
     </div>
   )
 }

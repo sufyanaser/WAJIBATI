@@ -6,7 +6,6 @@ import { DateNavigator } from '../components/DateNavigator'
 import { Toast, useToast } from '../components/Toast'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
-import { exportA4PNG } from '../utils/exportA4'
 
 // ── types ────────────────────────────────────────────────────────────────────
 interface Child {
@@ -246,6 +245,7 @@ export default function Today() {
       })
       // TODO: replace after published_by migration (see docs/implementation/ARCHITECTURE-AUDIT.md)
       const publisherName = 'مسؤول المدرسة'
+      const { exportA4PNG } = await import('../utils/exportA4')
       const blob = await exportA4PNG({
         date: toISO(date),
         classLabel: child.section_label,
@@ -289,16 +289,24 @@ export default function Today() {
   if (childrenLoaded && !children.length) {
     return (
       <main className="screen" dir="rtl">
-        <div className="top-bar">
-          <h1 className="app-title">واجباتي</h1>
-          <button
-            className="icon-btn"
-            onClick={handleLogout}
-          >
-            خروج
-          </button>
+        <header className="today-header">
+          <div className="today-header-top">
+            <div className="brand-identity">
+              <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
+              <div className="today-header-titles">
+                <h1 className="app-title">واجباتي</h1>
+                <p className="school-subtitle">{schoolName}</p>
+              </div>
+            </div>
+            <button className="icon-btn" onClick={handleLogout}>
+              خروج
+            </button>
+          </div>
+        </header>
+        <div className="empty-state">
+          <span className="empty-icon" aria-hidden="true">👨‍👦</span>
+          <p className="empty-msg">لا أبناء مرتبطون بهذا الحساب</p>
         </div>
-        <p className="muted">لا أبناء مرتبطون بهذا الحساب</p>
       </main>
     )
   }
@@ -310,13 +318,19 @@ export default function Today() {
       {/* ── header ─────────────────────────────────────────────────────── */}
       <header className="today-header">
         <div className="today-header-top">
-          <div className="today-header-titles">
-            <h1 className="app-title">واجباتي</h1>
-            <p className="school-subtitle">{schoolName}</p>
+          <div className="brand-identity">
+            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
+            <div className="today-header-titles">
+              <h1 className="app-title">واجباتي</h1>
+              <p className="school-subtitle">{schoolName}</p>
+            </div>
           </div>
-          <button className="icon-btn" onClick={handleLogout}>خروج</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link to="/archive" className="icon-btn">الأرشيف</Link>
+            <button className="icon-btn" onClick={handleLogout}>خروج</button>
+          </div>
         </div>
-        <p className="today-date-display">{todayArabic}</p>
+        <p className="today-date-display">📅 {todayArabic}</p>
       </header>
 
       {/* ── push opt-in banner ─────────────────────────────────────────── */}
@@ -470,15 +484,16 @@ export default function Today() {
                   />
                 )}
                 <button
+                  type="button"
                   onClick={handleExportA4PDF}
                   disabled={exporting || loading}
+                  className="icon-btn"
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '.4rem',
-                    padding: '.5rem 1rem', background: 'var(--card2)',
-                    border: '1.5px solid var(--accent)', borderRadius: '.5rem',
-                    color: 'var(--accent)', cursor: (exporting || loading) ? 'wait' : 'pointer',
-                    fontSize: '.875rem', fontWeight: 600, fontFamily: 'inherit',
-                    opacity: (exporting || loading) ? 0.6 : 1, whiteSpace: 'nowrap',
+                    borderColor: 'var(--accent)',
+                    color: 'var(--accent)',
+                    cursor: (exporting || loading) ? 'wait' : 'pointer',
+                    opacity: (exporting || loading) ? 0.6 : 1,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {exporting ? '⏳ جارٍ التصدير…' : '🖼 تصدير صورة A4'}
@@ -579,7 +594,9 @@ export default function Today() {
 
       {/* ── bottom sticky archive bar ───────────────────────────────────── */}
       <nav className="bottom-bar" aria-label="التنقل الرئيسي">
-        <Link to="/archive" className="archive-link">الأرشيف</Link>
+        <div className="bottom-bar-inner">
+          <Link to="/archive" className="archive-link">📚 تصفح أرشيف الواجبات</Link>
+        </div>
       </nav>
     </main>
   )

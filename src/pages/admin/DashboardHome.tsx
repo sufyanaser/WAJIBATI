@@ -1,17 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+
+// ── types ──────────────────────────────────────────────────────────────────────
 
 interface Stats {
   sections: number
   students: number
   guardians: number
   teachers: number
+  subjects: number
   homeworkToday: number
   noticesActive: number
 }
 
-interface Assignment {
+interface AssignmentRow {
   teacher_name: string
   subject_name: string
   section_label: string
@@ -35,6 +38,7 @@ const statLabels: Record<keyof Stats, string> = {
   sections:      'شعبة',
   noticesActive: 'إشعار فعال',
   guardians:     'ولي أمر',
+  subjects:      'مادة',
 }
 
 // ── component ──────────────────────────────────────────────────────────────────
@@ -42,66 +46,93 @@ const statLabels: Record<keyof Stats, string> = {
 export default function DashboardHome() {
   const nav = useNavigate()
   const [stats, setStats] = useState<Stats | null>(null)
-  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       const today = new Date().toLocaleDateString('en-CA')
-      const [secs, studs, guards, teachers, hw, notices, ta] = await Promise.all([
+      const nowIso = new Date().toISOString()
+
+      const [secs, studs, guards, teachers, subjects, hw, notices, ta, tt] = await Promise.all([
         supabase.from('sections').select('id', { count: 'exact', head: true }).eq('active', true),
         supabase.from('students').select('id', { count: 'exact', head: true }).eq('active', true),
         supabase.from('guardians').select('id', { count: 'exact', head: true }).eq('active', true),
         supabase.from('teachers').select('id', { count: 'exact', head: true }).eq('active', true),
+        supabase.from('subjects').select('id', { count: 'exact', head: true }),
         supabase.from('homework').select('id', { count: 'exact', head: true })
           .eq('due_date', today).eq('status', 'published'),
         supabase.from('notices').select('id', { count: 'exact', head: true })
-          .lte('publish_at', new Date().toISOString())
-          .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString()),
+          .lte('publish_at', nowIso)
+          .or('expires_at.is.null,expires_at.gt.' + nowIso),
+        supabase.from('teaching_assignments')
+          .select('teacher:teachers(full_name), subject:subjects(name), section:sections(letter, stage:stages(name, branch))')
+          .eq('active', true)
+          .order('id'),
         supabase.from('timetable')
           .select('teacher:teachers(full_name), subject:subjects(name), section:sections(letter, stage:stages(name, branch))')
           .not('teacher_id', 'is', null)
-          .limit(6),
+          .limit(8),
       ])
 
       setStats({
-        sections:      secs.count   ?? 0,
-        students:      studs.count  ?? 0,
-        guardians:     guards.count ?? 0,
+        sections:      secs.count     ?? 0,
+        students:      studs.count    ?? 0,
+        guardians:     guards.count   ?? 0,
         teachers:      teachers.count ?? 0,
-        homeworkToday: hw.count     ?? 0,
-        noticesActive: notices.count ?? 0,
+        subjects:      subjects.count ?? 0,
+        homeworkToday: hw.count       ?? 0,
+        noticesActive: notices.count  ?? 0,
       })
 
-      type TaRow = {
+      type RawRow = {
         teacher: { full_name: string } | null
         subject: { name: string } | null
         section: { letter: string; stage: { name: string; branch: string } } | null
       }
 
-      const rows = ((ta.data ?? []) as unknown as TaRow[])
-        .filter(r => r.teacher && r.subject && r.section)
-        .map(r => ({
-          teacher_name:  r.teacher!.full_name,
-          subject_name:  r.subject!.name,
-          section_label: `${r.section!.stage.name} ${r.section!.stage.branch} / ${r.section!.letter}`,
-        }))
+      const rawTa = (ta.data ?? []) as unknown as RawRow[]
+      const rawTt = (tt.data ?? []) as unknown as RawRow[]
+      const source = rawTa.length > 0 ? rawTa : rawTt
 
-      setAssignments(rows)
+      const map = new Map<string, { teacher_name: string; subject_name: string; sections: string[] }>()
+      for (const r of source) {
+        if (!r.teacher || !r.subject || !r.section) continue
+        const key = `${r.teacher.full_name}|||${r.subject.name}`
+        const secLabel = `${r.section.stage.name} ${r.section.stage.branch} / ${r.section.letter}`
+        const existing = map.get(key)
+        if (existing) {
+          if (!existing.sections.includes(secLabel)) existing.sections.push(secLabel)
+        } else {
+          map.set(key, {
+            teacher_name: r.teacher.full_name,
+            subject_name: r.subject.name,
+            sections: [secLabel],
+          })
+        }
+      }
+
+      setAssignments(
+        Array.from(map.values()).map(v => ({
+          teacher_name: v.teacher_name,
+          subject_name: v.subject_name,
+          section_label: v.sections.join(' ، '),
+        }))
+      )
       setLoading(false)
     }
-    load()
+    void load()
   }, [])
 
   return (
     <div dir="rtl" className="dash-page">
-
       {/* ── school header ──────────────────────────────────────────────── */}
       <div className="dash-header">
-        <span className="dash-header__icon">🎓</span>
+        <img src="/icon-192.png" alt="شعار المدرسة" className="dash-logo" width={54} height={54} />
+        <span className="dash-header__icon" aria-hidden="true">🎓</span>
         <div>
-          <h1 className="dash-header__title">واجباتي | لوحة الإدارة</h1>
-          <p className="dash-header__sub">مركز إدارة المدرسة</p>
+          <h1 className="dash-header__title">واجباتي | لوحة الإدارة — إعدادية الرميلة للبنين</h1>
+          <p className="dash-header__sub">مركز إدارة المدرسة · مديرية تربية الأنبار · الرمادي</p>
         </div>
       </div>
 
@@ -110,6 +141,7 @@ export default function DashboardHome() {
         {navCards.map(card => (
           <button
             key={card.route}
+            type="button"
             className="dash-card"
             onClick={() => nav(card.route)}
           >
@@ -160,7 +192,7 @@ export default function DashboardHome() {
               </tbody>
             </table>
             <p className="dash-table__note">
-              بيانات حقيقية من جدول الحصص — لإدارة التفاصيل انتقل إلى الجدول الدراسي
+              بيانات حقيقية من جدول الحصص وإسناد المدرسين — لإدارة التفاصيل انتقل إلى الجدول الدراسي
             </p>
           </div>
         )}

@@ -3,59 +3,52 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-// ── admin context ──────────────────────────────────────────────────────────────
+// ── Admin context (shared across child routes) ─────────────────────────────────
 
-interface AdminCtx { user: User; role: string }
-const AdminContext = createContext<AdminCtx | null>(null)
-export const useAdmin = () => useContext(AdminContext)
-
-// ── styles ─────────────────────────────────────────────────────────────────────
-
-const shell: React.CSSProperties = {
-  maxWidth: 960,
-  margin: '0 auto',
-  padding: '16px 16px env(safe-area-inset-bottom)',
-  display: 'grid',
-  gap: 14,
+export interface AdminCtx {
+  user: User | null
+  role: 'owner' | 'editor' | 'viewer'
+  ready: boolean
 }
 
-const navLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 6,
-  background: isActive ? 'var(--accent)' : 'transparent',
-  color: isActive ? '#08152A' : 'var(--muted)',
-  border: `1px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
-  borderRadius: 10,
-  padding: '9px 16px',
-  fontSize: '.88rem',
-  fontWeight: 700,
-  textDecoration: 'none',
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-  transition: 'background .15s, color .15s',
-})
+const AdminContext = createContext<AdminCtx>({ user: null, role: 'viewer', ready: false })
+export const useAdmin = () => useContext(AdminContext)
+
+// ── Nav items ──────────────────────────────────────────────────────────────────
+
+const NAV_ITEMS = [
+  { to: '/admin/dashboard', label: 'الرئيسية', icon: '🏠' },
+  { to: '/admin/homework',  label: 'الواجبات', icon: '📚' },
+  { to: '/admin/notices',   label: 'الإشعارات', icon: '🔔' },
+  { to: '/admin/master-data', label: 'بيانات المدرسة', icon: '🏫' },
+  { to: '/admin/import',    label: 'الاستيراد وPIN', icon: '📥' },
+]
 
 // ── component ──────────────────────────────────────────────────────────────────
 
 export default function AdminShell() {
   const nav = useNavigate()
-  const [ctx, setCtx] = useState<AdminCtx | null>(null)
-  const [checking, setChecking] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
+  const [role, setRole] = useState<'owner' | 'editor' | 'viewer'>('viewer')
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session) { nav('/admin/login', { replace: true }); return }
+      const u = data.session.user
       const { data: adm, error } = await supabase
-        .from('admins').select('role')
-        .eq('user_id', data.session.user.id).maybeSingle()
+        .from('admins')
+        .select('role')
+        .eq('user_id', u.id)
+        .maybeSingle()
       if (error || !adm) {
         await supabase.auth.signOut()
         nav('/admin/login', { replace: true })
         return
       }
-      setCtx({ user: data.session.user, role: adm.role })
-      setChecking(false)
+      setUser(u)
+      setRole((adm as { role: 'owner' | 'editor' | 'viewer' }).role)
+      setReady(true)
     })
   }, [nav])
 
@@ -64,73 +57,66 @@ export default function AdminShell() {
     nav('/admin/login')
   }
 
-  if (checking) {
+  if (!ready) {
     return (
-      <main style={{ ...shell, maxWidth: 520 }} dir="rtl">
+      <main className="admin-shell-container" dir="rtl" style={{ maxWidth: 520 }}>
         <p className="muted" style={{ textAlign: 'center', marginTop: 48 }}>جارٍ التحقق…</p>
       </main>
     )
   }
 
-  const displayName = ctx?.user.email?.replace(/@admin\.rumaila\.local$/, '') ?? null
+  // Display username instead of synthetic @admin.rumaila.local email
+  const displayName = user?.email
+    ? user.email.replace(/@admin\.rumaila\.local$/i, '')
+    : ''
 
   return (
-    <AdminContext.Provider value={ctx}>
-      <main style={shell} dir="rtl">
-        {/* ── top bar ─────────────────────────────────────────────── */}
-        <div style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 14,
-          padding: '12px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>🎓</span>
-            <div>
-              <h1 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--accent)', lineHeight: 1.2 }}>
-                واجباتي
-              </h1>
-              <p style={{ margin: 0, fontSize: '.72rem', color: 'var(--muted)' }}>لوحة الإدارة</p>
+    <AdminContext.Provider value={{ user, role, ready }}>
+      <main className="admin-shell-container" dir="rtl">
+        {/* top bar */}
+        <header className="top-bar">
+          <div className="brand-identity">
+            <img
+              src="/icon-192.png"
+              alt="واجباتي"
+              className="brand-logo"
+              width={44}
+              height={44}
+            />
+            <div className="today-header-titles">
+              <h1 className="app-title">لوحة الإدارة</h1>
+              <p className="school-subtitle">إعدادية الرميلة للبنين</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             {displayName && (
-              <span style={{
-                fontSize: '.8rem',
-                color: 'var(--muted)',
-                background: 'var(--card2)',
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                padding: '4px 10px',
-              }}>{displayName}</span>
+              <span
+                className="badge-muted"
+                style={{ direction: 'ltr', padding: '5px 12px', fontSize: '.78rem' }}
+              >
+                {displayName}
+              </span>
             )}
-            <button className="icon-btn" onClick={handleLogout} style={{ padding: '6px 14px', fontSize: '.85rem' }}>
+            <button type="button" className="icon-btn" onClick={handleLogout}>
               خروج
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* ── nav tabs ─────────────────────────────────────────────── */}
-        <nav style={{
-          display: 'flex',
-          gap: 4,
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 12,
-          padding: '6px 8px',
-        }}>
-          <NavLink to="/admin/dashboard"   style={navLinkStyle}>🏠 الرئيسية</NavLink>
-          <NavLink to="/admin/homework"    style={navLinkStyle}>📚 واجبات</NavLink>
-          <NavLink to="/admin/notices"     style={navLinkStyle}>🔔 إشعارات</NavLink>
-          <NavLink to="/admin/master-data" style={navLinkStyle}>🏫 المدرسة</NavLink>
-          <NavLink to="/admin/import"      style={navLinkStyle}>👤 الحسابات</NavLink>
+        {/* nav tabs */}
+        <nav className="child-tabs" aria-label="أقسام لوحة الإدارة">
+          {NAV_ITEMS.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/admin/dashboard'}
+              className={({ isActive }) => 'tab' + (isActive ? ' active' : '')}
+              style={{ textDecoration: 'none' }}
+            >
+              {item.icon} {item.label}
+            </NavLink>
+          ))}
         </nav>
 
         {/* routed content */}

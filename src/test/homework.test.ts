@@ -763,3 +763,124 @@ describe('Attachment hardening — 10 scenarios', () => {
   })
 })
 
+// ── PART D: Redesigned UI & Workflow Coverage ─────────────────────────────────
+
+describe('Redesigned UI & Workflows — HomeworkCard, NoticesPage, Auto Teacher Assignment', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'admin-uid' } } } })
+  })
+
+  it('HomeworkCard renders image thumbnail and opens accessible modal lightbox on click', async () => {
+    const { HomeworkCard } = await import('../components/HomeworkCard')
+    render(
+      React.createElement(HomeworkCard, {
+        subject: 'الفيزياء',
+        subjectColor: '#38B2AC',
+        period: 2,
+        teacher: 'حسين فاضل زيدان',
+        body: 'حل مسائل الفصل الثاني',
+        attachments: [{ id: 'att-img', storage_path: '1/hw-1/board.jpg', mime: 'image/jpeg' }],
+        signedUrls: { '1/hw-1/board.jpg': 'https://example.com/board.jpg' },
+      })
+    )
+
+    expect(screen.getByText('الفيزياء')).toBeInTheDocument()
+    expect(screen.getByText('حسين فاضل زيدان')).toBeInTheDocument()
+    const thumbBtn = screen.getByRole('button', { name: 'عرض الصورة board.jpg' })
+    expect(thumbBtn).toBeInTheDocument()
+
+    await act(async () => {
+      fireEvent.click(thumbBtn)
+    })
+
+    const dialog = screen.getByRole('dialog', { name: 'معاينة المرفق' })
+    expect(dialog).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'إغلاق' })).toBeInTheDocument()
+  })
+
+  it('NoticesPage supports editing an existing notice (full CRUD)', async () => {
+    const updateSpy = vi.fn(() => makeQB({ data: null, error: null }))
+    mockDbFrom.mockImplementation((table: string) => {
+      if (table === 'admins') return makeQB({ data: { role: 'owner' } })
+      if (table === 'sections') return makeQB({ data: [{ id: 1, letter: 'أ', stage: { name: 'الرابع', branch: 'علمي' } }] })
+      if (table === 'notices') {
+        const qb = makeQB({
+          data: [{
+            id: 'not-1',
+            title: 'اجتماع أولياء الأمور',
+            body: 'يوم الخميس الساعة العاشرة',
+            priority: 2,
+            section_id: 1,
+            publish_at: '2026-10-21T08:00:00Z',
+            expires_at: null,
+          }],
+        })
+        qb.update = updateSpy
+        return qb
+      }
+      return makeQB({ data: null })
+    })
+
+    const { default: NoticesPage } = await import('../pages/admin/NoticesPage')
+    render(
+      React.createElement(MemoryRouter, { initialEntries: ['/admin/notices'] },
+        React.createElement(NoticesPage))
+    )
+
+    await waitFor(() => expect(screen.getByText('اجتماع أولياء الأمور')).toBeInTheDocument())
+    const editBtn = screen.getByRole('button', { name: 'تعديل الإشعار' })
+    await act(async () => {
+      fireEvent.click(editBtn)
+    })
+
+    expect(screen.getByText('تعديل الإشعار')).toBeInTheDocument()
+    const titleInput = screen.getByLabelText('عنوان الإشعار') as HTMLInputElement
+    expect(titleInput.value).toBe('اجتماع أولياء الأمور')
+
+    await act(async () => {
+      fireEvent.change(titleInput, { target: { value: 'اجتماع أولياء الأمور — محدث' } })
+    })
+
+    const saveBtn = screen.getByRole('button', { name: 'حفظ التعديلات' })
+    await act(async () => {
+      fireEvent.click(saveBtn)
+    })
+
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'اجتماع أولياء الأمور — محدث',
+    }))
+  })
+
+  it('Admin automatically assigns teacher when selecting a subject in a period slot', async () => {
+    mockDbFrom.mockImplementation((table: string) => {
+      if (table === 'admins') return makeQB({ data: { role: 'owner' } })
+      if (table === 'notices') return makeQB({ data: [] })
+      if (table === 'sections') return makeQB({
+        data: [{ id: 1, letter: 'أ', stage: { name: 'الرابع', branch: 'علمي' } }],
+      })
+      if (table === 'teachers') return makeQB({
+        data: [{ id: 77, full_name: 'أنس طلال عبدالحميد', subject_id: 1 }],
+      })
+      if (table === 'timetable') return makeQB({ data: [] })
+      if (table === 'homework') return makeQB({ data: [] })
+      return makeQB({ data: null })
+    })
+
+    const { default: Admin } = await import('../pages/Admin')
+    render(
+      React.createElement(MemoryRouter, { initialEntries: ['/admin'] },
+        React.createElement(Admin))
+    )
+
+    await waitFor(() => screen.getAllByText('-- اختر المادة --'))
+    const subjectSelects = document.querySelectorAll('select.subject-select')
+    await act(async () => {
+      fireEvent.change(subjectSelects[0], { target: { value: '1' } })
+    })
+
+    await waitFor(() => expect(screen.getByText('أنس طلال عبدالحميد')).toBeInTheDocument())
+  })
+})
+
+

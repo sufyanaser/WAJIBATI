@@ -1,0 +1,1 @@
+- Custom domain suffix @guardian.rumaila.local is purely synthetic and does not require actual SMTP mail servers.

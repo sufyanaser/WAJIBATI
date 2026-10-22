@@ -1,0 +1,1 @@
+- Uses React Router 6 with nested routes under /admin.

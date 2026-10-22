@@ -1,0 +1,1 @@
+- Maintain index parity on frequently filtered columns (e.g. idx_homework_section_date).

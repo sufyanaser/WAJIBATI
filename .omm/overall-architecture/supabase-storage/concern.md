@@ -1,0 +1,1 @@
+- High resolution image uploads by teachers on mobile devices can consume excessive storage and guardian cellular bandwidth if uncompressed.

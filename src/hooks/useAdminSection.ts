@@ -14,6 +14,10 @@ interface HwRow {
   period: number
   body: string
   status: 'draft' | 'published' | 'archived'
+  subject_id?: number
+  teacher_id?: number | null
+  subject?: { id: number; name: string; color: string | null } | null
+  teacher?: { id: number; full_name: string } | null
   attachments: AttachmentRow[]
 }
 
@@ -50,6 +54,14 @@ export interface UseAdminSectionResult {
   periods: PeriodSlot[]
   loading: boolean
   setBodies: (bodies: Record<number, string>) => void
+  setPeriodSubject: (
+    period: number,
+    subjectId: number | null,
+    subjectName: string,
+    teacherId: number | null,
+    teacherName: string,
+  ) => void
+  deleteHomework: (period: number) => Promise<{ ok: boolean; error?: string }>
   save: () => Promise<SaveResult>
   publish: () => Promise<PublishResult>
   uploadAttachment: (period: number, file: File) => Promise<{ ok: boolean; error?: string }>
@@ -92,36 +104,56 @@ export function useAdminSection(
     const hw = (hwR.data ?? []) as unknown as HwRow[]
     const hwMap = new Map(hw.map(r => [r.period, r]))
 
-    // For slots that have a subject but no teacher in timetable, try teaching_assignments
-    // (falls back silently if the table/function doesn't exist yet)
-    const slotsNeeding = tt.filter(s => s.subject && !s.teacher).map(s => s.subject!.id)
-    const taMap = new Map<number, { id: number; full_name: string }>()
-    if (slotsNeeding.length > 0) {
-      for (const subjectId of slotsNeeding) {
-        const { data } = await supabase.rpc('get_section_subject_teachers', {
-          p_section_id: sid,
-          p_subject_id: subjectId,
-        }).limit(1)
-        if (data && (data as Array<{ teacher_id: number; full_name: string }>).length > 0) {
-          const first = (data as Array<{ teacher_id: number; full_name: string }>)[0]
-          taMap.set(subjectId, { id: first.teacher_id, full_name: first.full_name })
-        }
-      }
+    // Build teaching_assignments fallback map for slots where teacher is null
+    const unassignedSubjectIds = [
+      ...new Set(
+        tt
+          .filter(s => s.subject?.id != null && s.teacher === null)
+          .map(s => s.subject!.id),
+      ),
+    ]
+    const taTeacherMap = new Map<number, { id: number; full_name: string }>()
+    const rpcFn = (supabase as unknown as {
+      rpc?: (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>
+    }).rpc
+
+    if (unassignedSubjectIds.length > 0 && typeof rpcFn === 'function') {
+      await Promise.all(
+        unassignedSubjectIds.map(async subId => {
+          try {
+            const { data } = await rpcFn('get_section_subject_teachers', {
+              p_section_id: sid,
+              p_subject_id: subId,
+            })
+            const rows = (data ?? []) as { teacher_id: number; full_name: string }[]
+            if (rows.length > 0) {
+              taTeacherMap.set(subId, { id: rows[0].teacher_id, full_name: rows[0].full_name })
+            }
+          } catch {
+            // Ignore RPC errors if migration not applied yet
+          }
+        }),
+      )
     }
 
     const slots: PeriodSlot[] = Array.from({ length: 6 }, (_, i) => {
       const period = i + 1
       const slot = tt.find(s => s.period === period)
       const ex = hwMap.get(period)
-      // Prefer timetable teacher; fall back to teaching_assignment if missing
-      const fallbackTeacher = slot?.subject ? taMap.get(slot.subject.id) : undefined
-      const resolvedTeacher = slot?.teacher ?? fallbackTeacher ?? null
+      const fallbackTeacher =
+        slot?.teacher === null && slot?.subject?.id != null
+          ? (taTeacherMap.get(slot.subject.id) ?? null)
+          : null
+      const resolvedTeacher = slot?.teacher ?? fallbackTeacher
       return {
         period,
-        subject_id: slot?.subject?.id ?? null,
-        teacher_id: resolvedTeacher?.id ?? null,
-        subject: slot?.subject?.name ?? '',
-        teacher: resolvedTeacher?.full_name ?? '',
+        subject_id: slot?.subject?.id ?? ex?.subject_id ?? null,
+        teacher_id: resolvedTeacher?.id ?? ex?.teacher_id ?? null,
+        subject: slot?.subject?.name ?? ex?.subject?.name ?? '',
+        teacher: resolvedTeacher?.full_name ?? ex?.teacher?.full_name ?? '',
         hw_id: ex?.id ?? null,
         body: ex?.body ?? '',
         status: ex?.status ?? null,
@@ -145,6 +177,48 @@ export function useAdminSection(
 
   function setBodies(bodies: Record<number, string>) {
     setBodyOverrides(prev => ({ ...prev, ...bodies }))
+  }
+
+  function setPeriodSubject(
+    period: number,
+    subjectId: number | null,
+    subjectName: string,
+    teacherId: number | null,
+    teacherName: string,
+  ) {
+    setPeriods(prev =>
+      prev.map(p =>
+        p.period === period
+          ? {
+              ...p,
+              subject_id: subjectId,
+              subject: subjectName,
+              teacher_id: teacherId,
+              teacher: teacherName,
+            }
+          : p,
+      ),
+    )
+  }
+
+  async function deleteHomework(period: number): Promise<{ ok: boolean; error?: string }> {
+    const slot = periodsWithOverrides.find(p => p.period === period)
+    if (!slot?.hw_id) return { ok: false, error: 'لا يوجد واجب محفوظ لحذفه' }
+    const { error } = await supabase.from('homework').delete().eq('id', slot.hw_id)
+    if (error) return { ok: false, error: error.message }
+    setPeriods(prev =>
+      prev.map(p =>
+        p.period === period
+          ? { ...p, hw_id: null, body: '', status: null, attachments: [] }
+          : p,
+      ),
+    )
+    setBodyOverrides(prev => {
+      const next = { ...prev }
+      delete next[period]
+      return next
+    })
+    return { ok: true }
   }
 
   async function upsertAll(status: 'draft' | 'published'): Promise<SaveResult> {
@@ -341,5 +415,15 @@ export function useAdminSection(
     }
   }
 
-  return { periods: periodsWithOverrides, loading, setBodies, save, publish, uploadAttachment, deleteAttachment }
+  return {
+    periods: periodsWithOverrides,
+    loading,
+    setBodies,
+    setPeriodSubject,
+    deleteHomework,
+    save,
+    publish,
+    uploadAttachment,
+    deleteAttachment,
+  }
 }

@@ -1,96 +1,164 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAdmin } from './AdminShell'
+import { Spinner } from '../../components/Spinner'
+import { Toast, useToast } from '../../components/Toast'
 
-interface Subject { id: number; name: string; color: string | null; sort: number }
-
-const rowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr auto',
-  gap: 10,
-  alignItems: 'center',
-  padding: '10px 14px',
-  background: 'var(--card)',
-  border: '1px solid var(--border)',
-  borderRadius: 12,
+interface SubjectRow {
+  id: number
+  external_key: string | null
+  name: string
+  color: string | null
+  sort: number
 }
 
 export default function SubjectsPage() {
-  const [subjects, setSubjects] = useState<Subject[]>([])
+  const { ready, role } = useAdmin()
+  const [rows, setRows] = useState<SubjectRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<SubjectRow | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
-  const [color, setColor] = useState('#1769D2')
+  const [color, setColor] = useState('#3D84C8')
+  const [sort, setSort] = useState(10)
   const [saving, setSaving] = useState(false)
-  const [editId, setEditId] = useState<number | null>(null)
-  const [err, setErr] = useState('')
+  const { toast, show: showToast, clear: clearToast } = useToast()
+
+  const canEdit = role === 'owner' || role === 'editor'
+
+  useEffect(() => {
+    if (!ready) return
+    void load()
+  }, [ready])
 
   async function load() {
-    const { data } = await supabase.from('subjects').select('id, name, color, sort').order('sort')
-    setSubjects((data ?? []) as Subject[])
+    setLoading(true)
+    const { data } = await supabase.from('subjects').select('id, external_key, name, color, sort').order('sort')
+    setRows((data ?? []) as SubjectRow[])
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
-
-  function startEdit(s: Subject) {
-    setEditId(s.id); setName(s.name); setColor(s.color ?? '#1769D2'); setErr('')
+  function startAdd() {
+    setEditing(null)
+    setName('')
+    setColor('#3D84C8')
+    setSort((rows.length + 1) * 10)
+    setShowForm(true)
   }
 
-  function cancel() { setEditId(null); setName(''); setColor('#1769D2'); setErr('') }
+  function startEdit(r: SubjectRow) {
+    setEditing(r)
+    setName(r.name)
+    setColor(r.color ?? '#3D84C8')
+    setSort(r.sort)
+    setShowForm(true)
+  }
 
-  async function save(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) { setErr('الاسم مطلوب'); return }
-    setSaving(true); setErr('')
-    if (editId) {
-      const { error } = await supabase.from('subjects').update({ name: name.trim(), color }).eq('id', editId)
-      if (error) { setErr(error.message); setSaving(false); return }
+    if (!name.trim()) return
+    setSaving(true)
+
+    if (editing) {
+      const { error } = await supabase
+        .from('subjects')
+        .update({ name: name.trim(), color, sort })
+        .eq('id', editing.id)
+      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+      showToast('تم تعديل المادة ✓', 'success')
     } else {
-      const maxSort = subjects.reduce((m, s) => Math.max(m, s.sort), 0)
-      const { error } = await supabase.from('subjects').insert({ name: name.trim(), color, sort: maxSort + 1 })
-      if (error) { setErr(error.message); setSaving(false); return }
+      const extKey = `SUB-${Date.now().toString(36).toUpperCase()}`
+      const { error } = await supabase
+        .from('subjects')
+        .insert({ external_key: extKey, name: name.trim(), color, sort })
+      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+      showToast('تمت إضافة المادة ✓', 'success')
     }
-    cancel(); await load(); setSaving(false)
+
+    setShowForm(false)
+    setEditing(null)
+    await load()
+    setSaving(false)
   }
+
+  if (!ready || loading) return <Spinner />
 
   return (
-    <div dir="rtl" style={{ display: 'grid', gap: 12 }}>
-      <h2 style={{ margin: 0, fontSize: '1.1rem' }}>المواد الدراسية</h2>
-
-      <form onSubmit={save} style={{ display: 'grid', gap: 8, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'end' }}>
-          <input placeholder="اسم المادة *" value={name} onChange={e => setName(e.target.value)} required />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: '.78rem', color: 'var(--muted)' }}>اللون</label>
-            <input type="color" value={color} onChange={e => setColor(e.target.value)}
-              style={{ width: 44, height: 38, padding: 2, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', cursor: 'pointer' }} />
-          </div>
+    <div className="dash-page" dir="rtl">
+      <div className="dash-toolbar">
+        <div>
+          <h2 className="dash-page-title">المواد الدراسية</h2>
+          <span className="muted">{rows.length} مادة مسجلة</span>
         </div>
-        {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={saving} style={{ flex: 1 }}>
-            {saving ? '…' : editId ? 'حفظ التعديل' : 'إضافة مادة'}
+        {canEdit && (
+          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
+            + إضافة مادة
           </button>
-          {editId && <button type="button" className="icon-btn" onClick={cancel}>إلغاء</button>}
-        </div>
-      </form>
+        )}
+      </div>
 
-      {loading
-        ? <p className="muted">جارٍ التحميل…</p>
-        : (
-          <div style={{ display: 'grid', gap: 6 }}>
-            {subjects.map(s => (
-              <div key={s.id} style={rowStyle}>
-                <div style={{
-                  width: 12, height: 12, borderRadius: '50%',
-                  background: s.color ?? 'var(--muted)', flexShrink: 0
-                }} />
-                <span style={{ fontWeight: 500 }}>{s.name}</span>
-                <button className="icon-btn" style={{ fontSize: '.8rem' }} onClick={() => startEdit(s)}>تعديل</button>
+      {showForm && (
+        <form className="dash-form" onSubmit={handleSave}>
+          <h3 className="dash-form-title">{editing ? 'تعديل المادة' : 'إضافة مادة جديدة'}</h3>
+          <div className="dash-form-grid">
+            <label>
+              <span>اسم المادة *</span>
+              <input value={name} onChange={e => setName(e.target.value)} required placeholder="مثال: الرياضيات" />
+            </label>
+            <label>
+              <span>اللون</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input type="color" value={color} onChange={e => setColor(e.target.value)} style={{ width: 48, height: 38, padding: 2, cursor: 'pointer' }} />
+                <input value={color} onChange={e => setColor(e.target.value)} dir="ltr" style={{ flex: 1 }} />
               </div>
-            ))}
+            </label>
+            <label>
+              <span>الترتيب</span>
+              <input type="number" value={sort} onChange={e => setSort(Number(e.target.value))} />
+            </label>
           </div>
-        )
-      }
+          <div className="dash-form-actions">
+            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
+            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+          </div>
+        </form>
+      )}
+
+      <div className="dash-table-wrap">
+        <table className="dash-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>اللون</th>
+              <th>اسم المادة</th>
+              <th>الترتيب</th>
+              {canEdit && <th>إجراءات</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={r.id}>
+                <td className="muted">{i + 1}</td>
+                <td>
+                  <span
+                    className="dash-color-dot"
+                    style={{ background: r.color ?? '#8899AA' }}
+                  />
+                </td>
+                <td><strong>{r.name}</strong></td>
+                <td className="muted">{r.sort}</td>
+                {canEdit && (
+                  <td>
+                    <button type="button" className="icon-btn" onClick={() => startEdit(r)}>تعديل</button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onDone={clearToast} />}
     </div>
   )
 }

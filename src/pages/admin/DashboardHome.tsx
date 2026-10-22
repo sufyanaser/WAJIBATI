@@ -9,6 +9,7 @@ import {
   ShieldIcon,
   BellIcon,
   FamilyIcon,
+  DatabaseIcon,
 } from '../../components/Icons'
 
 // ── types ──────────────────────────────────────────────────────────────────────
@@ -32,22 +33,22 @@ interface AssignmentRow {
 // ── nav cards ──────────────────────────────────────────────────────────────────
 
 const navCards = [
-  { label: 'الطلاب والشعب',        icon: GraduationCapIcon, route: '/admin/students',  statKey: 'students' as const },
-  { label: 'الهيئة التدريسية',     icon: UsersIcon,          route: '/admin/teachers',  statKey: 'teachers' as const },
-  { label: 'الواجبات اليومية',     icon: BookIcon,           route: '/admin/homework',  statKey: 'homeworkToday' as const },
-  { label: 'الجدول الدراسي',       icon: CalendarIcon,       route: '/admin/timetable', statKey: 'sections' as const },
-  { label: 'الإشعارات المدرسية',   icon: BellIcon,           route: '/admin/notices',   statKey: 'noticesActive' as const },
-  { label: 'الإعدادات والصلاحيات', icon: ShieldIcon,         route: '/admin/settings',  statKey: 'guardians' as const },
+  { label: 'الواجبات اليومية',        icon: BookIcon,           route: '/admin/homework',   statKey: 'homeworkToday' as const },
+  { label: 'الجدول الدراسي',          icon: CalendarIcon,       route: '/admin/timetable',  statKey: 'sections' as const },
+  { label: 'الإعلانات والتنبيهات',    icon: BellIcon,           route: '/admin/notices',    statKey: 'noticesActive' as const },
+  { label: 'قاعدة البيانات المدرسية', icon: DatabaseIcon,       route: '/admin/master-data', statKey: 'students' as const },
+  { label: 'الهيئة التدريسية',        icon: UsersIcon,          route: '/admin/teachers',   statKey: 'teachers' as const },
+  { label: 'الإعدادات والصلاحيات',    icon: ShieldIcon,         route: '/admin/settings',   statKey: 'guardians' as const },
 ]
 
 const statLabels: Record<keyof Stats, string> = {
-  students:      'طالب',
-  teachers:      'مدرس',
+  students:      'طالب مسجل',
+  teachers:      'مدرس نشط',
   homeworkToday: 'واجب اليوم',
-  sections:      'شعبة',
-  noticesActive: 'إشعار فعال',
-  guardians:     'ولي أمر',
-  subjects:      'مادة',
+  sections:      'شعبة دراسية',
+  noticesActive: 'إعلان فعال',
+  guardians:     'ولي أمر مرتبط',
+  subjects:      'مادة دراسية',
 }
 
 // ── component ──────────────────────────────────────────────────────────────────

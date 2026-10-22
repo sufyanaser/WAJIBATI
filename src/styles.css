@@ -1728,7 +1728,7 @@ button:disabled {
   top: 0;
   z-index: 90;
   display: grid;
-  grid-template-columns: 1fr 1.35fr;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px;
   background: rgba(8, 21, 42, 0.92);
   backdrop-filter: blur(10px);
@@ -1747,6 +1747,38 @@ button:disabled {
   font-size: 0.94rem;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.he-btn-export {
+  background: var(--card);
+  color: var(--accent);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  min-height: 46px;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.he-btn-export:hover:not(:disabled) {
+  background: var(--surface2);
+  border-color: var(--accent);
+}
+
+.he-btn-export:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .he-btn-draft:disabled {
@@ -3150,7 +3182,8 @@ button:disabled {
   }
 
   .he-btn-draft,
-  .he-btn-publish {
+  .he-btn-publish,
+  .he-btn-export {
     padding: 10px 8px;
     font-size: 0.85rem;
   }
@@ -3507,11 +3540,14 @@ button:disabled {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--fg);
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
   cursor: pointer;
   align-items: center;
   justify-content: center;
+  transition: all 0.18s ease;
 }
 
 .admin-mobile-menu-btn:hover {

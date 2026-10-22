@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PageHeader } from '../../components/admin/PageHeader'
+import { StatusBadge } from '../../components/admin/StatusBadge'
 import { PlusIcon, EditIcon, CheckIcon, CloseIcon } from '../../components/Icons'
 
 interface StudentRow {
@@ -138,18 +140,20 @@ export default function StudentsPage() {
 
   return (
     <div className="dash-page" dir="rtl">
-      <div className="dash-toolbar">
-        <div>
-          <h2 className="dash-page-title">الطلاب</h2>
-          <span className="muted">عرض {filtered.length} من أصل {students.length} طالب</span>
-        </div>
-        {canEdit && (
-          <button type="button" className="btn btn-primary" onClick={startAdd}>
-            <PlusIcon size={16} />
-            <span>إضافة طالب</span>
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="دليل الطلاب وقوائم الفصول"
+        subtitle={`عرض ${filtered.length} من أصل ${students.length} طالب مسجل`}
+        badgeText={`${students.length} طالب`}
+        badgeVariant="blue"
+        actions={
+          canEdit ? (
+            <button type="button" className="btn btn-primary" onClick={startAdd}>
+              <PlusIcon size={16} />
+              <span>إضافة طالب جديد</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Filters */}
       <div className="dash-filters">
@@ -231,9 +235,10 @@ export default function StudentsPage() {
                     : 'غير مرتبط'}
                 </td>
                 <td>
-                  <span className={`dash-badge ${s.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
-                    {s.active ? 'فعّال' : 'معطّل'}
-                  </span>
+                  <StatusBadge
+                    variant={s.active ? 'active' : 'suspended'}
+                    label={s.active ? 'فعّال' : 'معطّل'}
+                  />
                 </td>
                 {canEdit && (
                   <td>

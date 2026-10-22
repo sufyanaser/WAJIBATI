@@ -6,6 +6,7 @@ import type { AttachmentRow } from '../../hooks/useAdminSection'
 import { DateNavigator } from '../../components/DateNavigator'
 import { Toast, useToast } from '../../components/Toast'
 import { assertCanWrite } from '../../services/platform'
+import type { HomeworkExportData } from '../../utils/exportHomework'
 import {
   ImageIcon,
   FileTextIcon,
@@ -15,6 +16,7 @@ import {
   CheckIcon,
   SendIcon,
   TrashIcon,
+  DownloadIcon,
 } from '../../components/Icons'
 
 // ── types ──────────────────────────────────────────────────────────────────────
@@ -164,6 +166,7 @@ export default function HomeworkEntry() {
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishingPeriod, setPublishingPeriod] = useState<number | null>(null)
+  const [exporting, setExporting] = useState(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
   useEffect(() => {
@@ -315,6 +318,43 @@ export default function HomeworkEntry() {
     setPublishing(false)
   }
 
+  async function handleExportA4() {
+    const activeItems = periods
+      .filter(p => p.body.trim().length > 0 || p.subject)
+      .map(p => ({
+        period: p.period,
+        subject: p.subject || `حصة ${p.period}`,
+        teacher: p.teacher || '—',
+        body: p.body.trim() || 'لا يوجد واجب مسجل',
+      }))
+
+    if (activeItems.length === 0) {
+      showToast('لا توجد واجبات أو مواد مسجلة لتصديرها في هذا التاريخ', 'info')
+      return
+    }
+
+    setExporting(true)
+    try {
+      const { exportAsPDF } = await import('../../utils/exportHomework')
+      const sec = sections.find(s => s.id === secId)
+      const exportData: HomeworkExportData = {
+        schoolName: 'إعدادية الرميلة للبنين',
+        sectionName: sec
+          ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}`
+          : 'الشعبة الدراسية',
+        date: toISO(date),
+        items: activeItems,
+      }
+      await exportAsPDF(exportData)
+      showToast('تم تصدير جدول الواجبات A4 بنجاح ✓', 'success')
+    } catch (err) {
+      console.error('A4 export error:', err)
+      showToast('حدث خطأ أثناء تصدير ملف A4', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (!ready) {
     return (
       <div style={{ padding: 24 }} dir="rtl">
@@ -367,7 +407,7 @@ export default function HomeworkEntry() {
         <button
           type="button"
           className="btn btn-secondary he-btn-draft"
-          disabled={saving || publishing || loading}
+          disabled={saving || publishing || loading || exporting}
           onClick={handleSaveDraft}
         >
           <CheckIcon size={16} />
@@ -376,11 +416,22 @@ export default function HomeworkEntry() {
         <button
           type="button"
           className="btn btn-primary he-btn-publish"
-          disabled={saving || publishing || loading}
+          disabled={saving || publishing || loading || exporting}
           onClick={handlePublish}
         >
           <SendIcon size={16} />
           <span>{publishing ? '…' : 'نشر الكل'}</span>
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary he-btn-export"
+          disabled={saving || publishing || loading || exporting}
+          onClick={handleExportA4}
+          aria-label="تصدير A4 للطباعة"
+          title="تصدير جدول واجبات اليوم كملف PDF للطباعة"
+        >
+          <DownloadIcon size={16} />
+          <span>{exporting ? '…' : 'تصدير A4 للطباعة'}</span>
         </button>
       </div>
 

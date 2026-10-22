@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PageHeader } from '../../components/admin/PageHeader'
+import { StatusBadge } from '../../components/admin/StatusBadge'
 import {
   PlusIcon,
   EditIcon,
@@ -121,20 +123,24 @@ export default function SectionsPage() {
 
   if (!ready || loading) return <Spinner />
 
+  const activeCount = sections.filter(s => s.active).length
+
   return (
     <div className="dash-page" dir="rtl">
-      <div className="dash-toolbar">
-        <div>
-          <h2 className="dash-page-title">الشعب الدراسية</h2>
-          <span className="muted">{sections.filter(s => s.active).length} شعبة فعّالة</span>
-        </div>
-        {canEdit && (
-          <button type="button" className="btn btn-primary" onClick={startAdd}>
-            <PlusIcon size={16} />
-            <span>إضافة شعبة</span>
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="إدارة الشعب والمراحل الدراسية"
+        subtitle={`${activeCount} شعبة فعّالة في النظام`}
+        badgeText={`${activeCount} شعبة`}
+        badgeVariant="blue"
+        actions={
+          canEdit ? (
+            <button type="button" className="btn btn-primary" onClick={startAdd}>
+              <PlusIcon size={16} />
+              <span>إضافة شعبة جديدة</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <form className="dash-form" onSubmit={handleSave}>
@@ -181,9 +187,10 @@ export default function SectionsPage() {
           <div key={s.id} className="dash-sec-card">
             <div className="dash-sec-header">
               <strong className="dash-sec-name">{s.stage.name} {s.stage.branch} / {s.letter}</strong>
-              <span className={`dash-badge ${s.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
-                {s.active ? 'فعّالة' : 'معطّلة'}
-              </span>
+              <StatusBadge
+                variant={s.active ? 'active' : 'suspended'}
+                label={s.active ? 'فعّالة' : 'معطّلة'}
+              />
             </div>
             <div className="dash-sec-meta">
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>

@@ -262,6 +262,86 @@ describe('useAdminSection — save', () => {
   })
 })
 
+describe('useAdminSection — deleteHomework', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: [], error: null })
+  })
+
+  it('archives homework (status=archived) instead of hard-deleting', async () => {
+    const updateSpy = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })
+    const deleteSpy = vi.fn()
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      if (table === 'timetable') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: timetableRows, error: null }; return chain
+        })
+      }
+      if (table === 'homework') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: homeworkRows, error: null }; return chain
+        })
+        chain.update = updateSpy
+        chain.delete = deleteSpy
+      }
+      return chain
+    })
+
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.periods[0].hw_id).toBe('hw-1')
+
+    let deleteResult: Awaited<ReturnType<typeof result.current.deleteHomework>> | undefined
+    await act(async () => {
+      deleteResult = await result.current.deleteHomework(1)
+    })
+
+    expect(deleteResult!.ok).toBe(true)
+    // Must call update with status=archived, NOT delete()
+    expect(updateSpy).toHaveBeenCalledWith({ status: 'archived' })
+    expect(deleteSpy).not.toHaveBeenCalled()
+    // Local status must reflect archived
+    expect(result.current.periods[0].status).toBe('archived')
+  })
+
+  it('returns error when no hw_id exists for the period', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      if (table === 'timetable') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: timetableRows, error: null }; return chain
+        })
+      }
+      if (table === 'homework') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: [], error: null }; return chain
+        })
+      }
+      return chain
+    })
+
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // Period 1 has no homework (empty data)
+    let deleteResult: Awaited<ReturnType<typeof result.current.deleteHomework>> | undefined
+    await act(async () => {
+      deleteResult = await result.current.deleteHomework(1)
+    })
+
+    expect(deleteResult!.ok).toBe(false)
+    expect(deleteResult!.error).toContain('لا يوجد')
+  })
+})
+
 describe('useAdminSection — publish', () => {
   beforeEach(() => {
     vi.clearAllMocks()

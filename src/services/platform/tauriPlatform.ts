@@ -12,11 +12,24 @@ import { WebDialogService, WebNotifierService, WebVersionGuard } from './webPlat
 
 // ── Desktop Secure DPAPI Storage Adapter ──
 
+async function nativeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T | null> {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core')
+    return await invoke<T>(cmd, args)
+  } catch {
+    const inv = (window as any).__TAURI__?.core?.invoke || (window as any).__TAURI_INTERNALS__?.invoke
+    if (typeof inv === 'function') {
+      return await inv(cmd, args)
+    }
+    return null
+  }
+}
+
 export class TauriDpapiStorage implements IStorageAdapter {
   private inMemoryCache = new Map<string, string>()
 
   private isTauriAvailable(): boolean {
-    return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+    return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window)
   }
 
   async getItem(key: string): Promise<string | null> {
@@ -28,8 +41,7 @@ export class TauriDpapiStorage implements IStorageAdapter {
     // 2. When running in real Tauri Desktop runtime, call Rust DPAPI IPC
     if (this.isTauriAvailable()) {
       try {
-        const { invoke } = (window as any).__TAURI__.core
-        const decrypted: string | null = await invoke('dpapi_read', { key })
+        const decrypted = await nativeInvoke<string | null>('dpapi_read', { key })
         if (decrypted) {
           this.inMemoryCache.set(key, decrypted)
           return decrypted
@@ -51,8 +63,7 @@ export class TauriDpapiStorage implements IStorageAdapter {
 
     if (this.isTauriAvailable()) {
       try {
-        const { invoke } = (window as any).__TAURI__.core
-        await invoke('dpapi_write', { key, value })
+        await nativeInvoke<void>('dpapi_write', { key, value })
         return
       } catch (err) {
         console.warn('[TauriDPAPI] Native write fallback:', err)
@@ -69,8 +80,7 @@ export class TauriDpapiStorage implements IStorageAdapter {
 
     if (this.isTauriAvailable()) {
       try {
-        const { invoke } = (window as any).__TAURI__.core
-        await invoke('dpapi_delete', { key })
+        await nativeInvoke<void>('dpapi_delete', { key })
         return
       } catch (err) {
         console.warn('[TauriDPAPI] Native delete fallback:', err)

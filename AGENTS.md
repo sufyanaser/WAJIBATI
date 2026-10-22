@@ -1,4 +1,6 @@
-# AGENTS.md — rumaila-homework
+# AGENTS.md — Wajibati (واجباتي) · `wajibati`
+
+Repository: https://github.com/sufyanaser/WAJIBATI (renamed from `sufyanaser/homeworks`; GitHub redirects the old URL). Supabase ref `oconxdrujhjaunvrycdz` is immutable.
 
 Context file for coding agents (Codex / Claude / Copilot). Read fully before any change.
 
@@ -24,7 +26,7 @@ Daily homework PWA for **اعدادية الرميلة للبنين** (Ramadi, A
 ## 3. Layout
 ```
 index.html                 RTL shell, icons
-vite.config.ts             PWA manifest (name واجبات الرميلة, theme #1F3A5F, bg #0F1E33)
+vite.config.ts             PWA manifest (name واجباتي, theme #1F3A5F, bg #0F1E33)
 vercel.json                SPA rewrites; sw.js no-cache
 src/main.tsx, App.tsx      router: /login, /* → Today
 src/lib/supabase.ts        client (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)

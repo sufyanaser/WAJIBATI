@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { HomeworkExportData } from '../utils/exportHomework'
+import { DownloadIcon, ImageIcon, FileTextIcon, RefreshIcon } from './Icons'
 
 interface Props {
   data: HomeworkExportData
@@ -39,7 +40,7 @@ export function ExportButton({ data }: Props) {
           opacity: loading ? 0.6 : 1,
         }}
       >
-        <span aria-hidden="true">{loading ? '⏳' : '↓'}</span>
+        {loading ? <RefreshIcon size={16} /> : <DownloadIcon size={16} />}
         <span>تصدير</span>
       </button>
 
@@ -65,9 +66,9 @@ export function ExportButton({ data }: Props) {
             }}
           >
             {([
-              { key: 'image' as const, label: '🖼 تصدير كصورة PNG' },
-              { key: 'pdf' as const, label: '📄 تصدير كـ PDF' },
-            ]).map(({ key, label }) => (
+              { key: 'image' as const, label: 'تصدير كصورة PNG', icon: ImageIcon },
+              { key: 'pdf' as const, label: 'تصدير كـ PDF', icon: FileTextIcon },
+            ]).map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 type="button"
@@ -75,6 +76,8 @@ export function ExportButton({ data }: Props) {
                 onClick={() => handle(key)}
                 style={{
                   display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
                   justifyContent: 'flex-start',
                   width: '100%',
                   padding: '.75rem 1rem',
@@ -93,7 +96,8 @@ export function ExportButton({ data }: Props) {
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface2)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
               >
-                {label}
+                <Icon size={16} />
+                <span>{label}</span>
               </button>
             ))}
           </div>

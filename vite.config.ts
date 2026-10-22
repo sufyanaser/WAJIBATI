@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const isDesktop = !!process.env.TAURI_ENV_PLATFORM || process.env.VITE_IS_DESKTOP === 'true'
+
 export default defineConfig({
   test: {
     environment: 'jsdom',
@@ -21,6 +23,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      disable: isDesktop,
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
       srcDir: 'src',

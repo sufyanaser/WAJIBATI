@@ -1,4 +1,6 @@
-# واجبات الرميلة — إعدادية الرميلة للبنين
+# واجباتي · Wajibati — إعدادية الرميلة للبنين
+
+Repository: https://github.com/sufyanaser/WAJIBATI · Technical slug: `wajibati`
 
 PWA لعرض الواجبات اليومية لأولياء الأمور + Dashboard للمشرف.
 

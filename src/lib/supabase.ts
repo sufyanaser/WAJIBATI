@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
+import { platform } from '../services/platform'
 
 export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY,
-  { auth: { persistSession: true, autoRefreshToken: true } }
+  {
+    auth: {
+      storage: platform.storage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
 )
 
 /** Validates and normalises to local Iraqi format: 07XXXXXXXXX (11 digits). */

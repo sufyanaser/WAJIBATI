@@ -3,6 +3,16 @@ import { useSearchParams } from 'react-router-dom'
 import ImportPage from './ImportPage'
 import TimetablePage from './TimetablePage'
 import { supabase } from '../../lib/supabase'
+import {
+  PlusIcon,
+  EditIcon,
+  TrashIcon,
+  CheckIcon,
+  CloseIcon,
+  ListIcon,
+  TableIcon,
+  ImportIcon,
+} from '../../components/Icons'
 
 type Row = Record<string, unknown>
 type Option = { value: string | number; label: string }
@@ -438,14 +448,16 @@ export default function MasterDataPage() {
           className={mode === 'manual' ? 'active' : ''}
           onClick={() => setMode('manual')}
         >
-          إضافة وتعديل
+          <EditIcon size={16} />
+          <span>إضافة وتعديل</span>
         </button>
         <button
           type="button"
           className={mode === 'excel' ? 'active' : ''}
           onClick={() => setMode('excel')}
         >
-          استيراد Excel
+          <ImportIcon size={16} />
+          <span>استيراد Excel</span>
         </button>
       </div>
       {mode === 'excel' ? (
@@ -477,10 +489,11 @@ export default function MasterDataPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  className="icon-btn"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => setTimetableView('list')}
                 >
-                  📋 عرض كقائمة تفصيلية
+                  <ListIcon size={16} />
+                  <span>عرض كقائمة تفصيلية</span>
                 </button>
               </div>
               <TimetablePage />
@@ -494,16 +507,18 @@ export default function MasterDataPage() {
                   {entity.key === 'timetable' && (
                     <button
                       type="button"
-                      className="icon-btn"
+                      className="btn btn-secondary btn-sm"
                       onClick={() => setTimetableView('grid')}
                     >
-                      🗓 عرض الجدول الأسبوعي التفاعلي
+                      <TableIcon size={16} />
+                      <span>عرض الجدول الأسبوعي التفاعلي</span>
                     </button>
                   )}
                 </div>
                 {canEdit && (
-                  <button type="button" className="btn-publish-all" onClick={startAdd}>
-                    + إضافة جديد
+                  <button type="button" className="btn btn-primary" onClick={startAdd}>
+                    <PlusIcon size={16} />
+                    <span>إضافة جديد</span>
                   </button>
                 )}
               </div>
@@ -549,18 +564,20 @@ export default function MasterDataPage() {
                     ))}
                   </div>
                   <div className="master-form-actions">
-                    <button type="submit" disabled={busy}>
-                      حفظ
+                    <button type="submit" className="btn btn-primary" disabled={busy}>
+                      <CheckIcon size={16} />
+                      <span>حفظ</span>
                     </button>
                     <button
                       type="button"
-                      className="icon-btn"
+                      className="btn btn-secondary"
                       onClick={() => {
                         setForm({})
                         setEditing(null)
                       }}
                     >
-                      إلغاء
+                      <CloseIcon size={16} />
+                      <span>إلغاء</span>
                     </button>
                   </div>
                 </form>
@@ -590,24 +607,28 @@ export default function MasterDataPage() {
                         {row.active === false && <small>معطّل</small>}
                       </div>
                       {canEdit && (
-                        <div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <button
                             type="button"
-                            className="icon-btn"
+                            className="btn btn-secondary btn-sm"
                             onClick={() => startEdit(row)}
                           >
-                            تعديل
+                            <EditIcon size={14} />
+                            <span>تعديل</span>
                           </button>
                           <button
                             type="button"
-                            className="icon-btn danger"
+                            className="btn btn-danger btn-sm"
                             onClick={() => void toggleOrDelete(row)}
                           >
-                            {entity.active
-                              ? row.active === false
-                                ? 'تفعيل'
-                                : 'تعطيل'
-                              : 'حذف'}
+                            <TrashIcon size={14} />
+                            <span>
+                              {entity.active
+                                ? row.active === false
+                                  ? 'تفعيل'
+                                  : 'تعطيل'
+                                : 'حذف'}
+                            </span>
                           </button>
                         </div>
                       )}

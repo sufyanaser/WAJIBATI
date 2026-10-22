@@ -1,4 +1,5 @@
 import { usePushSubscription } from '../hooks/usePushSubscription'
+import { BellIcon, CheckIcon } from './Icons'
 
 interface Props {
   sectionId: string
@@ -36,7 +37,10 @@ export function PushOptIn({ sectionId }: Props) {
           fontSize: '.88rem',
         }}
       >
-        <span style={{ color: 'var(--success)', fontWeight: 600 }}>الإشعارات مفعّلة ✓</span>
+        <span style={{ color: 'var(--success)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <CheckIcon size={16} />
+          <span>الإشعارات مفعّلة</span>
+        </span>
         <button
           onClick={unsubscribe}
           disabled={loading}
@@ -63,9 +67,11 @@ export function PushOptIn({ sectionId }: Props) {
       <button
         onClick={subscribe}
         disabled={loading}
-        style={{ padding: '8px 16px', fontSize: '.85rem', borderRadius: 8, flexShrink: 0 }}
+        className="btn btn-primary btn-sm"
+        style={{ flexShrink: 0 }}
       >
-        {loading ? '…' : 'تفعيل الإشعارات'}
+        <BellIcon size={16} />
+        <span>{loading ? '…' : 'تفعيل الإشعارات'}</span>
       </button>
     </div>
   )

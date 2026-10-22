@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Spinner } from './components/Spinner'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
@@ -18,10 +18,14 @@ const SectionsPage = lazy(() => import('./pages/admin/SectionsPage'))
 const TimetablePage = lazy(() => import('./pages/admin/TimetablePage'))
 const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'))
 const GuardiansPage = lazy(() => import('./pages/admin/GuardiansPage'))
+const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'))
+
+const isLocalFile = typeof window !== 'undefined' && window.location.protocol === 'file:'
+const Router = isLocalFile ? HashRouter : BrowserRouter
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -34,16 +38,18 @@ export default function App() {
             <Route path="notices" element={<NoticesPage />} />
             <Route path="import" element={<ImportPage />} />
             <Route path="master-data" element={<MasterDataPage />} />
+            <Route path="database" element={<MasterDataPage />} />
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="teachers" element={<TeachersPage />} />
             <Route path="sections" element={<SectionsPage />} />
             <Route path="timetable" element={<TimetablePage />} />
             <Route path="students" element={<StudentsPage />} />
             <Route path="guardians" element={<GuardiansPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="/*" element={<Today />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </Router>
   )
 }

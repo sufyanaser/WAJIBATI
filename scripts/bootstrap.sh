@@ -2,7 +2,12 @@
 # One-time: GitHub repo → Supabase → VAPID/Edge Function → GH secrets → Vercel.
 # Requires: gh, supabase (v2), vercel, jq, npx — logged in to gh/supabase/vercel.
 set -euo pipefail
-REPO=${REPO:-rumaila-homework}
+REPO=${REPO:-WAJIBATI}
+# Supabase: project ref is immutable — pin it so a rerun never creates a duplicate project.
+SUPABASE_REF=${SUPABASE_REF:-oconxdrujhjaunvrycdz}
+# Vercel: keep the CURRENT project name until the dashboard rename to `wajibati` is done
+# (see WAJIBATI-RENAME-AUDIT.md). `vercel link --project <missing>` would create a new project.
+VERCEL_PROJECT=${VERCEL_PROJECT:-homeworks}
 OWNER=${OWNER:-sufyanaser}
 REGION=${REGION:-eu-central-1}
 SUBJECT=${SUBJECT:-mailto:sufyanaser@gmail.com}
@@ -23,7 +28,7 @@ git push -u origin dev
 gh repo edit "$OWNER/$REPO" --default-branch main >/dev/null
 
 echo "▶ Supabase"
-REF=$(supabase projects list -o json | jq -r ".[] | select(.name==\"$REPO\") | (.ref // .id)" | head -1)
+REF=${SUPABASE_REF:-$(supabase projects list -o json | jq -r ".[] | select(.name==\"$REPO\") | (.ref // .id)" | head -1)}
 DBPASS=${DBPASS:-}
 [ -n "$DBPASS" ] || { read -rsp "DB password (new or existing project): " DBPASS; echo; }
 if [ -z "$REF" ]; then
@@ -64,7 +69,7 @@ else
 fi
 
 echo "▶ Vercel"
-vercel link --yes --project "$REPO"
+vercel link --yes --project "$VERCEL_PROJECT"
 setenv() { # name value target
   vercel env rm "$1" "$3" --yes >/dev/null 2>&1 || true
   printf '%s' "$2" | vercel env add "$1" "$3" >/dev/null
@@ -86,4 +91,4 @@ VAPID_PRIVATE_KEY=$VPRIV
 VAPID_SUBJECT=$SUBJECT
 ENV
 chmod 600 .env
-echo "✔ Done → https://github.com/$OWNER/$REPO | $URL | vercel: $REPO"
+echo "✔ Done → https://github.com/$OWNER/$REPO | $URL | vercel: $VERCEL_PROJECT"

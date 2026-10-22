@@ -1,4 +1,6 @@
-export function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) {
+import React from 'react'
+
+export function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
   return (
     <div className="empty-state">
       <div className="empty-icon" aria-hidden="true">{icon}</div>

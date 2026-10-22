@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PageHeader } from '../../components/admin/PageHeader'
+import { PlusIcon, EditIcon, CheckIcon, CloseIcon } from '../../components/Icons'
 
 interface SubjectRow {
   id: number
@@ -85,17 +87,20 @@ export default function SubjectsPage() {
 
   return (
     <div className="dash-page" dir="rtl">
-      <div className="dash-toolbar">
-        <div>
-          <h2 className="dash-page-title">المواد الدراسية</h2>
-          <span className="muted">{rows.length} مادة مسجلة</span>
-        </div>
-        {canEdit && (
-          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
-            + إضافة مادة
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="المواد الدراسية والمناهج"
+        subtitle={`${rows.length} مادة دراسية مسجلة في النظام`}
+        badgeText={`${rows.length} مادة`}
+        badgeVariant="blue"
+        actions={
+          canEdit ? (
+            <button type="button" className="btn btn-primary" onClick={startAdd}>
+              <PlusIcon size={16} />
+              <span>إضافة مادة</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <form className="dash-form" onSubmit={handleSave}>
@@ -118,8 +123,18 @@ export default function SubjectsPage() {
             </label>
           </div>
           <div className="dash-form-actions">
-            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
-            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <CheckIcon size={16} />
+              <span>{saving ? '…' : 'حفظ'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setShowForm(false); setEditing(null) }}
+            >
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       )}
@@ -149,7 +164,14 @@ export default function SubjectsPage() {
                 <td className="muted">{r.sort}</td>
                 {canEdit && (
                   <td>
-                    <button type="button" className="icon-btn" onClick={() => startEdit(r)}>تعديل</button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => startEdit(r)}
+                    >
+                      <EditIcon size={14} />
+                      <span>تعديل</span>
+                    </button>
                   </td>
                 )}
               </tr>

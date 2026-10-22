@@ -5,6 +5,19 @@ import { useAdminSection } from '../../hooks/useAdminSection'
 import type { AttachmentRow } from '../../hooks/useAdminSection'
 import { DateNavigator } from '../../components/DateNavigator'
 import { Toast, useToast } from '../../components/Toast'
+import { assertCanWrite } from '../../services/platform'
+import type { HomeworkExportData } from '../../utils/exportHomework'
+import {
+  ImageIcon,
+  FileTextIcon,
+  PaperclipIcon,
+  RefreshIcon,
+  CloseIcon,
+  CheckIcon,
+  SendIcon,
+  TrashIcon,
+  DownloadIcon,
+} from '../../components/Icons'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
@@ -49,26 +62,28 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showTo
     setBusy(null)
   }
 
-  const label = (mime: string, path: string) => {
-    const name = path.split('/').pop() ?? 'مرفق'
-    return mime.startsWith('image/') ? `🖼 ${name}` : `📄 ${name}`
-  }
-
   return (
     <div className="he-attachments">
-      {attachments.map(a => (
-        <span key={a.id} className="he-attach-chip">
-          <span className="he-attach-label">{label(a.mime, a.storage_path)}</span>
-          <button
-            className="he-attach-del"
-            disabled={busy === a.id}
-            onClick={() => handleDelete(a.id, a.storage_path)}
-            aria-label="حذف المرفق"
-          >
-            {busy === a.id ? '…' : '×'}
-          </button>
-        </span>
-      ))}
+      {attachments.map(a => {
+        const isImage = a.mime.startsWith('image/')
+        const fileName = a.storage_path.split('/').pop() ?? 'مرفق'
+        return (
+          <span key={a.id} className="he-attach-chip">
+            <span className="he-attach-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              {isImage ? <ImageIcon size={14} /> : <FileTextIcon size={14} />}
+              <span>{fileName}</span>
+            </span>
+            <button
+              className="he-attach-del"
+              disabled={busy === a.id}
+              onClick={() => handleDelete(a.id, a.storage_path)}
+              aria-label="حذف المرفق"
+            >
+              {busy === a.id ? '…' : <CloseIcon size={12} />}
+            </button>
+          </span>
+        )
+      })}
       <input
         ref={inputRef}
         type="file"
@@ -93,7 +108,12 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showTo
             }
           }}
         >
-          {busy === 'upload' ? '…' : '↩ أعد المحاولة'}
+          {busy === 'upload' ? '…' : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <RefreshIcon size={13} />
+              <span>أعد المحاولة</span>
+            </span>
+          )}
         </button>
       )}
       <button
@@ -102,7 +122,12 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showTo
         title={!hwId ? 'احفظ الواجب أولاً لإضافة مرفقات' : undefined}
         onClick={() => inputRef.current?.click()}
       >
-        {busy === 'upload' ? '…' : '+ مرفق'}
+        {busy === 'upload' ? '…' : (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <PaperclipIcon size={13} />
+            <span>مرفق</span>
+          </span>
+        )}
       </button>
     </div>
   )
@@ -141,6 +166,7 @@ export default function HomeworkEntry() {
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishingPeriod, setPublishingPeriod] = useState<number | null>(null)
+  const [exporting, setExporting] = useState(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
   useEffect(() => {
@@ -224,6 +250,11 @@ export default function HomeworkEntry() {
   }
 
   async function handlePublishPeriod(period: number) {
+    const writeCheck = await assertCanWrite('نشر الحصة')
+    if (!writeCheck.allowed) {
+      showToast(writeCheck.error || 'عملية النشر محظورة', 'error')
+      return
+    }
     const slot = periods.find(p => p.period === period)
     if (!slot?.hw_id || secId === null) return
     setPublishingPeriod(period)
@@ -240,7 +271,7 @@ export default function HomeworkEntry() {
       const { error: pushErr } = await supabase.functions.invoke('send-push', {
         body: {
           section_id: secId,
-          title: 'واجبات الرميلة',
+          title: 'واجباتي',
           body: `واجب جديد — ${slot.subject || `حصة ${period}`} بتاريخ ${toISO(date)}`,
           url: '/',
         },
@@ -285,6 +316,43 @@ export default function HomeworkEntry() {
       showToast('خطأ أثناء النشر', 'error')
     }
     setPublishing(false)
+  }
+
+  async function handleExportA4() {
+    const activeItems = periods
+      .filter(p => p.body.trim().length > 0 || p.subject)
+      .map(p => ({
+        period: p.period,
+        subject: p.subject || `حصة ${p.period}`,
+        teacher: p.teacher || '—',
+        body: p.body.trim() || 'لا يوجد واجب مسجل',
+      }))
+
+    if (activeItems.length === 0) {
+      showToast('لا توجد واجبات أو مواد مسجلة لتصديرها في هذا التاريخ', 'info')
+      return
+    }
+
+    setExporting(true)
+    try {
+      const { exportAsPDF } = await import('../../utils/exportHomework')
+      const sec = sections.find(s => s.id === secId)
+      const exportData: HomeworkExportData = {
+        schoolName: 'إعدادية الرميلة للبنين',
+        sectionName: sec
+          ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}`
+          : 'الشعبة الدراسية',
+        date: toISO(date),
+        items: activeItems,
+      }
+      await exportAsPDF(exportData)
+      showToast('تم تصدير جدول الواجبات A4 بنجاح ✓', 'success')
+    } catch (err) {
+      console.error('A4 export error:', err)
+      showToast('حدث خطأ أثناء تصدير ملف A4', 'error')
+    } finally {
+      setExporting(false)
+    }
   }
 
   if (!ready) {
@@ -338,19 +406,32 @@ export default function HomeworkEntry() {
       <div className="he-action-bar">
         <button
           type="button"
-          className="he-btn-draft"
-          disabled={saving || publishing || loading}
+          className="btn btn-secondary he-btn-draft"
+          disabled={saving || publishing || loading || exporting}
           onClick={handleSaveDraft}
         >
-          {saving ? '…' : 'حفظ مسودة'}
+          <CheckIcon size={16} />
+          <span>{saving ? '…' : 'حفظ مسودة'}</span>
         </button>
         <button
           type="button"
-          className="btn-publish-all he-btn-publish"
-          disabled={saving || publishing || loading}
+          className="btn btn-primary he-btn-publish"
+          disabled={saving || publishing || loading || exporting}
           onClick={handlePublish}
         >
-          {publishing ? '…' : 'نشر الكل'}
+          <SendIcon size={16} />
+          <span>{publishing ? '…' : 'نشر الكل'}</span>
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary he-btn-export"
+          disabled={saving || publishing || loading || exporting}
+          onClick={handleExportA4}
+          aria-label="تصدير A4 للطباعة"
+          title="تصدير جدول واجبات اليوم كملف PDF للطباعة"
+        >
+          <DownloadIcon size={16} />
+          <span>{exporting ? '…' : 'تصدير A4 للطباعة'}</span>
         </button>
       </div>
 
@@ -388,22 +469,24 @@ export default function HomeworkEntry() {
                 {slot.status === 'draft' && slot.hw_id && (
                   <button
                     type="button"
-                    className="he-btn-publish he-btn-publish--sm"
+                    className="btn btn-success btn-sm he-btn-publish--sm"
                     disabled={publishingPeriod === slot.period || saving || publishing}
                     onClick={() => void handlePublishPeriod(slot.period)}
                   >
-                    {publishingPeriod === slot.period ? '…' : 'نشر'}
+                    <SendIcon size={13} />
+                    <span>{publishingPeriod === slot.period ? '…' : 'نشر'}</span>
                   </button>
                 )}
                 {slot.hw_id && (
                   <button
                     type="button"
                     className="btn-del"
-                    style={{ alignSelf: 'flex-start', marginTop: 2, fontSize: '.72rem', padding: '2px 8px', minWidth: 28, minHeight: 26 }}
+                    style={{ alignSelf: 'flex-start', marginTop: 2 }}
                     title="حذف واجب هذه الحصة"
                     onClick={() => void handleDeletePeriod(slot.period)}
                   >
-                    حذف
+                    <TrashIcon size={13} />
+                    <span>حذف</span>
                   </button>
                 )}
               </div>

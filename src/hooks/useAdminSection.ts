@@ -400,7 +400,7 @@ export function useAdminSection(
       const { error } = await supabase.functions.invoke('send-push', {
         body: {
           section_id: sid,
-          title: 'واجبات الرميلة',
+          title: 'واجباتي',
           body: `${pushBody} بتاريخ ${date}`,
           url: '/',
         },

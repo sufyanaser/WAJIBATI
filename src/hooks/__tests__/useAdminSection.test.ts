@@ -303,7 +303,7 @@ describe('useAdminSection — publish', () => {
     expect(mockFunctions.invoke).toHaveBeenCalledWith('send-push', expect.objectContaining({
       body: expect.objectContaining({
         section_id: 1,
-        title: 'واجبات الرميلة',
+        title: 'واجباتي',
         url: '/',
       }),
     }))

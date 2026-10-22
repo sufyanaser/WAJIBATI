@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase, isValidPhone } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
@@ -82,6 +82,10 @@ export default function GuardiansPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     if (!editing || !phone.trim()) return
+    if (!isValidPhone(phone.trim())) {
+      showToast('رقم الهاتف يجب أن يكون بصيغة 07XXXXXXXXX (11 رقماً)', 'error')
+      return
+    }
     setSaving(true)
 
     const { error } = await supabase
@@ -146,7 +150,7 @@ export default function GuardiansPage() {
             </label>
             <label>
               <span>رقم الهاتف *</span>
-              <input value={phone} onChange={e => setPhone(e.target.value)} dir="ltr" required />
+              <input value={phone} onChange={e => setPhone(e.target.value)} dir="ltr" required placeholder="07XXXXXXXXX" pattern="^07[0-9]{9}$" title="07 متبوعاً بـ 9 أرقام" />
             </label>
             <label>
               <span>رقم بديل</span>

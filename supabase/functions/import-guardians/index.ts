@@ -2,7 +2,7 @@
 // CSV columns (header row required):
 //   student_name, stage, branch, section, guardian_name, phone, pin
 //
-// phone format: +9647XXXXXXXXX   |   pin: exactly 6 digits
+// phone format: 07XXXXXXXXX (local Iraqi, 11 digits)  |  pin: exactly 6 digits
 // Returns: { created, skipped, errors: [{row, message}] }
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -122,8 +122,8 @@ Deno.serve(async (req) => {
     if (!studentName || !stage || !branch || !sectionLtr || !guardianName || !phone || !pin) {
       errors.push({ row: rowNum, message: 'حقول ناقصة' }); continue
     }
-    if (!/^\+9647[0-9]{9}$/.test(phone)) {
-      errors.push({ row: rowNum, message: `رقم الهاتف غير صالح: ${phone}` }); continue
+    if (!/^07[0-9]{9}$/.test(phone)) {
+      errors.push({ row: rowNum, message: `رقم الهاتف غير صالح (يجب 07XXXXXXXXX): ${phone}` }); continue
     }
     if (!/^[0-9]{6}$/.test(pin)) {
       errors.push({ row: rowNum, message: `PIN غير صالح (يجب 6 أرقام): ${pin}` }); continue
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
       errors.push({ row: rowNum, message: `شعبة غير موجودة: ${stage} ${branch} / ${sectionLtr}` }); continue
     }
 
-    const email = `${phone.replace('+', '')}@guardian.rumaila.local`
+    const email = `${phone}@guardian.rumaila.local`
 
     try {
       let userId: string

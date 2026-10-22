@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
   const { phone, new_pin } = await req.json()
   if (!phone || !new_pin) return new Response('missing phone or new_pin', { status: 400, headers: CORS })
-  if (!/^\+9647[0-9]{9}$/.test(phone)) return new Response('invalid phone', { status: 400, headers: CORS })
+  if (!/^07[0-9]{9}$/.test(phone)) return new Response('invalid phone (expected 07XXXXXXXXX)', { status: 400, headers: CORS })
   if (!/^[0-9]{6}$/.test(new_pin)) return new Response('PIN must be 6 digits', { status: 400, headers: CORS })
 
   const db = createClient(SUPABASE_URL, SERVICE_KEY)

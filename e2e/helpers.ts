@@ -51,8 +51,9 @@ export async function adminSignIn(page: Page, username = 'admin', password = 'ad
   await page.locator('input[type="text"], input[placeholder*="مستخدم"]').first().fill(username)
   await page.locator('input[type="password"]').fill(password)
   await page.locator('button[type="submit"]').click()
-  // wait for dashboard or auth error
-  await page.waitForURL(/\/(admin|login)/, { timeout: 10000 })
+  // Wait explicitly for navigation away from login into an authenticated admin page
+  await page.waitForURL(url => url.pathname.startsWith('/admin') && !url.pathname.includes('/login'), { timeout: 15000 })
+  await page.waitForLoadState('networkidle')
 }
 
 /** Returns true if currently on an admin authenticated page */

@@ -143,13 +143,9 @@ test.describe('Auth redirects', () => {
     await expect(page.url()).toMatch(/login/)
   })
 
-  test('unauthenticated / renders Today page or guardian login', async ({ page }) => {
+  test('unauthenticated / redirects to guardian login', async ({ page }) => {
     await page.goto('/')
-    // Today page should render (auth check may redirect to guardian login)
-    await page.waitForLoadState('networkidle')
-    // either shows today content or login
-    const isLoginPage = page.url().includes('/login')
-    const hasTodayContent = await page.locator('h1, .screen, main').count() > 0
-    expect(hasTodayContent || isLoginPage).toBe(true)
+    await page.waitForURL(/\/login/, { timeout: 8000 })
+    expect(page.url()).toMatch(/\/login/)
   })
 })

@@ -574,6 +574,11 @@ export default function MasterDataPage() {
 
               <div className="master-list">
                 {busy && <p className="muted">جارٍ التحميل…</p>}
+                {!busy && rows.length === 0 && (
+                  <p className="muted" style={{ padding: '16px', textAlign: 'center' }}>
+                    لا توجد سجلات حالياً.
+                  </p>
+                )}
                 {rows.map((row, index) => {
                   const rowKey = entity.compositeKeys
                     ? entity.compositeKeys.map(k => String(row[k] ?? '')).join('-')

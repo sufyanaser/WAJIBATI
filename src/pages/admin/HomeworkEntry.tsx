@@ -5,6 +5,7 @@ import { useAdminSection } from '../../hooks/useAdminSection'
 import type { AttachmentRow } from '../../hooks/useAdminSection'
 import { DateNavigator } from '../../components/DateNavigator'
 import { Toast, useToast } from '../../components/Toast'
+import { assertCanWrite } from '../../services/platform'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
@@ -224,6 +225,11 @@ export default function HomeworkEntry() {
   }
 
   async function handlePublishPeriod(period: number) {
+    const writeCheck = await assertCanWrite('نشر الحصة')
+    if (!writeCheck.allowed) {
+      showToast(writeCheck.error || 'عملية النشر محظورة', 'error')
+      return
+    }
     const slot = periods.find(p => p.period === period)
     if (!slot?.hw_id || secId === null) return
     setPublishingPeriod(period)

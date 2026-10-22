@@ -261,6 +261,15 @@ button:disabled {
   }
 }
 
+@media (min-width: 1280px) {
+  .screen.admin,
+  .admin-shell-container {
+    max-width: 1360px;
+    padding: 28px 36px 48px;
+    gap: 24px;
+  }
+}
+
 /* ===== Unified Top Bar & Brand Header ===== */
 .top-bar {
   display: flex;

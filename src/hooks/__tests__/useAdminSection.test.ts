@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAdminSection } from '../useAdminSection'
+import { platform } from '../../services/platform'
+import { VersionGuardState } from '../../services/platform/types'
 
 // ── mock supabase ──────────────────────────────────────────────────────────────
 
@@ -376,3 +378,81 @@ describe('useAdminSection — publish', () => {
     expect(mockFunctions.invoke).not.toHaveBeenCalled()
   })
 })
+
+describe('useAdminSection — Version Guard write barrier', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: [], error: null })
+  })
+
+  it('blocks save when Version Guard canPerformWrite is false', async () => {
+    vi.spyOn(platform.versionGuard, 'canPerformWrite').mockReturnValue(false)
+    vi.spyOn(platform.versionGuard, 'getState').mockReturnValue(VersionGuardState.INCOMPATIBLE)
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      if (table === 'timetable') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: timetableRows, error: null }; return chain
+        })
+      }
+      if (table === 'homework') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: [], error: null }; return chain
+        })
+      }
+      return chain
+    })
+
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => result.current.setBodies({ 1: 'واجب ممنوع' }))
+
+    let saveRes: any
+    await act(async () => {
+      saveRes = await result.current.save()
+    })
+
+    expect(saveRes.saved).toBe(0)
+    expect(saveRes.failed).toBeGreaterThan(0)
+    expect(saveRes.errors[0]).toContain('[حظر توافق الإصدار]')
+  })
+
+  it('blocks deleteHomework when Version Guard canPerformWrite is false', async () => {
+    vi.spyOn(platform.versionGuard, 'canPerformWrite').mockReturnValue(false)
+    vi.spyOn(platform.versionGuard, 'getState').mockReturnValue(VersionGuardState.NETWORK_ERROR)
+
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      if (table === 'timetable') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: timetableRows, error: null }; return chain
+        })
+      }
+      if (table === 'homework') {
+        let c = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          c++; if (c >= 2) return { ...chain, data: homeworkRows, error: null }; return chain
+        })
+      }
+      return chain
+    })
+
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    let delRes: any
+    await act(async () => {
+      delRes = await result.current.deleteHomework(1)
+    })
+
+    expect(delRes.ok).toBe(false)
+    expect(delRes.error).toContain('[حظر توافق الإصدار]')
+    expect(delRes.error).toContain('NETWORK_ERROR')
+  })
+})
+

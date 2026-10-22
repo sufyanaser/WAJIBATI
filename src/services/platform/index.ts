@@ -21,3 +21,23 @@ export function getPlatform(): IPlatformService {
 }
 
 export const platform: IPlatformService = getPlatform()
+
+/**
+ * Enforces execution-level protection against unsafe writes when Version Guard flags
+ * network failure, permission denial, or version incompatibility.
+ */
+export async function assertCanWrite(actionLabel: string = 'العملية'): Promise<{ allowed: boolean; error?: string }> {
+  // On web, if no desktop constraints apply, allow operations
+  if (!platform.isDesktop && platform.versionGuard.canPerformWrite()) {
+    return { allowed: true }
+  }
+
+  // Check guard state
+  if (!platform.versionGuard.canPerformWrite()) {
+    const state = platform.versionGuard.getState()
+    const msg = `[حظر توافق الإصدار] تعذر تنفيذ ${actionLabel} نظراً لتعليق صلاحية الكتابة (${state}). يرجى التحقق من اتصال الشبكة وتوافق التطبيق.`
+    return { allowed: false, error: msg }
+  }
+
+  return { allowed: true }
+}

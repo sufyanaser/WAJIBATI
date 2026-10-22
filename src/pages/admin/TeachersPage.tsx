@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PlusIcon, EditIcon, CheckIcon, CloseIcon, TrashIcon } from '../../components/Icons'
 
 interface TeacherRow {
   id: number
@@ -141,8 +142,9 @@ export default function TeachersPage() {
           <span className="muted">{activeCount} مدرس فعّال من أصل {teachers.length}</span>
         </div>
         {canEdit && (
-          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
-            + إضافة مدرس
+          <button type="button" className="btn btn-primary" onClick={startAdd}>
+            <PlusIcon size={16} />
+            <span>إضافة مدرس</span>
           </button>
         )}
       </div>
@@ -168,8 +170,18 @@ export default function TeachersPage() {
             </label>
           </div>
           <div className="dash-form-actions">
-            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
-            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <CheckIcon size={16} />
+              <span>{saving ? '…' : 'حفظ'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setShowForm(false); setEditing(null) }}
+            >
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       )}
@@ -203,11 +215,25 @@ export default function TeachersPage() {
                   </span>
                 </td>
                 {canEdit && (
-                  <td style={{ display: 'flex', gap: 6 }}>
-                    <button type="button" className="icon-btn" onClick={() => startEdit(t)}>تعديل</button>
-                    <button type="button" className="icon-btn" onClick={() => void toggleActive(t)}>
-                      {t.active ? 'تعطيل' : 'تفعيل'}
-                    </button>
+                  <td>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => startEdit(t)}
+                      >
+                        <EditIcon size={14} />
+                        <span>تعديل</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn btn-sm ${t.active ? 'btn-danger' : 'btn-success'}`}
+                        onClick={() => void toggleActive(t)}
+                      >
+                        {t.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                        <span>{t.active ? 'تعطيل' : 'تفعيل'}</span>
+                      </button>
+                    </div>
                   </td>
                 )}
               </tr>

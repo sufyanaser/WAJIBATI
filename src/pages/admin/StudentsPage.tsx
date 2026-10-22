@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PlusIcon, EditIcon, CheckIcon, CloseIcon } from '../../components/Icons'
 
 interface StudentRow {
   id: number
@@ -143,8 +144,9 @@ export default function StudentsPage() {
           <span className="muted">عرض {filtered.length} من أصل {students.length} طالب</span>
         </div>
         {canEdit && (
-          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
-            + إضافة طالب
+          <button type="button" className="btn btn-primary" onClick={startAdd}>
+            <PlusIcon size={16} />
+            <span>إضافة طالب</span>
           </button>
         )}
       </div>
@@ -189,8 +191,18 @@ export default function StudentsPage() {
             </label>
           </div>
           <div className="dash-form-actions">
-            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
-            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <CheckIcon size={16} />
+              <span>{saving ? '…' : 'حفظ'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setShowForm(false); setEditing(null) }}
+            >
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       )}
@@ -225,7 +237,14 @@ export default function StudentsPage() {
                 </td>
                 {canEdit && (
                   <td>
-                    <button type="button" className="icon-btn" onClick={() => startEdit(s)}>تعديل</button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => startEdit(s)}
+                    >
+                      <EditIcon size={14} />
+                      <span>تعديل</span>
+                    </button>
                   </td>
                 )}
               </tr>

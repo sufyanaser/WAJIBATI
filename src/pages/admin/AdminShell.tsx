@@ -2,6 +2,14 @@ import { useEffect, useState, createContext, useContext } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import {
+  HomeIcon,
+  BookIcon,
+  BellIcon,
+  SchoolIcon,
+  ImportIcon,
+  LogOutIcon,
+} from '../../components/Icons'
 
 // ── Admin context (shared across child routes) ─────────────────────────────────
 
@@ -17,11 +25,11 @@ export const useAdmin = () => useContext(AdminContext)
 // ── Nav items ──────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { to: '/admin/dashboard', label: 'الرئيسية', icon: '🏠' },
-  { to: '/admin/homework',  label: 'الواجبات', icon: '📚' },
-  { to: '/admin/notices',   label: 'الإشعارات', icon: '🔔' },
-  { to: '/admin/master-data', label: 'بيانات المدرسة', icon: '🏫' },
-  { to: '/admin/import',    label: 'الاستيراد وPIN', icon: '📥' },
+  { to: '/admin/dashboard', label: 'الرئيسية', icon: HomeIcon },
+  { to: '/admin/homework',  label: 'الواجبات', icon: BookIcon },
+  { to: '/admin/notices',   label: 'الإشعارات', icon: BellIcon },
+  { to: '/admin/master-data', label: 'بيانات المدرسة', icon: SchoolIcon },
+  { to: '/admin/import',    label: 'الاستيراد وPIN', icon: ImportIcon },
 ]
 
 // ── component ──────────────────────────────────────────────────────────────────
@@ -99,24 +107,29 @@ export default function AdminShell() {
               </span>
             )}
             <button type="button" className="icon-btn" onClick={handleLogout}>
-              خروج
+              <LogOutIcon size={16} />
+              <span>خروج</span>
             </button>
           </div>
         </header>
 
         {/* nav tabs */}
         <nav className="child-tabs" aria-label="أقسام لوحة الإدارة">
-          {NAV_ITEMS.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/admin/dashboard'}
-              className={({ isActive }) => 'tab' + (isActive ? ' active' : '')}
-              style={{ textDecoration: 'none' }}
-            >
-              {item.icon} {item.label}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/admin/dashboard'}
+                className={({ isActive }) => 'tab' + (isActive ? ' active' : '')}
+                style={{ textDecoration: 'none' }}
+              >
+                <Icon size={18} />
+                <span>{item.label}</span>
+              </NavLink>
+            )
+          })}
         </nav>
 
         {/* routed content */}

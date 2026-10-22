@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import {
+  GraduationCapIcon,
+  UsersIcon,
+  BookIcon,
+  CalendarIcon,
+  ShieldIcon,
+  FamilyIcon,
+} from '../../components/Icons'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
@@ -23,12 +31,12 @@ interface AssignmentRow {
 // ── nav cards ──────────────────────────────────────────────────────────────────
 
 const navCards = [
-  { label: 'الطلاب',               icon: '🎓', route: '/admin/master-data?entity=students',   statKey: 'students' as const },
-  { label: 'المدرسون',             icon: '👥', route: '/admin/master-data?entity=teachers',   statKey: 'teachers' as const },
-  { label: 'الواجبات',             icon: '📚', route: '/admin/homework',                       statKey: 'homeworkToday' as const },
-  { label: 'الجدول الدراسي',       icon: '📅', route: '/admin/master-data?entity=timetable',  statKey: 'sections' as const },
-  { label: 'الحسابات والصلاحيات', icon: '🛡', route: '/admin/import',                        statKey: 'noticesActive' as const },
-  { label: 'أولياء الأمور',        icon: '👨‍👩‍👧', route: '/admin/master-data?entity=guardians', statKey: 'guardians' as const },
+  { label: 'الطلاب',               icon: GraduationCapIcon, route: '/admin/master-data?entity=students',   statKey: 'students' as const },
+  { label: 'المدرسون',             icon: UsersIcon,          route: '/admin/master-data?entity=teachers',   statKey: 'teachers' as const },
+  { label: 'الواجبات',             icon: BookIcon,           route: '/admin/homework',                       statKey: 'homeworkToday' as const },
+  { label: 'الجدول الدراسي',       icon: CalendarIcon,       route: '/admin/master-data?entity=timetable',  statKey: 'sections' as const },
+  { label: 'الحسابات والصلاحيات', icon: ShieldIcon,         route: '/admin/import',                        statKey: 'noticesActive' as const },
+  { label: 'أولياء الأمور',        icon: FamilyIcon,         route: '/admin/master-data?entity=guardians', statKey: 'guardians' as const },
 ]
 
 const statLabels: Record<keyof Stats, string> = {
@@ -129,7 +137,6 @@ export default function DashboardHome() {
       {/* ── school header ──────────────────────────────────────────────── */}
       <div className="dash-header">
         <img src="/icon-192.png" alt="شعار المدرسة" className="dash-logo" width={54} height={54} />
-        <span className="dash-header__icon" aria-hidden="true">🎓</span>
         <div>
           <h1 className="dash-header__title">واجباتي | لوحة الإدارة — إعدادية الرميلة للبنين</h1>
           <p className="dash-header__sub">مركز إدارة المدرسة · مديرية تربية الأنبار · الرمادي</p>
@@ -138,25 +145,30 @@ export default function DashboardHome() {
 
       {/* ── nav card grid ──────────────────────────────────────────────── */}
       <div className="dash-grid">
-        {navCards.map(card => (
-          <button
-            key={card.route}
-            type="button"
-            className="dash-card"
-            onClick={() => nav(card.route)}
-          >
-            <span className="dash-card__icon">{card.icon}</span>
-            <span className="dash-card__label">{card.label}</span>
-            {stats && (
-              <span className="dash-card__stat">
-                {stats[card.statKey]} {statLabels[card.statKey]}
+        {navCards.map(card => {
+          const Icon = card.icon
+          return (
+            <button
+              key={card.route}
+              type="button"
+              className="dash-card"
+              onClick={() => nav(card.route)}
+            >
+              <span className="dash-card__icon">
+                <Icon size={24} />
               </span>
-            )}
-            {loading && !stats && (
-              <span className="dash-card__stat">…</span>
-            )}
-          </button>
-        ))}
+              <span className="dash-card__label">{card.label}</span>
+              {stats && (
+                <span className="dash-card__stat">
+                  {stats[card.statKey]} {statLabels[card.statKey]}
+                </span>
+              )}
+              {loading && !stats && (
+                <span className="dash-card__stat">…</span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* ── teacher assignments preview ────────────────────────────────── */}

@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { EditIcon, CheckIcon, CloseIcon } from '../../components/Icons'
 
 interface GuardianRow {
   id: string
@@ -154,8 +155,18 @@ export default function GuardiansPage() {
             </label>
           </div>
           <div className="dash-form-actions">
-            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
-            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <CheckIcon size={16} />
+              <span>{saving ? '…' : 'حفظ'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setShowForm(false); setEditing(null) }}
+            >
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       )}
@@ -198,7 +209,14 @@ export default function GuardiansPage() {
                 </td>
                 {canEdit && (
                   <td>
-                    <button type="button" className="icon-btn" onClick={() => startEdit(g)}>تعديل</button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => startEdit(g)}
+                    >
+                      <EditIcon size={14} />
+                      <span>تعديل</span>
+                    </button>
                   </td>
                 )}
               </tr>

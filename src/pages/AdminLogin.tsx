@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, usernameToAdminEmail } from '../lib/supabase'
+import { EyeIcon, EyeOffIcon } from '../components/Icons'
 
 export default function AdminLogin() {
   const nav = useNavigate()
@@ -110,14 +111,15 @@ export default function AdminLogin() {
                   border: 'none',
                   cursor: 'pointer',
                   color: 'var(--muted)',
-                  fontSize: '1.05rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   padding: '4px 8px',
                   minHeight: 34,
                   minWidth: 34,
-                  lineHeight: 1,
                 }}
               >
-                {showPass ? '🙈' : '👁'}
+                {showPass ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
               </button>
             </div>
           </div>

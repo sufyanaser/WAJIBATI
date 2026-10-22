@@ -1,3 +1,5 @@
+import { ChevronLeftIcon, ChevronRightIcon } from './Icons'
+
 // Iraqi school week: Sun(0)–Thu(4); Fri(5) Sat(6) are off
 const isSchool = (d: Date) => { const w = d.getDay(); return w !== 5 && w !== 6 }
 
@@ -36,13 +38,13 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
 
   return (
     <div className="date-nav" dir="rtl">
-      {/* next (left arrow in RTL = ‹) */}
+      {/* next (left arrow in RTL) */}
       <button
         className="icon-btn"
         aria-label="يوم تالٍ"
         onClick={() => onChange(stepDay(date, 1))}
       >
-        ‹
+        <ChevronLeftIcon size={18} />
       </button>
 
       {/* date label — clickable to open a calendar if onLabelClick is provided */}
@@ -58,13 +60,13 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
         {isToday ? `اليوم — ${arDay(date)}` : arDay(date)}
       </button>
 
-      {/* prev (right arrow in RTL = ›) */}
+      {/* prev (right arrow in RTL) */}
       <button
         className="icon-btn"
         aria-label="يوم سابق"
         onClick={() => onChange(stepDay(date, -1))}
       >
-        ›
+        <ChevronRightIcon size={18} />
       </button>
     </div>
   )

@@ -6,6 +6,16 @@ import { DateNavigator } from '../components/DateNavigator'
 import { Toast, useToast } from '../components/Toast'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
+import {
+  LogOutIcon,
+  BookIcon,
+  CalendarIcon,
+  CloseIcon,
+  RefreshIcon,
+  ImageIcon,
+  FileTextIcon,
+  FamilyIcon,
+} from '../components/Icons'
 
 // ── types ────────────────────────────────────────────────────────────────────
 interface Child {
@@ -299,12 +309,15 @@ export default function Today() {
               </div>
             </div>
             <button className="icon-btn" onClick={handleLogout}>
-              خروج
+              <LogOutIcon size={16} />
+              <span>خروج</span>
             </button>
           </div>
         </header>
         <div className="empty-state">
-          <span className="empty-icon" aria-hidden="true">👨‍👦</span>
+          <span className="empty-icon" aria-hidden="true">
+            <FamilyIcon size={44} />
+          </span>
           <p className="empty-msg">لا أبناء مرتبطون بهذا الحساب</p>
         </div>
       </main>
@@ -326,11 +339,20 @@ export default function Today() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link to="/archive" className="icon-btn">الأرشيف</Link>
-            <button className="icon-btn" onClick={handleLogout}>خروج</button>
+            <Link to="/archive" className="icon-btn">
+              <BookIcon size={16} />
+              <span>الأرشيف</span>
+            </Link>
+            <button className="icon-btn" onClick={handleLogout}>
+              <LogOutIcon size={16} />
+              <span>خروج</span>
+            </button>
           </div>
         </div>
-        <p className="today-date-display">📅 {todayArabic}</p>
+        <p className="today-date-display" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <CalendarIcon size={15} />
+          <span>{todayArabic}</span>
+        </p>
       </header>
 
       {/* ── push opt-in banner ─────────────────────────────────────────── */}
@@ -351,7 +373,9 @@ export default function Today() {
           inputMode="search"
         />
         {search && (
-          <button className="icon-btn" onClick={() => setSearch('')}>✕</button>
+          <button className="icon-btn" onClick={() => setSearch('')} aria-label="مسح البحث">
+            <CloseIcon size={14} />
+          </button>
         )}
       </div>
 
@@ -496,14 +520,15 @@ export default function Today() {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {exporting ? '⏳ جارٍ التصدير…' : '🖼 تصدير صورة A4'}
+                  {exporting ? <RefreshIcon size={16} /> : <ImageIcon size={16} />}
+                  <span>{exporting ? 'جارٍ التصدير…' : 'تصدير صورة A4'}</span>
                 </button>
               </div>
             </div>
           )}
 
           {offline && (
-            <p className="offline-note">⚠️ عرض مؤقت بدون اتصال</p>
+            <p className="offline-note">عرض مؤقت بدون اتصال</p>
           )}
 
           {/* ── notices — latest 3 ─────────────────────────────────────── */}
@@ -533,7 +558,9 @@ export default function Today() {
           ) : hw.length === 0 ? (
             /* empty state */
             <div className="empty-state">
-              <span className="empty-icon" aria-hidden="true">📚</span>
+              <span className="empty-icon" aria-hidden="true">
+                <BookIcon size={44} />
+              </span>
               <p className="empty-msg">لا توجد واجبات لهذا اليوم</p>
             </div>
           ) : (
@@ -575,7 +602,7 @@ export default function Today() {
                           className="attach-badge"
                         >
                           <span aria-hidden="true">
-                            {a.mime.startsWith('image/') ? '🖼' : '📄'}
+                            {a.mime.startsWith('image/') ? <ImageIcon size={14} /> : <FileTextIcon size={14} />}
                           </span>
                           <span>مرفق</span>
                         </a>
@@ -595,7 +622,10 @@ export default function Today() {
       {/* ── bottom sticky archive bar ───────────────────────────────────── */}
       <nav className="bottom-bar" aria-label="التنقل الرئيسي">
         <div className="bottom-bar-inner">
-          <Link to="/archive" className="archive-link">📚 تصفح أرشيف الواجبات</Link>
+          <Link to="/archive" className="archive-link">
+            <BookIcon size={18} />
+            <span>تصفح أرشيف الواجبات</span>
+          </Link>
         </div>
       </nav>
     </main>

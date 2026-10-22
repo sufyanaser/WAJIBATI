@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { CheckIcon, CloseIcon, EditIcon, TrashIcon } from '../../components/Icons'
 
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
 interface Notice {
@@ -160,13 +161,15 @@ export default function NoticesPage() {
             title="تاريخ انتهاء الإشعار"
           />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" className="btn-publish-all" style={{ flex: 1 }} disabled={nSaving}>
-            {nSaving ? '…' : editingId ? 'حفظ التعديلات' : 'إضافة إشعار'}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button type="submit" className="btn btn-primary" disabled={nSaving}>
+            <CheckIcon size={16} />
+            <span>{nSaving ? '…' : editingId ? 'حفظ التعديلات' : 'إضافة إشعار'}</span>
           </button>
           {editingId && (
-            <button type="button" className="icon-btn" onClick={resetForm}>
-              إلغاء
+            <button type="button" className="btn btn-secondary" onClick={resetForm}>
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
             </button>
           )}
         </div>
@@ -180,12 +183,12 @@ export default function NoticesPage() {
               <span className={priorityBadgeClass(n.priority)}>{priorityLabel(n.priority)}</span>
               <button
                 type="button"
-                className="icon-btn"
-                style={{ minHeight: 32, padding: '2px 10px', fontSize: '.78rem' }}
+                className="btn btn-secondary btn-sm"
                 aria-label="تعديل الإشعار"
                 onClick={() => startEditNotice(n)}
               >
-                تعديل
+                <EditIcon size={14} />
+                <span>تعديل</span>
               </button>
               <button
                 type="button"
@@ -193,7 +196,7 @@ export default function NoticesPage() {
                 aria-label="حذف الإشعار"
                 onClick={() => deleteNotice(n.id)}
               >
-                ✕
+                <TrashIcon size={14} />
               </button>
             </div>
             {n.body && <p>{n.body}</p>}

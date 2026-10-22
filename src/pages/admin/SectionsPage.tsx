@@ -3,6 +3,13 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import {
+  PlusIcon,
+  EditIcon,
+  CheckIcon,
+  CloseIcon,
+  GraduationCapIcon,
+} from '../../components/Icons'
 
 interface SectionRow {
   id: number
@@ -122,8 +129,9 @@ export default function SectionsPage() {
           <span className="muted">{sections.filter(s => s.active).length} شعبة فعّالة</span>
         </div>
         {canEdit && (
-          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
-            + إضافة شعبة
+          <button type="button" className="btn btn-primary" onClick={startAdd}>
+            <PlusIcon size={16} />
+            <span>إضافة شعبة</span>
           </button>
         )}
       </div>
@@ -152,8 +160,18 @@ export default function SectionsPage() {
             </label>
           </div>
           <div className="dash-form-actions">
-            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
-            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <CheckIcon size={16} />
+              <span>{saving ? '…' : 'حفظ'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setShowForm(false); setEditing(null) }}
+            >
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       )}
@@ -168,12 +186,22 @@ export default function SectionsPage() {
               </span>
             </div>
             <div className="dash-sec-meta">
-              <span>👨‍🎓 {s.studentCount} طالب</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <GraduationCapIcon size={15} />
+                <span>{s.studentCount} طالب</span>
+              </span>
               <span className="muted">{s.year.label}</span>
             </div>
             {canEdit && (
               <div style={{ marginTop: 8 }}>
-                <button type="button" className="icon-btn" onClick={() => startEdit(s)}>تعديل</button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => startEdit(s)}
+                >
+                  <EditIcon size={14} />
+                  <span>تعديل</span>
+                </button>
               </div>
             )}
           </div>

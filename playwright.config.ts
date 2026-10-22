@@ -1,10 +1,16 @@
 import fs from 'node:fs'
 import { defineConfig } from '@playwright/test'
+import { loadEnv } from 'vite'
+
+// Load .env.local so VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, E2E_ADMIN_PASSWORD are available to global-setup
+const env = loadEnv('', process.cwd(), '')
+Object.assign(process.env, env)
 
 const CHROMIUM = process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined)
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup',
   timeout: 30000,
   retries: 1,
   reporter: [

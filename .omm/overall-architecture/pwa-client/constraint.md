@@ -1,0 +1,2 @@
+- Zero SMS gateway dependency; PIN login only.
+- Strict RTL layout; Arabic typography with Cairo / system fonts.

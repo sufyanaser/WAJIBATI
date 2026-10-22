@@ -33,45 +33,24 @@ export function HomeworkSearch({ value, onChange, placeholder = 'ابحث في �
   }, [onChange])
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 8,
-        alignItems: 'center',
-      }}
-    >
+    <div className="search-row">
       <input
         type="search"
+        className="search-input"
         defaultValue={value}
         onChange={handleChange}
         placeholder={placeholder}
         inputMode="search"
         autoComplete="off"
+        aria-label={placeholder}
         dir="rtl"
-        style={{
-          flex: 1,
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 12,
-          color: 'var(--fg)',
-          padding: '12px 16px',
-          fontSize: '1rem',
-        }}
       />
       {value && (
         <button
+          type="button"
+          className="icon-btn"
           onClick={handleClear}
           aria-label="مسح البحث"
-          style={{
-            background: 'transparent',
-            color: 'var(--muted)',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            padding: '10px 14px',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
         >
           ✕
         </button>

@@ -1,0 +1,1 @@
+- Database migrations are versioned sequentially under supabase/migrations/ and deployed via GitHub Actions or Supabase CLI.

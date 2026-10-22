@@ -1,0 +1,3 @@
+- Private bucket ttachments enforces a 10MB limit and restricts MIME types to JPEG, PNG, WEBP, and PDF.
+- File storage path pattern must adhere to <section_id>/<homework_id>/<file>.
+- Storage RLS policy enforces numeric regex validation on the path prefix before casting to integer.

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase, phoneToEmail } from '../lib/supabase'
 import { Spinner } from '../components/Spinner'
 
@@ -29,53 +29,36 @@ export default function Login() {
   }
 
   return (
-    <main style={{
-      minHeight: '100dvh',
-      background: 'var(--bg)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 'max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))',
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: 420,
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        borderRadius: '1.25rem',
-        padding: '2rem 1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.25rem',
-      }}>
-        {/* Logo + titles */}
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.75rem' }}>
+    <main className="auth-page" dir="rtl">
+      <div className="auth-card">
+        {/* Brand identity */}
+        <div className="auth-brand">
           <img
             src="/icon-192.png"
-            alt="واجباتي"
-            width={72}
-            height={72}
-            style={{ borderRadius: '1rem', boxShadow: '0 4px 16px rgba(0,0,0,.4)' }}
+            alt="شعار واجباتي"
+            width={76}
+            height={76}
+            className="auth-logo"
           />
+          <span className="auth-role-badge">بوابة أولياء الأمور</span>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '.01em' }}>
-              واجباتي
-            </h1>
-            <p style={{ margin: '.2rem 0 0', fontSize: '.85rem', color: 'var(--muted)' }}>
-              اعدادية الرميلة للبنين
+            <h1 className="login-title">واجباتي</h1>
+            <p className="school-subtitle" style={{ marginTop: 4 }}>
+              إعدادية الرميلة للبنين
             </p>
           </div>
         </div>
 
-        <div style={{ height: 1, background: 'var(--border)' }} />
+        <div className="divider" style={{ margin: 0 }} />
 
         {/* Form */}
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
-            <label style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--muted)' }}>
+          <div className="auth-field">
+            <label htmlFor="guardian-phone" className="auth-label">
               رقم الهاتف
             </label>
             <input
+              id="guardian-phone"
               className="input"
               type="tel"
               dir="ltr"
@@ -87,11 +70,12 @@ export default function Login() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
-            <label style={{ fontSize: '.85rem', fontWeight: 600, color: 'var(--muted)' }}>
-              رمز PIN
+          <div className="auth-field">
+            <label htmlFor="guardian-pin" className="auth-label">
+              رمز PIN (6 أرقام)
             </label>
             <input
+              id="guardian-pin"
               className="input"
               type="password"
               dir="ltr"
@@ -106,7 +90,7 @@ export default function Login() {
           </div>
 
           {err && (
-            <p style={{ margin: 0, color: 'var(--err)', fontSize: '.875rem', fontWeight: 600, textAlign: 'center' }}>
+            <p className="err" role="alert" style={{ textAlign: 'center' }}>
               {err}
             </p>
           )}
@@ -115,11 +99,16 @@ export default function Login() {
             type="submit"
             className="btn btn-primary"
             disabled={loading || !phone || !pin}
-            style={{ width: '100%', justifyContent: 'center', padding: '.8rem', fontSize: '1rem', borderRadius: '.75rem' }}
+            style={{ width: '100%', justifyContent: 'center', padding: '.85rem', fontSize: '1rem', borderRadius: 'var(--radius-lg)' }}
           >
             {loading ? <Spinner size={20} /> : 'دخول'}
           </button>
         </form>
+
+        <footer className="auth-footer">
+          <span>هل أنت من كادر المدرسة؟</span>
+          <Link to="/admin/login">دخول الإدارة</Link>
+        </footer>
       </div>
     </main>
   )

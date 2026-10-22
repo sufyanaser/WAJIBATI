@@ -1,0 +1,1 @@
+PostgreSQL 15+ database hosted in Supabase (eu-central-1). Manages relational schemas for academic structures, user relationships, daily homework content, push subscription endpoints, and read receipts, enforced through rigorous Row Level Security (RLS) policies.

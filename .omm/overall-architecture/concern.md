@@ -1,0 +1,3 @@
+- iOS Safari compatibility for Web Push requires users to explicitly 'Add to Home Screen' (standalone PWA mode) on iOS 16.4+.
+- Shared household devices might expose cached guardian data unless auth session invalidation thoroughly purges local storage and Service Worker cache.
+- Network volatility requires reliable offline fallback for previously fetched daily schedules.

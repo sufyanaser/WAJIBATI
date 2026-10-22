@@ -22,6 +22,10 @@ const chipStyle = (color?: string | null): CSSProperties =>
 
 const fileName = (path: string) => path.split('/').pop() ?? 'مرفق'
 
+/**
+ * Renders a single homework entry card.
+ * RTL layout, dark navy background, gold period badge, and image lightbox.
+ */
 export function HomeworkCard({
   period,
   subject,
@@ -38,19 +42,7 @@ export function HomeworkCard({
       <div className="hw-header">
         {period != null && (
           <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--accent)',
-              color: '#111',
-              borderRadius: '50%',
-              width: 28,
-              height: 28,
-              fontSize: '.82rem',
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
+            className="hw-period-circle"
             aria-label={`الحصة ${period}`}
           >
             {period}
@@ -72,6 +64,7 @@ export function HomeworkCard({
               return (
                 <button
                   key={a.id}
+                  type="button"
                   className="attach-link"
                   onClick={() => setLightbox(url)}
                   style={{ cursor: 'pointer', border: 'none', background: 'none', padding: 0 }}
@@ -105,6 +98,7 @@ export function HomeworkCard({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="معاينة المرفق"
           onClick={() => setLightbox(null)}
           style={{
             position: 'fixed', inset: 0, zIndex: 1000,
@@ -120,11 +114,12 @@ export function HomeworkCard({
             style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: 12, boxShadow: '0 8px 48px #000' }}
           />
           <button
+            type="button"
             onClick={() => setLightbox(null)}
             style={{
               position: 'absolute', top: 16, left: 16,
               background: 'rgba(255,255,255,.15)', border: 'none',
-              color: '#fff', borderRadius: '50%', width: 40, height: 40,
+              color: '#fff', borderRadius: '50%', width: 42, height: 42,
               fontSize: '1.3rem', cursor: 'pointer',
             }}
             aria-label="إغلاق"

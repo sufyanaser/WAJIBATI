@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
@@ -9,14 +10,24 @@ interface Notice {
 }
 
 export default function NoticesPage() {
+  const nav = useNavigate()
   const [sections, setSections] = useState<Section[]>([])
   const [notices, setNotices] = useState<Notice[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [nTitle, setNTitle] = useState('')
   const [nBody, setNBody] = useState('')
   const [nPri, setNPri] = useState(1)
   const [nSec, setNSec] = useState<number | ''>('')
   const [nExpires, setNExpires] = useState('')
   const [nSaving, setNSaving] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) { nav('/admin/login'); return }
+      const { data: adm } = await supabase.from('admins').select('role').eq('user_id', data.session.user.id).maybeSingle()
+      if (!adm) { await supabase.auth.signOut(); nav('/admin/login'); return }
+    })
+  }, [nav])
 
   useEffect(() => {
     supabase.from('sections')
@@ -34,53 +45,131 @@ export default function NoticesPage() {
     setNotices((data ?? []) as unknown as Notice[])
   }
 
-  async function addNotice(e: React.FormEvent) {
+  function resetForm() {
+    setEditingId(null)
+    setNTitle('')
+    setNBody('')
+    setNPri(1)
+    setNSec('')
+    setNExpires('')
+  }
+
+  function startEditNotice(n: Notice) {
+    setEditingId(n.id)
+    setNTitle(n.title)
+    setNBody(n.body ?? '')
+    setNPri(n.priority)
+    setNSec(n.section_id ?? '')
+    setNExpires(n.expires_at ? n.expires_at.slice(0, 10) : '')
+  }
+
+  async function saveNotice(e: React.FormEvent) {
     e.preventDefault()
     if (!nTitle.trim()) return
     setNSaving(true)
-    await supabase.from('notices').insert({
+
+    const payload = {
       title: nTitle.trim(),
       body: nBody.trim() || null,
       priority: nPri,
       section_id: nSec || null,
-      publish_at: new Date().toISOString(),
       expires_at: nExpires ? new Date(nExpires + 'T23:59:59').toISOString() : null,
-    })
-    setNTitle(''); setNBody(''); setNPri(1); setNSec(''); setNExpires('')
+    }
+
+    if (editingId) {
+      await supabase.from('notices').update(payload).eq('id', editingId)
+    } else {
+      await supabase.from('notices').insert({
+        ...payload,
+        publish_at: new Date().toISOString(),
+      })
+    }
+
+    resetForm()
     await loadNotices()
     setNSaving(false)
   }
 
   async function deleteNotice(id: string) {
     await supabase.from('notices').delete().eq('id', id)
+    if (editingId === id) resetForm()
     setNotices(p => p.filter(n => n.id !== id))
   }
 
+  const sectionLabel = (id: number | null) => {
+    if (!id) return 'كل الشعب'
+    const sec = sections.find(s => s.id === id)
+    return sec ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}` : `شعبة ${id}`
+  }
+
+  const priorityLabel = (p: number) => (p === 3 ? 'عاجل' : p === 2 ? 'مهم' : 'عادي')
+  const priorityBadgeClass = (p: number) =>
+    p === 3 ? 'badge-warn' : p === 2 ? 'badge-gold' : 'badge-muted'
+
   return (
-    <div dir="rtl" style={{ display: 'grid', gap: 12 }}>
-      <form className="notice-form" onSubmit={addNotice}>
-        <input placeholder="العنوان *" value={nTitle}
-          onChange={e => setNTitle(e.target.value)} required />
-        <textarea className="hw-textarea" rows={2} placeholder="النص (اختياري)"
-          value={nBody} onChange={e => setNBody(e.target.value)} />
+    <div dir="rtl" style={{ display: 'grid', gap: 14 }}>
+      <form className="notice-form" onSubmit={saveNotice}>
+        <h2 className="import-heading">
+          {editingId ? 'تعديل الإشعار' : 'إضافة إشعار جديد'}
+        </h2>
+        <input
+          placeholder="العنوان *"
+          aria-label="عنوان الإشعار"
+          value={nTitle}
+          onChange={e => setNTitle(e.target.value)}
+          required
+        />
+        <textarea
+          className="hw-textarea"
+          rows={2}
+          placeholder="النص (اختياري)"
+          aria-label="نص الإشعار"
+          value={nBody}
+          onChange={e => setNBody(e.target.value)}
+        />
         <div className="admin-selectors">
-          <select className="admin-select" value={nPri}
-            onChange={e => setNPri(Number(e.target.value))}>
+          <select
+            className="admin-select"
+            aria-label="أولوية الإشعار"
+            value={nPri}
+            onChange={e => setNPri(Number(e.target.value))}
+          >
             <option value={1}>عادي</option>
             <option value={2}>مهم</option>
             <option value={3}>عاجل</option>
           </select>
-          <select className="admin-select" value={nSec}
-            onChange={e => setNSec(e.target.value ? Number(e.target.value) : '')}>
+          <select
+            className="admin-select"
+            aria-label="الشعبة المستهدفة"
+            value={nSec}
+            onChange={e => setNSec(e.target.value ? Number(e.target.value) : '')}
+          >
             <option value="">كل الشعب</option>
             {sections.map(s => (
-              <option key={s.id} value={s.id}>{s.stage.name} {s.stage.branch} / {s.letter}</option>
+              <option key={s.id} value={s.id}>
+                {s.stage.name} {s.stage.branch} / {s.letter}
+              </option>
             ))}
           </select>
-          <input type="date" className="admin-date" value={nExpires}
-            onChange={e => setNExpires(e.target.value)} title="تاريخ انتهاء الإشعار" />
+          <input
+            type="date"
+            className="admin-date"
+            aria-label="تاريخ انتهاء الإشعار"
+            value={nExpires}
+            onChange={e => setNExpires(e.target.value)}
+            title="تاريخ انتهاء الإشعار"
+          />
         </div>
-        <button type="submit" disabled={nSaving}>{nSaving ? '…' : 'إضافة إشعار'}</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="submit" className="btn-publish-all" style={{ flex: 1 }} disabled={nSaving}>
+            {nSaving ? '…' : editingId ? 'حفظ التعديلات' : 'إضافة إشعار'}
+          </button>
+          {editingId && (
+            <button type="button" className="icon-btn" onClick={resetForm}>
+              إلغاء
+            </button>
+          )}
+        </div>
       </form>
 
       <div className="notices">
@@ -88,10 +177,34 @@ export default function NoticesPage() {
           <div key={n.id} className={`notice p${n.priority}`}>
             <div className="notice-header">
               <strong>{n.title}</strong>
-              <button className="btn-del" onClick={() => deleteNotice(n.id)}>✕</button>
+              <span className={priorityBadgeClass(n.priority)}>{priorityLabel(n.priority)}</span>
+              <button
+                type="button"
+                className="icon-btn"
+                style={{ minHeight: 32, padding: '2px 10px', fontSize: '.78rem' }}
+                aria-label="تعديل الإشعار"
+                onClick={() => startEditNotice(n)}
+              >
+                تعديل
+              </button>
+              <button
+                type="button"
+                className="btn-del"
+                aria-label="حذف الإشعار"
+                onClick={() => deleteNotice(n.id)}
+              >
+                ✕
+              </button>
             </div>
             {n.body && <p>{n.body}</p>}
-            {n.section_id && <span className="badge">شعبة {n.section_id}</span>}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
+              <span className="badge">{sectionLabel(n.section_id)}</span>
+              {n.expires_at && (
+                <span className="badge-muted">
+                  ينتهي: {new Date(n.expires_at).toLocaleDateString('ar-IQ')}
+                </span>
+              )}
+            </div>
           </div>
         ))}
         {!notices.length && <p className="muted">لا إشعارات حالياً</p>}

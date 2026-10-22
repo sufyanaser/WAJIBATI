@@ -50,6 +50,7 @@ export default function Admin() {
   const [sectionLabel, setSectionLabel] = useState('')
 
   const [subjects, setSubjects] = useState<Subject[]>([])
+  const [teachersBySubject, setTeachersBySubject] = useState<Record<number, { id: number; full_name: string }>>({})
 
   // upload/save in-flight guards (ref-based to avoid React state race conditions)
   const uploadingFiles = useRef(new Set<File>())
@@ -83,9 +84,21 @@ export default function Admin() {
       setReady(true)
       loadSections()
       loadNotices()
+      loadTeachers()
       fetchSubjects().then(setSubjects)
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadTeachers() {
+    const { data } = await supabase.from('teachers').select('id, full_name, subject_id').eq('active', true)
+    const map: Record<number, { id: number; full_name: string }> = {}
+    for (const t of (data ?? []) as { id: number; full_name: string; subject_id?: number }[]) {
+      if (t.subject_id && !map[t.subject_id]) {
+        map[t.subject_id] = { id: t.id, full_name: t.full_name }
+      }
+    }
+    setTeachersBySubject(map)
+  }
 
   async function loadSections() {
     const { data } = await supabase.from('sections')
@@ -420,7 +433,13 @@ export default function Admin() {
     <main className="screen admin" dir="rtl">
       {/* top bar */}
       <div className="top-bar">
-        <h1 className="app-title">لوحة الإدارة</h1>
+        <div className="brand-identity">
+          <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={42} height={42} />
+          <div className="today-header-titles">
+            <h1 className="app-title">لوحة الإدارة</h1>
+            <p className="school-subtitle">إعدادية الرميلة للبنين</p>
+          </div>
+        </div>
         <button className="icon-btn"
           onClick={() => supabase.auth.signOut().then(() => nav('/admin/login'))}>خروج</button>
       </div>
@@ -472,8 +491,19 @@ export default function Admin() {
                         <select
                           className="admin-select subject-select"
                           value={s.selectedSubjectId ?? ''}
-                          onChange={e => setSlots(p => p.map((r, j) =>
-                            j === i ? { ...r, selectedSubjectId: e.target.value ? Number(e.target.value) : null, error: null } : r))}
+                          onChange={e => {
+                            const nextSubId = e.target.value ? Number(e.target.value) : null
+                            setSlots(p => p.map((r, j) =>
+                              j === i
+                                ? {
+                                    ...r,
+                                    selectedSubjectId: nextSubId,
+                                    teacher: nextSubId ? (teachersBySubject[nextSubId] ?? r.teacher) : null,
+                                    error: null,
+                                  }
+                                : r
+                            ))
+                          }}
                         >
                           <option value="">-- اختر المادة --</option>
                           {subjects.map(sub => (

@@ -1,6 +1,7 @@
+import fs from 'node:fs'
 import { defineConfig } from '@playwright/test'
 
-const CHROMIUM = '/opt/pw-browsers/chromium'
+const CHROMIUM = process.env.CHROMIUM_PATH || (fs.existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined)
 
 export default defineConfig({
   testDir: './e2e',
@@ -18,7 +19,7 @@ export default defineConfig({
     locale: 'ar-IQ',
     browserName: 'chromium',
     launchOptions: {
-      executablePath: CHROMIUM,
+      ...(CHROMIUM ? { executablePath: CHROMIUM } : {}),
     },
   },
   webServer: {

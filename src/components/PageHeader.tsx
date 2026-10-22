@@ -4,30 +4,22 @@ interface Props {
   title: string
   subtitle?: string
   actions?: ReactNode
+  showLogo?: boolean
 }
 
-export function PageHeader({ title, subtitle, actions }: Props) {
+export function PageHeader({ title, subtitle, actions, showLogo = false }: Props) {
   return (
-    <div style={{
-      background: 'var(--card)',
-      borderBottom: '1px solid var(--border)',
-      paddingTop: '.9rem',
-      paddingBottom: '.9rem',
-      paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))',
-      paddingRight: 'max(16px, env(safe-area-inset-right, 0px))',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '1rem',
-      position: 'sticky',
-      top: 0,
-      zIndex: 10,
-    }}>
-      <div>
-        <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{title}</h1>
-        {subtitle && <p style={{ margin: 0, fontSize: '.8rem', color: 'var(--muted)' }}>{subtitle}</p>}
+    <header className="top-bar" style={{ position: 'sticky', top: 0, zIndex: 20 }}>
+      <div className="brand-identity">
+        {showLogo && (
+          <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={42} height={42} />
+        )}
+        <div className="today-header-titles">
+          <h1 className="app-title">{title}</h1>
+          {subtitle && <p className="school-subtitle">{subtitle}</p>}
+        </div>
       </div>
-      {actions && <div style={{ display: 'flex', gap: '.5rem' }}>{actions}</div>}
-    </div>
+      {actions && <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>{actions}</div>}
+    </header>
   )
 }

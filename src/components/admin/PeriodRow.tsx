@@ -30,13 +30,13 @@ const S: Record<string, React.CSSProperties> = {
   },
   badge: {
     display: 'inline-block',
-    background: '#E8B04A22',
-    border: '1px solid #E8B04A66',
+    background: 'var(--accent-soft)',
+    border: '1px solid rgba(232, 176, 74, 0.35)',
     borderRadius: 20,
     padding: '3px 12px',
     fontSize: '.82rem',
     fontWeight: 700,
-    color: '#E8B04A',
+    color: 'var(--accent)',
     flexShrink: 0,
   },
   subjectChip: {
@@ -57,8 +57,8 @@ const S: Record<string, React.CSSProperties> = {
 
 // Status badge colours
 function statusStyle(status: PeriodRowProps['status']): React.CSSProperties {
-  if (status === 'published') return { background: '#1a3a2a', color: '#4caf82', border: '1px solid #1f5a3d', borderRadius: 20, padding: '3px 10px', fontSize: '.78rem', fontWeight: 700 }
-  if (status === 'draft') return { background: '#2a3a1a', color: '#8bc34a', border: '1px solid #3d5a1f', borderRadius: 20, padding: '3px 10px', fontSize: '.78rem', fontWeight: 700 }
+  if (status === 'published') return { background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid rgba(34, 197, 139, 0.4)', borderRadius: 20, padding: '3px 10px', fontSize: '.78rem', fontWeight: 700 }
+  if (status === 'draft') return { background: 'var(--warn-bg)', color: 'var(--warn)', border: '1px solid rgba(246, 173, 85, 0.4)', borderRadius: 20, padding: '3px 10px', fontSize: '.78rem', fontWeight: 700 }
   return {}
 }
 
@@ -70,7 +70,7 @@ const statusLabel = (s: PeriodRowProps['status']) =>
 export default function PeriodRow({ period, subject, teacher, value, status, onChange }: PeriodRowProps) {
   const cardStyle: React.CSSProperties = {
     ...S.card,
-    ...(status === 'published' ? { borderRight: '3px solid #3ab56a' } : {}),
+    ...(status === 'published' ? { borderRight: '4px solid var(--success)' } : {}),
   }
 
   return (

@@ -5,7 +5,7 @@ import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
 import { PageHeader } from '../../components/admin/PageHeader'
 import { StatusBadge } from '../../components/admin/StatusBadge'
-import { PlusIcon, EditIcon, CheckIcon, CloseIcon } from '../../components/Icons'
+import { PlusIcon, EditIcon, CheckIcon, CloseIcon, TrashIcon } from '../../components/Icons'
 
 interface StudentRow {
   id: number
@@ -14,15 +14,17 @@ interface StudentRow {
   active: boolean
   section_id: number
   section_label: string
-  guardians: { full_name: string | null; phone: string; relation: string | null }[]
+  guardians: { guardian_id: string; full_name: string | null; phone: string; relation: string | null }[]
 }
 
 interface SectionOpt { id: number; label: string }
+interface GuardianOpt { id: string; label: string }
 
 export default function StudentsPage() {
   const { ready, role } = useAdmin()
   const [students, setStudents] = useState<StudentRow[]>([])
   const [sections, setSections] = useState<SectionOpt[]>([])
+  const [guardiansList, setGuardiansList] = useState<GuardianOpt[]>([])
   const [filterSec, setFilterSec] = useState<number | ''>('')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -31,6 +33,8 @@ export default function StudentsPage() {
   const [fullName, setFullName] = useState('')
   const [sectionId, setSectionId] = useState<number | ''>('')
   const [notes, setNotes] = useState('')
+  const [guardianId, setGuardianId] = useState<string>('')
+  const [relation, setRelation] = useState('أب')
   const [saving, setSaving] = useState(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
@@ -43,7 +47,7 @@ export default function StudentsPage() {
 
   async function load() {
     setLoading(true)
-    const [stuR, secR, gsR] = await Promise.all([
+    const [stuR, secR, gsR, gListR] = await Promise.all([
       supabase.from('students')
         .select('id, full_name, notes, active, section_id, section:sections(letter, stage:stages(name, branch))')
         .order('full_name'),
@@ -52,19 +56,31 @@ export default function StudentsPage() {
         .eq('active', true)
         .order('letter'),
       supabase.from('guardian_students')
-        .select('student_id, relation, guardian:guardians(full_name, phone)'),
+        .select('student_id, guardian_id, relation, guardian:guardians(full_name, phone)'),
+      supabase.from('guardians')
+        .select('id, full_name, phone')
+        .eq('active', true)
+        .order('full_name'),
     ])
 
     type RawSec = { id: number; letter: string; stage: { name: string; branch: string } }
     const secs = (secR.data ?? []) as unknown as RawSec[]
     setSections(secs.map(s => ({ id: s.id, label: `${s.stage.name} ${s.stage.branch} / ${s.letter}` })))
 
-    type RawGS = { student_id: number; relation: string | null; guardian: { full_name: string | null; phone: string } | null }
-    const gsByStu = new Map<number, { full_name: string | null; phone: string; relation: string | null }[]>()
+    const gOpts = (gListR.data ?? []) as { id: string; full_name: string | null; phone: string }[]
+    setGuardiansList(gOpts.map(g => ({ id: g.id, label: `${g.full_name ?? ''} (${g.phone})` })))
+
+    type RawGS = {
+      student_id: number
+      guardian_id: string
+      relation: string | null
+      guardian: { full_name: string | null; phone: string } | null
+    }
+    const gsByStu = new Map<number, { guardian_id: string; full_name: string | null; phone: string; relation: string | null }[]>()
     for (const g of (gsR.data ?? []) as unknown as RawGS[]) {
       if (!g.guardian) continue
       const arr = gsByStu.get(g.student_id) ?? []
-      arr.push({ full_name: g.guardian.full_name, phone: g.guardian.phone, relation: g.relation })
+      arr.push({ guardian_id: g.guardian_id, full_name: g.guardian.full_name, phone: g.guardian.phone, relation: g.relation })
       gsByStu.set(g.student_id, arr)
     }
 
@@ -90,6 +106,8 @@ export default function StudentsPage() {
     setFullName('')
     setSectionId(filterSec || sections[0]?.id || '')
     setNotes('')
+    setGuardianId('')
+    setRelation('أب')
     setShowForm(true)
   }
 
@@ -98,6 +116,8 @@ export default function StudentsPage() {
     setFullName(s.full_name)
     setSectionId(s.section_id)
     setNotes(s.notes ?? '')
+    setGuardianId(s.guardians[0]?.guardian_id ?? '')
+    setRelation(s.guardians[0]?.relation ?? 'أب')
     setShowForm(true)
   }
 
@@ -116,11 +136,34 @@ export default function StudentsPage() {
     if (editing) {
       const { error } = await supabase.from('students').update(payload).eq('id', editing.id)
       if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+
+      if (guardianId) {
+        await supabase.from('guardian_students').upsert({
+          guardian_id: guardianId,
+          student_id: editing.id,
+          relation: relation.trim() || null,
+        })
+      }
+
       showToast('تم تعديل بيانات الطالب ✓', 'success')
     } else {
       const extKey = `STU-${Date.now().toString(36).toUpperCase()}`
-      const { error } = await supabase.from('students').insert({ ...payload, external_key: extKey })
+      const { data: newStu, error } = await supabase
+        .from('students')
+        .insert({ ...payload, external_key: extKey })
+        .select('id')
+        .single()
+
       if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+
+      if (newStu?.id && guardianId) {
+        await supabase.from('guardian_students').insert({
+          guardian_id: guardianId,
+          student_id: newStu.id,
+          relation: relation.trim() || null,
+        })
+      }
+
       showToast('تمت إضافة الطالب ✓', 'success')
     }
 
@@ -128,6 +171,14 @@ export default function StudentsPage() {
     setEditing(null)
     await load()
     setSaving(false)
+  }
+
+  async function toggleActive(s: StudentRow) {
+    const newActive = !s.active
+    const { error } = await supabase.from('students').update({ active: newActive }).eq('id', s.id)
+    if (error) { showToast(`خطأ: ${error.message}`, 'error'); return }
+    showToast(newActive ? 'تم تفعيل الطالب' : 'تم تعطيل الطالب', 'info')
+    await load()
   }
 
   if (!ready || loading) return <Spinner />
@@ -190,6 +241,34 @@ export default function StudentsPage() {
               </select>
             </label>
             <label>
+              <span>ربط بولي أمر</span>
+              <select
+                className="admin-select"
+                value={guardianId}
+                onChange={e => setGuardianId(e.target.value)}
+              >
+                <option value="">بدون ربط حالياً</option>
+                {guardiansList.map(g => (
+                  <option key={g.id} value={g.id}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>صلة القرابة</span>
+              <select
+                className="admin-select"
+                value={relation}
+                onChange={e => setRelation(e.target.value)}
+              >
+                <option value="أب">أب</option>
+                <option value="أم">أم</option>
+                <option value="أخ">أخ</option>
+                <option value="ولي أمر">ولي أمر</option>
+              </select>
+            </label>
+            <label style={{ gridColumn: '1 / -1' }}>
               <span>ملاحظات</span>
               <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="اختياري" />
             </label>
@@ -242,14 +321,24 @@ export default function StudentsPage() {
                 </td>
                 {canEdit && (
                   <td>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => startEdit(s)}
-                    >
-                      <EditIcon size={14} />
-                      <span>تعديل</span>
-                    </button>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => startEdit(s)}
+                      >
+                        <EditIcon size={14} />
+                        <span>تعديل</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}`}
+                        onClick={() => void toggleActive(s)}
+                      >
+                        {s.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                        <span>{s.active ? 'تعطيل' : 'تفعيل'}</span>
+                      </button>
+                    </div>
                   </td>
                 )}
               </tr>

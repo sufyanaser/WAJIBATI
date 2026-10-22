@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PageHeader } from '../../components/admin/PageHeader'
 import { PlusIcon, EditIcon, CheckIcon, CloseIcon } from '../../components/Icons'
 
 interface SubjectRow {
@@ -86,18 +87,20 @@ export default function SubjectsPage() {
 
   return (
     <div className="dash-page" dir="rtl">
-      <div className="dash-toolbar">
-        <div>
-          <h2 className="dash-page-title">المواد الدراسية</h2>
-          <span className="muted">{rows.length} مادة مسجلة</span>
-        </div>
-        {canEdit && (
-          <button type="button" className="btn btn-primary" onClick={startAdd}>
-            <PlusIcon size={16} />
-            <span>إضافة مادة</span>
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="المواد الدراسية والمناهج"
+        subtitle={`${rows.length} مادة دراسية مسجلة في النظام`}
+        badgeText={`${rows.length} مادة`}
+        badgeVariant="blue"
+        actions={
+          canEdit ? (
+            <button type="button" className="btn btn-primary" onClick={startAdd}>
+              <PlusIcon size={16} />
+              <span>إضافة مادة</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <form className="dash-form" onSubmit={handleSave}>

@@ -10,6 +10,7 @@ import {
   EditIcon,
   CheckIcon,
   CloseIcon,
+  TrashIcon,
   GraduationCapIcon,
 } from '../../components/Icons'
 
@@ -121,6 +122,14 @@ export default function SectionsPage() {
     setSaving(false)
   }
 
+  async function toggleActive(s: SectionRow) {
+    const newActive = !s.active
+    const { error } = await supabase.from('sections').update({ active: newActive }).eq('id', s.id)
+    if (error) { showToast(`خطأ: ${error.message}`, 'error'); return }
+    showToast(newActive ? 'تم تفعيل الشعبة' : 'تم تعطيل الشعبة', 'info')
+    await load()
+  }
+
   if (!ready || loading) return <Spinner />
 
   const activeCount = sections.filter(s => s.active).length
@@ -200,7 +209,7 @@ export default function SectionsPage() {
               <span className="muted">{s.year.label}</span>
             </div>
             {canEdit && (
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
@@ -208,6 +217,14 @@ export default function SectionsPage() {
                 >
                   <EditIcon size={14} />
                   <span>تعديل</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => void toggleActive(s)}
+                >
+                  {s.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                  <span>{s.active ? 'تعطيل' : 'تفعيل'}</span>
                 </button>
               </div>
             )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase, isValidPhone } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
@@ -133,9 +133,9 @@ export default function GuardiansPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    const cleanPhone = formatIraqiPhone(phone)
+const cleanPhone = formatIraqiPhone(phone)
     if (!/^\+9647[0-9]{9}$/.test(cleanPhone)) {
-      showToast('يرجى إدخال رقم هاتف عراقي صالح بصيغة (+9647XXXXXXXXX)', 'error')
+      showToast('يرجى إدخال رقم هاتف عراقي صالح (07XXXXXXXXX أو +9647XXXXXXXXX)', 'error')
       return
     }
 
@@ -267,12 +267,14 @@ export default function GuardiansPage() {
               />
             </label>
             <label>
-              <span>رقم الهاتف الأساسي *</span>
+<span>رقم الهاتف الأساسي *</span>
               <input
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 dir="ltr"
-                placeholder="+9647XXXXXXXXX"
+                placeholder="07XXXXXXXXX أو +9647XXXXXXXXX"
+                pattern="^(\+9647[0-9]{9}|07[0-9]{9})$"
+                title="07 متبوعاً بـ 9 أرقام أو +9647 متبوعاً بـ 9 أرقام"
                 required
               />
             </label>

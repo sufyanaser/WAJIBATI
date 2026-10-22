@@ -208,20 +208,19 @@ export function useAdminSection(
 
     const slot = periodsWithOverrides.find(p => p.period === period)
     if (!slot?.hw_id) return { ok: false, error: 'لا يوجد واجب محفوظ لحذفه' }
-    const { error } = await supabase.from('homework').delete().eq('id', slot.hw_id)
+    // Archive instead of hard-delete — homework is never permanently removed (AGENTS.md §1)
+    const { error } = await supabase
+      .from('homework')
+      .update({ status: 'archived' })
+      .eq('id', slot.hw_id)
     if (error) return { ok: false, error: error.message }
     setPeriods(prev =>
       prev.map(p =>
         p.period === period
-          ? { ...p, hw_id: null, body: '', status: null, attachments: [] }
+          ? { ...p, status: 'archived' as const }
           : p,
       ),
     )
-    setBodyOverrides(prev => {
-      const next = { ...prev }
-      delete next[period]
-      return next
-    })
     return { ok: true }
   }
 

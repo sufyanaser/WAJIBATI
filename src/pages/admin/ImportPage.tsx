@@ -49,8 +49,8 @@ export default function ImportPage() {
 
   async function resetGuardianPin(event: React.FormEvent) {
     event.preventDefault()
-    if (!/^\+9647[0-9]{9}$/.test(resetPhone) || !/^[0-9]{6}$/.test(resetPin)) {
-      setMessage('تحقق من رقم الهاتف والرمز المكون من 6 أرقام.'); return
+    if (!/^07[0-9]{9}$/.test(resetPhone) || !/^[0-9]{6}$/.test(resetPin)) {
+      setMessage('رقم الهاتف يجب أن يكون بصيغة 07XXXXXXXXX والرمز 6 أرقام.'); return
     }
     setBusy(true); setMessage('')
     const { error } = await supabase.functions.invoke('reset-pin', { body: { phone: resetPhone, new_pin: resetPin } })
@@ -95,7 +95,7 @@ export default function ImportPage() {
       <h2 className="import-heading">تغيير رمز دخول ولي الأمر</h2>
       <p className="muted" style={{ textAlign: 'right', padding: 0 }}>هذه العملية منفصلة عن ملف Excel ولا تحفظ الرمز في بيانات المدرسة.</p>
       <form className="notice-form" style={{ padding: 0, border: 'none', boxShadow: 'none' }} onSubmit={event => void resetGuardianPin(event)}>
-        <input aria-label="رقم الهاتف" placeholder="رقم الهاتف (+9647XXXXXXXXX)" value={resetPhone} onChange={e => setResetPhone(e.target.value)} dir="ltr" />
+        <input aria-label="رقم الهاتف" placeholder="رقم الهاتف (07XXXXXXXXX)" value={resetPhone} onChange={e => setResetPhone(e.target.value)} dir="ltr" />
         <input aria-label="الرمز الجديد" placeholder="الرمز الجديد (6 أرقام)" value={resetPin} maxLength={6} onChange={e => setResetPin(e.target.value.replace(/\D/g,''))} dir="ltr" />
         <button type="submit" className="btn btn-primary" disabled={busy || !resetPhone || resetPin.length !== 6}>
           <KeyIcon size={18} />

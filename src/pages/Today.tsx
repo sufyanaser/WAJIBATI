@@ -244,24 +244,43 @@ export default function Today() {
     if (!child) return
     setExporting(true)
     try {
-      const homeworkBySubject: Record<string, string> = {}
-      hw.forEach(h => {
+      // Build ordered homework items (hw is already sorted by period from useHomework)
+      const subjectMap = new Map<string, string>()
+      for (const h of hw) {
         const name = h.subject?.name ?? ''
-        if (!name) return
+        if (!name) continue
         const entry = h.period ? `(ح${h.period}) ${h.body}` : h.body
-        homeworkBySubject[name] = homeworkBySubject[name]
-          ? homeworkBySubject[name] + '\n' + entry
-          : entry
-      })
-      // TODO: replace after published_by migration (see docs/implementation/ARCHITECTURE-AUDIT.md)
-      const publisherName = 'مسؤول المدرسة'
-      const { exportA4PNG } = await import('../utils/exportA4')
+        subjectMap.set(name, subjectMap.has(name) ? subjectMap.get(name)! + '\n' + entry : entry)
+      }
+      const homeworkItems = Array.from(subjectMap.entries()).map(([subject, text]) => ({ subject, text }))
+
+      // Fetch publisher name from current admin session
+      let publisherName = 'مسؤول المدرسة'
+      try {
+        const { data: sess } = await supabase.auth.getSession()
+        if (sess.session?.user.id) {
+          const { data: adm } = await supabase
+            .from('admins')
+            .select('full_name')
+            .eq('user_id', sess.session.user.id)
+            .maybeSingle()
+          if (adm && (adm as { full_name?: string | null }).full_name) {
+            publisherName = (adm as { full_name: string }).full_name
+          }
+        }
+      } catch { /* keep default */ }
+
+      // Fetch app icon as base64 for embedding in the export
+      const { exportA4PNG, fetchAsDataUrl } = await import('../utils/exportA4')
+      const logoDataUrl = await fetchAsDataUrl('/icon-192.png')
+
       const blob = await exportA4PNG({
         date: toISO(date),
         classLabel: child.section_label,
         section: child.section_letter,
-        homeworkBySubject,
+        homeworkItems,
         publisherName,
+        logoDataUrl,
       })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

@@ -20,7 +20,7 @@ self.addEventListener('message', (e) => {
 
 self.addEventListener('push', (e) => {
   const data = e.data?.json() ?? {}
-  e.waitUntil(self.registration.showNotification(data.title ?? 'واجبات الرميلة', {
+  e.waitUntil(self.registration.showNotification(data.title ?? 'واجباتي', {
     body: data.body, dir: 'rtl', lang: 'ar', icon: '/icon-192.png', data: { url: data.url ?? '/' }
   }))
 })

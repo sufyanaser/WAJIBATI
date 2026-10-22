@@ -1,5 +1,5 @@
 /**
- * Rumaila Homeworks — test suite
+ * Wajibati (واجباتي) — test suite
  *
  * Part A — Pure unit tests: validation helpers (attachmentUtils, phone normalisation,
  *           slot logic) — no React, no network.

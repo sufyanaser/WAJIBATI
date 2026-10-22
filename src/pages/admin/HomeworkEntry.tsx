@@ -240,7 +240,7 @@ export default function HomeworkEntry() {
       const { error: pushErr } = await supabase.functions.invoke('send-push', {
         body: {
           section_id: secId,
-          title: 'واجبات الرميلة',
+          title: 'واجباتي',
           body: `واجب جديد — ${slot.subject || `حصة ${period}`} بتاريخ ${toISO(date)}`,
           url: '/',
         },

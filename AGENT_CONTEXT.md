@@ -1,4 +1,4 @@
-# AGENT_CONTEXT.md — واجبات الرميلة
+# AGENT_CONTEXT.md — واجباتي (Wajibati)
 ## ملف المرجع المعرفي للوكلاء — اقرأه كاملاً قبل أي خطوة
 
 ---
@@ -12,10 +12,10 @@
 
 | الحقل | القيمة |
 |---|---|
-| الاسم | واجبات الرميلة |
+| الاسم | واجباتي — Wajibati (slug: `wajibati`) |
 | المدرسة | اعدادية الرميلة للبنين — الرمادي، الأنبار، العراق |
 | المالك | Sufyan Naser Ali — sufyanaser@gmail.com |
-| المستودع | https://github.com/sufyanaser/homeworks |
+| المستودع | https://github.com/sufyanaser/WAJIBATI (السابق: `sufyanaser/homeworks` — إعادة توجيه GitHub) |
 | الفروع | `dev` (تطوير) → PR → `main` (إنتاج) |
 
 ---
@@ -41,8 +41,8 @@ Region    : Supabase eu-central-1
 | Production | https://homeworks-nasai.vercel.app |
 | Production (alias) | https://homeworks-pi.vercel.app |
 | Preview (dev branch) | https://homeworks-git-dev-nasai.vercel.app |
-| Vercel Project ID | `prj_h5aJDlHIKGUcV5rg5gjOTLtA39DA` |
-| Supabase Project | `rumaila-homework` (oconxdrujhjaunvrycdz) |
+| Vercel Project ID | `prj_h5aJDlHIKGUcV5rg5gjOTLtA39DA` (اسم المشروع الحالي `homeworks` — الهدف `wajibati`، انظر WAJIBATI-RENAME-AUDIT.md) |
+| Supabase Project | `WAJIBATI` (oconxdrujhjaunvrycdz — ref ثابت لا يُغيَّر؛ الاسم السابق `rumaila-homework`) |
 | Supabase Region | eu-central-1 |
 
 ---

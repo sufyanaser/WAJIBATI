@@ -52,12 +52,12 @@ export async function adminSignIn(page: Page, username = 'admin', password = 'ad
   await page.locator('input[type="password"]').fill(password)
   await page.locator('button[type="submit"]').click()
   // Wait for a non-login admin page — /admin/dashboard, /admin/homework, etc.
-  // Using a negative-lookahead-equivalent: wait until URL matches /admin/* but NOT /admin/login
   try {
     await page.waitForURL(
       url => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login'),
       { timeout: 15000 },
     )
+    await page.waitForLoadState('networkidle')
   } catch {
     // auth failed — caller will detect via isAdminAuthenticated()
   }

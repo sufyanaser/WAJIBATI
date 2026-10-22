@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { defineConfig } from '@playwright/test'
 import { loadEnv } from 'vite'
 
-// Load .env.local so VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are available to global-setup
+// Load .env.local so VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, E2E_ADMIN_PASSWORD are available to global-setup
 const env = loadEnv('', process.cwd(), '')
 Object.assign(process.env, env)
 

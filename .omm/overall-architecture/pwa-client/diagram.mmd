@@ -1,0 +1,13 @@
+graph LR
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    classDef comp fill:#cdd6f4,stroke:#6c7086,color:#1e1e2e
+
+    guardian-portal["Guardian Portal\nsrc/pages/Today.tsx"]:::entry
+    admin-portal["Admin Portal\nsrc/pages/admin/"]:::entry
+    data-hooks["Data Hooks\nsrc/hooks/"]:::comp
+    ui-components["UI Components\nsrc/components/"]:::comp
+
+    guardian-portal -->|"uses"| data-hooks
+    guardian-portal -->|"renders"| ui-components
+    admin-portal -->|"uses"| data-hooks
+    admin-portal -->|"renders"| ui-components

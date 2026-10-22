@@ -1,0 +1,1 @@
+The client-side single page application (SPA) built with Vite, React 18, and TypeScript. Handles route navigation, state management, offline cached state fallback, and communicates with Supabase APIs and the registered Service Worker.

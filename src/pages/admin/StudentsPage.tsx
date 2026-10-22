@@ -1,122 +1,247 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAdmin } from './AdminShell'
+import { Spinner } from '../../components/Spinner'
+import { Toast, useToast } from '../../components/Toast'
 
-interface Section { id: number; letter: string; stage: { name: string; branch: string } }
-interface Student {
+interface StudentRow {
   id: number
   full_name: string
+  notes: string | null
   active: boolean
   section_id: number
-  section: Section | null
+  section_label: string
+  guardians: { full_name: string | null; phone: string; relation: string | null }[]
 }
 
-const rowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr auto',
-  gap: 8,
-  alignItems: 'center',
-  padding: '10px 14px',
-  background: 'var(--card)',
-  border: '1px solid var(--border)',
-  borderRadius: 12,
-}
+interface SectionOpt { id: number; label: string }
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>([])
-  const [sections, setSections] = useState<Section[]>([])
+  const { ready, role } = useAdmin()
+  const [students, setStudents] = useState<StudentRow[]>([])
+  const [sections, setSections] = useState<SectionOpt[]>([])
+  const [filterSec, setFilterSec] = useState<number | ''>('')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<number | ''>('')
-  const [name, setName] = useState('')
-  const [secId, setSecId] = useState<number | ''>('')
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<StudentRow | null>(null)
+  const [fullName, setFullName] = useState('')
+  const [sectionId, setSectionId] = useState<number | ''>('')
+  const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
-  const [err, setErr] = useState('')
+  const { toast, show: showToast, clear: clearToast } = useToast()
+
+  const canEdit = role === 'owner' || role === 'editor'
+
+  useEffect(() => {
+    if (!ready) return
+    void load()
+  }, [ready])
 
   async function load() {
-    const [st, sec] = await Promise.all([
+    setLoading(true)
+    const [stuR, secR, gsR] = await Promise.all([
       supabase.from('students')
-        .select('id, full_name, active, section_id, section:sections(id, letter, stage:stages(name, branch))')
+        .select('id, full_name, notes, active, section_id, section:sections(letter, stage:stages(name, branch))')
         .order('full_name'),
       supabase.from('sections')
         .select('id, letter, stage:stages(name, branch)')
-        .eq('active', true).order('letter'),
+        .eq('active', true)
+        .order('letter'),
+      supabase.from('guardian_students')
+        .select('student_id, relation, guardian:guardians(full_name, phone)'),
     ])
-    setStudents((st.data ?? []) as unknown as Student[])
-    setSections((sec.data ?? []) as unknown as Section[])
+
+    type RawSec = { id: number; letter: string; stage: { name: string; branch: string } }
+    const secs = (secR.data ?? []) as unknown as RawSec[]
+    setSections(secs.map(s => ({ id: s.id, label: `${s.stage.name} ${s.stage.branch} / ${s.letter}` })))
+
+    type RawGS = { student_id: number; relation: string | null; guardian: { full_name: string | null; phone: string } | null }
+    const gsByStu = new Map<number, { full_name: string | null; phone: string; relation: string | null }[]>()
+    for (const g of (gsR.data ?? []) as unknown as RawGS[]) {
+      if (!g.guardian) continue
+      const arr = gsByStu.get(g.student_id) ?? []
+      arr.push({ full_name: g.guardian.full_name, phone: g.guardian.phone, relation: g.relation })
+      gsByStu.set(g.student_id, arr)
+    }
+
+    type RawStu = {
+      id: number; full_name: string; notes: string | null; active: boolean; section_id: number
+      section: { letter: string; stage: { name: string; branch: string } } | null
+    }
+    const rawStudents = (stuR.data ?? []) as unknown as RawStu[]
+    setStudents(rawStudents.map(s => ({
+      id: s.id,
+      full_name: s.full_name,
+      notes: s.notes,
+      active: s.active,
+      section_id: s.section_id,
+      section_label: s.section ? `${s.section.stage.name} ${s.section.stage.branch} / ${s.section.letter}` : '',
+      guardians: gsByStu.get(s.id) ?? [],
+    })))
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  function startAdd() {
+    setEditing(null)
+    setFullName('')
+    setSectionId(filterSec || sections[0]?.id || '')
+    setNotes('')
+    setShowForm(true)
+  }
 
-  async function add(e: React.FormEvent) {
+  function startEdit(s: StudentRow) {
+    setEditing(s)
+    setFullName(s.full_name)
+    setSectionId(s.section_id)
+    setNotes(s.notes ?? '')
+    setShowForm(true)
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim() || !secId) { setErr('الاسم والشعبة مطلوبان'); return }
-    setSaving(true); setErr('')
-    const { error } = await supabase.from('students').insert({ full_name: name.trim(), section_id: secId })
-    if (error) { setErr(error.message); setSaving(false); return }
-    setName(''); setSecId(''); await load(); setSaving(false)
+    if (!fullName.trim() || !sectionId) return
+    setSaving(true)
+
+    const payload = {
+      full_name: fullName.trim(),
+      section_id: Number(sectionId),
+      notes: notes.trim() || null,
+      active: true,
+    }
+
+    if (editing) {
+      const { error } = await supabase.from('students').update(payload).eq('id', editing.id)
+      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+      showToast('تم تعديل بيانات الطالب ✓', 'success')
+    } else {
+      const extKey = `STU-${Date.now().toString(36).toUpperCase()}`
+      const { error } = await supabase.from('students').insert({ ...payload, external_key: extKey })
+      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+      showToast('تمت إضافة الطالب ✓', 'success')
+    }
+
+    setShowForm(false)
+    setEditing(null)
+    await load()
+    setSaving(false)
   }
 
-  async function toggleActive(s: Student) {
-    await supabase.from('students').update({ active: !s.active }).eq('id', s.id)
-    setStudents(prev => prev.map(x => x.id === s.id ? { ...x, active: !x.active } : x))
-  }
+  if (!ready || loading) return <Spinner />
 
-  const visible = filter ? students.filter(s => s.section_id === Number(filter)) : students
-
-  const sectionLabel = (s: Section | null) =>
-    s ? `${s.stage.name} ${s.stage.branch} / ${s.letter}` : '—'
+  const filtered = students.filter(s => {
+    if (filterSec && s.section_id !== filterSec) return false
+    if (search.trim() && !s.full_name.includes(search.trim())) return false
+    return true
+  })
 
   return (
-    <div dir="rtl" style={{ display: 'grid', gap: 12 }}>
-      <h2 style={{ margin: 0, fontSize: '1.1rem' }}>الطلاب</h2>
-
-      <form onSubmit={add} style={{ display: 'grid', gap: 8, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 14 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <input placeholder="اسم الطالب *" value={name} onChange={e => setName(e.target.value)} required />
-          <select value={secId} onChange={e => setSecId(e.target.value ? Number(e.target.value) : '')} required>
-            <option value="">— اختر الشعبة —</option>
-            {sections.map(s => <option key={s.id} value={s.id}>{sectionLabel(s)}</option>)}
-          </select>
+    <div className="dash-page" dir="rtl">
+      <div className="dash-toolbar">
+        <div>
+          <h2 className="dash-page-title">الطلاب</h2>
+          <span className="muted">عرض {filtered.length} من أصل {students.length} طالب</span>
         </div>
-        {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
-        <button type="submit" disabled={saving}>{saving ? '…' : 'إضافة طالب'}</button>
-      </form>
+        {canEdit && (
+          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
+            + إضافة طالب
+          </button>
+        )}
+      </div>
 
-      <select
-        value={filter}
-        onChange={e => setFilter(e.target.value ? Number(e.target.value) : '')}
-        style={{ maxWidth: 240 }}
-      >
-        <option value="">جميع الشعب</option>
-        {sections.map(s => <option key={s.id} value={s.id}>{sectionLabel(s)}</option>)}
-      </select>
+      {/* Filters */}
+      <div className="dash-filters">
+        <input
+          className="search-input"
+          placeholder="بحث باسم الطالب…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <select
+          className="admin-select"
+          style={{ width: 'auto', minWidth: 170 }}
+          value={filterSec}
+          onChange={e => setFilterSec(e.target.value ? Number(e.target.value) : '')}
+        >
+          <option value="">كل الشعب</option>
+          {sections.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+        </select>
+      </div>
 
-      {loading
-        ? <p className="muted">جارٍ التحميل…</p>
-        : visible.length === 0
-          ? <p className="muted">لا طلاب في هذه الشعبة</p>
-          : (
-            <div style={{ display: 'grid', gap: 6 }}>
-              {visible.map(s => (
-                <div key={s.id} style={{ ...rowStyle, opacity: s.active ? 1 : 0.5 }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{s.full_name}</div>
-                    <div style={{ fontSize: '.8rem', color: 'var(--muted)' }}>
-                      {sectionLabel(s.section)}
-                    </div>
-                  </div>
-                  <button
-                    className="icon-btn"
-                    style={{ fontSize: '.8rem', color: s.active ? 'var(--muted)' : 'var(--accent)' }}
-                    onClick={() => toggleActive(s)}
-                  >
-                    {s.active ? 'تعطيل' : 'تفعيل'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )
-      }
+      {showForm && (
+        <form className="dash-form" onSubmit={handleSave}>
+          <h3 className="dash-form-title">{editing ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</h3>
+          <div className="dash-form-grid">
+            <label>
+              <span>الاسم الكامل *</span>
+              <input value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="الاسم الرباعي" />
+            </label>
+            <label>
+              <span>الشعبة *</span>
+              <select className="admin-select" value={sectionId} onChange={e => setSectionId(Number(e.target.value))} required>
+                <option value="">اختر الشعبة…</option>
+                {sections.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>ملاحظات</span>
+              <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="اختياري" />
+            </label>
+          </div>
+          <div className="dash-form-actions">
+            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
+            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+          </div>
+        </form>
+      )}
+
+      <div className="dash-table-wrap">
+        <table className="dash-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>اسم الطالب</th>
+              <th>الشعبة</th>
+              <th>ولي الأمر</th>
+              <th>الحالة</th>
+              {canEdit && <th>إجراءات</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((s, i) => (
+              <tr key={s.id} className={!s.active ? 'dash-row-inactive' : ''}>
+                <td className="muted">{i + 1}</td>
+                <td><strong>{s.full_name}</strong></td>
+                <td><span className="badge">{s.section_label}</span></td>
+                <td className="muted">
+                  {s.guardians.length > 0
+                    ? s.guardians.map(g => `${g.full_name ?? ''} (${g.phone})`).join(' ، ')
+                    : 'غير مرتبط'}
+                </td>
+                <td>
+                  <span className={`dash-badge ${s.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
+                    {s.active ? 'فعّال' : 'معطّل'}
+                  </span>
+                </td>
+                {canEdit && (
+                  <td>
+                    <button type="button" className="icon-btn" onClick={() => startEdit(s)}>تعديل</button>
+                  </td>
+                )}
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={canEdit ? 6 : 5} className="muted" style={{ textAlign: 'center', padding: 24 }}>
+                  لا توجد نتائج مطابقة
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onDone={clearToast} />}
     </div>
   )
 }

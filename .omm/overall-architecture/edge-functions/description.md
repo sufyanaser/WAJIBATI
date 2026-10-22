@@ -1,0 +1,1 @@
+Serverless Deno TypeScript functions deployed on Supabase Edge Network. Provides privileged administrative workflows, Web Push fan-out, CSV parsing for bulk provisioning, and guardian PIN updates without exposing the service-role key to client browsers.

@@ -1,0 +1,22 @@
+graph LR
+    classDef external fill:#585b70,stroke:#585b70,color:#cdd6f4
+    classDef entry fill:#89b4fa,stroke:#89b4fa,color:#1e1e2e
+    classDef store fill:#a6e3a1,stroke:#a6e3a1,color:#1e1e2e
+
+    pwa-client["PWA Client\nsrc/"]:::entry
+    service-worker["Service Worker\nsrc/sw.ts"]
+    supabase-auth["Supabase Auth\nauth.users"]
+    supabase-database["Supabase Database\nsupabase/migrations/"]:::store
+    supabase-storage["Supabase Storage\nattachments & branding"]:::store
+    edge-functions["Edge Functions\nsupabase/functions/"]
+    web-push-service["Web Push Gateways\nVAPID Push Endpoints"]:::external
+
+    pwa-client -->|"registers & caches"| service-worker
+    pwa-client -->|"Phone+PIN login"| supabase-auth
+    pwa-client -->|"PostgREST API"| supabase-database
+    pwa-client -->|"read/upload attachments"| supabase-storage
+    pwa-client -->|"invokes via SDK"| edge-functions
+    edge-functions -->|"service_role RPC/queries"| supabase-database
+    edge-functions -->|"admin.updateUserById"| supabase-auth
+    edge-functions -->|"sends VAPID notification"| web-push-service
+    web-push-service -->|"delivers push event"| service-worker

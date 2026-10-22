@@ -26,18 +26,21 @@ export function ExportButton({ data }: Props) {
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
+        type="button"
         onClick={() => setOpen(o => !o)}
         disabled={loading}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="icon-btn"
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: '.4rem',
-          padding: '.5rem 1rem', background: 'var(--card2)',
-          border: '1.5px solid var(--border)', borderRadius: '.5rem',
-          color: 'var(--accent)', cursor: loading ? 'wait' : 'pointer',
-          fontSize: '.875rem', fontWeight: 600, fontFamily: 'inherit',
+          borderColor: 'var(--border)',
+          color: 'var(--accent)',
+          cursor: loading ? 'wait' : 'pointer',
           opacity: loading ? 0.6 : 1,
         }}
       >
-        {loading ? '⏳' : '↓'} تصدير
+        <span aria-hidden="true">{loading ? '⏳' : '↓'}</span>
+        <span>تصدير</span>
       </button>
 
       {open && (
@@ -46,26 +49,48 @@ export function ExportButton({ data }: Props) {
             onClick={() => setOpen(false)}
             style={{ position: 'fixed', inset: 0, zIndex: 99 }}
           />
-          <div style={{
-            position: 'absolute', top: 'calc(100% + .5rem)', left: 0,
-            background: 'var(--card2)', border: '1px solid var(--border)',
-            borderRadius: '.5rem', minWidth: '170px', zIndex: 100,
-            boxShadow: '0 8px 24px rgba(0,0,0,.4)', overflow: 'hidden',
-          }}>
+          <div
+            role="menu"
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + .5rem)',
+              left: 0,
+              background: 'var(--card2)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: 'var(--radius-md)',
+              minWidth: '185px',
+              zIndex: 100,
+              boxShadow: '0 10px 28px var(--shadow)',
+              overflow: 'hidden',
+            }}
+          >
             {([
               { key: 'image' as const, label: '🖼 تصدير كصورة PNG' },
               { key: 'pdf' as const, label: '📄 تصدير كـ PDF' },
             ]).map(({ key, label }) => (
               <button
                 key={key}
+                type="button"
+                role="menuitem"
                 onClick={() => handle(key)}
                 style={{
-                  display: 'block', width: '100%', padding: '.7rem 1rem',
-                  background: 'none', border: 'none', color: 'var(--fg)',
-                  textAlign: 'right', cursor: 'pointer', fontSize: '.875rem',
-                  fontFamily: 'inherit', transition: 'background .15s',
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                  width: '100%',
+                  padding: '.75rem 1rem',
+                  minHeight: '42px',
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: 0,
+                  color: 'var(--fg)',
+                  textAlign: 'right',
+                  cursor: 'pointer',
+                  fontSize: '.875rem',
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  transition: 'background .15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--card)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface2)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
               >
                 {label}

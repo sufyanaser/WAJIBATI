@@ -4,15 +4,17 @@ import { useAdminSection } from '../useAdminSection'
 
 // ── mock supabase ──────────────────────────────────────────────────────────────
 
-const { mockFrom, mockInvoke } = vi.hoisted(() => ({
+const { mockFrom, mockInvoke, mockRpc } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
   mockInvoke: vi.fn(),
+  mockRpc: vi.fn(),
 }))
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
     functions: { invoke: (...args: unknown[]) => mockInvoke(...args) },
+    rpc: (...args: unknown[]) => mockRpc(...args),
   },
 }))
 
@@ -27,6 +29,7 @@ function makeChain(overrides: Record<string, unknown> = {}) {
     order: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
     single: vi.fn(),
     ...overrides,
   }
@@ -47,6 +50,7 @@ const homeworkRows = [
 describe('useAdminSection — load', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: [], error: null })
     mockFrom.mockImplementation((table: string) => {
       const chain = makeChain()
       if (table === 'timetable') {
@@ -81,11 +85,67 @@ describe('useAdminSection — load', () => {
     // periods without timetable entry have empty subject
     expect(result.current.periods[2].subject).toBe('')
   })
+
+  it('auto-assigns teacher via get_section_subject_teachers RPC when timetable slot has null teacher', async () => {
+    const ttWithNullTeacher = [
+      { period: 1, subject: { id: 15, name: 'الفيزياء', color: '#38B2AC' }, teacher: null },
+    ]
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      if (table === 'timetable') {
+        let callCount = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          callCount++
+          if (callCount >= 2) return { ...chain, data: ttWithNullTeacher, error: null }
+          return chain
+        })
+      }
+      if (table === 'homework') {
+        let callCount = 0
+        chain.eq = vi.fn().mockImplementation(() => {
+          callCount++
+          if (callCount >= 2) return { ...chain, data: [], error: null }
+          return chain
+        })
+      }
+      return chain
+    })
+    mockRpc.mockResolvedValue({
+      data: [{ teacher_id: 99, full_name: 'حسين فاضل زيدان' }],
+      error: null,
+    })
+
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(mockRpc).toHaveBeenCalledWith('get_section_subject_teachers', {
+      p_section_id: 1,
+      p_subject_id: 15,
+    })
+    expect(result.current.periods[0].subject).toBe('الفيزياء')
+    expect(result.current.periods[0].teacher_id).toBe(99)
+    expect(result.current.periods[0].teacher).toBe('حسين فاضل زيدان')
+  })
+
+  it('supports manual subject and teacher override via setPeriodSubject', async () => {
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => {
+      result.current.setPeriodSubject(3, 12, 'الكيمياء', 44, 'أنس طلال')
+    })
+
+    expect(result.current.periods[2].subject_id).toBe(12)
+    expect(result.current.periods[2].subject).toBe('الكيمياء')
+    expect(result.current.periods[2].teacher_id).toBe(44)
+    expect(result.current.periods[2].teacher).toBe('أنس طلال')
+  })
 })
 
 describe('useAdminSection — save', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: [], error: null })
   })
 
   it('returns SaveResult with saved count on success', async () => {
@@ -203,7 +263,10 @@ describe('useAdminSection — save', () => {
 })
 
 describe('useAdminSection — publish', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: [], error: null })
+  })
 
   it('returns pushSent=true when send-push succeeds', async () => {
     mockFrom.mockImplementation((table: string) => {

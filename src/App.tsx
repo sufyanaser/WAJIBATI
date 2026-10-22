@@ -1,32 +1,49 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Spinner } from './components/Spinner'
 import Login from './pages/Login'
-import Today from './pages/Today'
-import Archive from './pages/Archive'
 import AdminLogin from './pages/AdminLogin'
-import AdminShell from './pages/admin/AdminShell'
-import DashboardHome from './pages/admin/DashboardHome'
-import HomeworkEntry from './pages/admin/HomeworkEntry'
-import NoticesPage from './pages/admin/NoticesPage'
-import ImportPage from './pages/admin/ImportPage'
-import MasterDataPage from './pages/admin/MasterDataPage'
+
+const Today = lazy(() => import('./pages/Today'))
+const Archive = lazy(() => import('./pages/Archive'))
+const AdminShell = lazy(() => import('./pages/admin/AdminShell'))
+const DashboardHome = lazy(() => import('./pages/admin/DashboardHome'))
+const HomeworkEntry = lazy(() => import('./pages/admin/HomeworkEntry'))
+const NoticesPage = lazy(() => import('./pages/admin/NoticesPage'))
+const ImportPage = lazy(() => import('./pages/admin/ImportPage'))
+const MasterDataPage = lazy(() => import('./pages/admin/MasterDataPage'))
+const SubjectsPage = lazy(() => import('./pages/admin/SubjectsPage'))
+const TeachersPage = lazy(() => import('./pages/admin/TeachersPage'))
+const SectionsPage = lazy(() => import('./pages/admin/SectionsPage'))
+const TimetablePage = lazy(() => import('./pages/admin/TimetablePage'))
+const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'))
+const GuardiansPage = lazy(() => import('./pages/admin/GuardiansPage'))
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/archive" element={<Archive />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminShell />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardHome />} />
-          <Route path="homework" element={<HomeworkEntry />} />
-          <Route path="notices" element={<NoticesPage />} />
-          <Route path="import" element={<ImportPage />} />
-          <Route path="master-data" element={<MasterDataPage />} />
-        </Route>
-        <Route path="/*" element={<Today />} />
-      </Routes>
+      <Suspense fallback={<Spinner />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/archive" element={<Archive />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminShell />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardHome />} />
+            <Route path="homework" element={<HomeworkEntry />} />
+            <Route path="notices" element={<NoticesPage />} />
+            <Route path="import" element={<ImportPage />} />
+            <Route path="master-data" element={<MasterDataPage />} />
+            <Route path="subjects" element={<SubjectsPage />} />
+            <Route path="teachers" element={<TeachersPage />} />
+            <Route path="sections" element={<SectionsPage />} />
+            <Route path="timetable" element={<TimetablePage />} />
+            <Route path="students" element={<StudentsPage />} />
+            <Route path="guardians" element={<GuardiansPage />} />
+          </Route>
+          <Route path="/*" element={<Today />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

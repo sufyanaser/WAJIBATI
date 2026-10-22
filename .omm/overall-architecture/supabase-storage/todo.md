@@ -1,0 +1,1 @@
+- Add client-side or Edge Function image downscaling/compression prior to upload.

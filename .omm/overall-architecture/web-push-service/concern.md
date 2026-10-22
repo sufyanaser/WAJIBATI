@@ -1,0 +1,1 @@
+- Third-party push delivery latency or silent failures outside direct control of the application.

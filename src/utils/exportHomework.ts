@@ -12,37 +12,357 @@ export interface HomeworkExportData {
   }>
 }
 
-// Minimal inline SVG icons keyed by subject keyword (Arabic)
+// ── SVG Subject Icons (Clean 18×18 line stroke for high-contrast B&W and color print) ──
+
 const SUBJECT_ICONS: Record<string, string> = {
-  رياضيات: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`,
-  فيزياء: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>`,
-  كيمياء: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3h6v7l4 11H5L9 10V3z"/><line x1="9" y1="3" x2="15" y2="3"/><circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="14" cy="14" r="1" fill="currentColor"/></svg>`,
-  احياء: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
-  أحياء: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
-  عربي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
-  انجليزي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>`,
-  إنجليزي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>`,
-  اسلامي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="1.5" transform="scale(0.4) translate(18,6)"/></svg>`,
-  إسلامي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
-  تاريخ: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  جغرافي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
-  اقتصاد: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>`,
-  فلسف: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-  وطني: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-  حاسوب: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
-  رياضي: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`,
-  بعث: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  'رياضيات': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>`,
+  'فيزياء': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>`,
+  'كيمياء': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v7l4 11H5L9 10V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>`,
+  'أحياء': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C12 22 4 18 4 11C4 7 7 4 11 4C11 4 12 12 20 12C20 16 17 22 12 22Z"/></svg>`,
+  'احياء': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C12 22 4 18 4 11C4 7 7 4 11 4C11 4 12 12 20 12C20 16 17 22 12 22Z"/></svg>`,
+  'عربي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  'انجليزي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>`,
+  'إنجليزي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>`,
+  'اسلامي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  'إسلامي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  'تاريخ': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  'جغرافي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  'رياضي': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.5 8.5 0 0 1 13 0"/></svg>`,
+  'حاسوب': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+  'بعث': `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
 }
 
-function getSubjectIcon(subject: string): string {
+export function getSubjectIcon(subject: string): string {
   for (const [key, svg] of Object.entries(SUBJECT_ICONS)) {
     if (subject.includes(key)) return svg
   }
-  // Default: book icon
-  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`
+  return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`
 }
 
-// Local offline rendering utilities (bundled via npm, zero CDN dependencies)
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+// ── Arabic & Mathematics Bidirectional Isolation Engine ──
+
+export function formatMathAndArabic(raw: string): string {
+  if (!raw) return ''
+  const lines = raw.split('\n')
+  return lines.map(line => {
+    const text = line.trim()
+    if (!text) return ''
+
+    // Detect list numbering or bullet at beginning (e.g. "1.", "1-", "2.", "2-")
+    const hasListNumber = /^(\d+[\.\-\)]\s*)/.test(text)
+    const escaped = escapeHtml(text)
+
+    // Math regex: matches equations and algebraic expressions
+    // e.g. 2x + 7 = 22, 2(3 - x) = 14, (x + 2)(x + 5), x² + 7x + 12
+    const mathRegex = /([0-9a-zA-Z\(\)\^²³_]+(?:\s*[\+\-\*\/=<>×÷±≤≥≠≈]\s*[0-9a-zA-Z\(\)\^²³_]+)+|\([a-zA-Z0-9\s\+\-\*\/×÷^²³]+\)(?:\s*\([a-zA-Z0-9\s\+\-\*\/×÷^²³]+\))*|[a-zA-Z][0-9a-zA-Z_]*\s*[²³]|[a-zA-Z]\s*=\s*[0-9a-zA-Z\+\-\*\/×÷\s\(\)\^²³]+)/g
+
+    let formatted = escaped.replace(mathRegex, (match) => {
+      if (/^\d+$/.test(match.trim())) return match
+      return `<span dir="ltr" class="math-expr" style="unicode-bidi:isolate; display:inline-block; font-family:'Cambria Math','Times New Roman','Segoe UI',sans-serif; direction:ltr; text-align:left; font-weight:700; margin:0 4px;">${match.trim()}</span>`
+    })
+
+    if (hasListNumber) {
+      formatted = '&rlm;' + formatted
+    }
+
+    return `<div style="text-align: right; direction: rtl; min-height: 1.4em;">${formatted}</div>`
+  }).join('')
+}
+
+// ── Alerts & Notes (التنبيهات والملاحظات) Flexible Layout ──
+
+export function buildNoticesAndWarningsRow(warnings?: string, notices?: string): string {
+  const hasWarnings = Boolean(warnings && warnings.trim().length > 0)
+  const hasNotices = Boolean(notices && notices.trim().length > 0)
+
+  // Rule 5: When both sections are empty, omit row completely (no blank space or empty cards)
+  if (!hasWarnings && !hasNotices) return ''
+
+  const cleanWarnings = (warnings || '').trim()
+  const cleanNotices = (notices || '').trim()
+
+  let warningsFlex = '1 1 50%'
+  let noticesFlex = '1 1 50%'
+
+  if (hasWarnings && hasNotices) {
+    // Rule 1, 2, 3: Proportional width calculation based on text lengths after wrapping
+    const wLen = cleanWarnings.length
+    const nLen = cleanNotices.length
+    const total = wLen + nLen
+
+    if (total > 0) {
+      let wRatio = wLen / total
+      // Clamp between 25% and 75% so neither side collapses
+      wRatio = Math.max(0.25, Math.min(0.75, wRatio))
+      const nRatio = 1 - wRatio
+      warningsFlex = `${(wRatio * 100).toFixed(1)}%`
+      noticesFlex = `${(nRatio * 100).toFixed(1)}%`
+    }
+  } else if (hasWarnings && !hasNotices) {
+    // Rule 4: Only warnings has content -> spans 100% width
+    warningsFlex = '1 1 100%'
+  } else if (!hasWarnings && hasNotices) {
+    // Rule 4: Only notices has content -> spans 100% width
+    noticesFlex = '1 1 100%'
+  }
+
+  // Rule 7: Warnings box with crisp red border & clear title (for color & B&W printing)
+  const warningsBox = hasWarnings ? `
+    <div style="
+      flex: ${warningsFlex};
+      border: 1.5px solid #dc2626;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #ffffff;
+      box-sizing: border-box;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    ">
+      <div style="
+        font-size: 13px;
+        font-weight: 800;
+        color: #dc2626;
+        border-bottom: 1px solid #fecaca;
+        padding-bottom: 5px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      ">
+        <span>تنبيهات</span>
+      </div>
+      <div style="
+        font-size: 12px;
+        color: #1e293b;
+        line-height: 1.6;
+        word-break: break-word;
+        flex: 1;
+      ">
+        ${formatMathAndArabic(cleanWarnings)}
+      </div>
+    </div>
+  ` : ''
+
+  // Rule 8: Notes box with neutral border matching subject cards
+  const noticesBox = hasNotices ? `
+    <div style="
+      flex: ${noticesFlex};
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #ffffff;
+      box-sizing: border-box;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    ">
+      <div style="
+        font-size: 13px;
+        font-weight: 800;
+        color: #1e293b;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 5px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      ">
+        <span>ملاحظات</span>
+      </div>
+      <div style="
+        font-size: 12px;
+        color: #334155;
+        line-height: 1.6;
+        word-break: break-word;
+        flex: 1;
+      ">
+        ${formatMathAndArabic(cleanNotices)}
+      </div>
+    </div>
+  ` : ''
+
+  // Rule 9: RTL display order (warnings on the right, notices on the left)
+  return `
+    <div style="
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: stretch;
+      width: 100%;
+      box-sizing: border-box;
+    ">
+      ${warningsBox}
+      ${noticesBox}
+    </div>
+  `
+}
+
+// ── Multi-Page A4 Landscape Sheet Builder ──
+
+export function buildExportPages(data: HomeworkExportData): HTMLElement[] {
+  // A4 Landscape standard dimensions: 297mm × 210mm (1122px × 794px at 96 DPI, 10mm margins = 38px)
+  const itemsPerPage = 6
+  const totalPages = Math.ceil(data.items.length / itemsPerPage) || 1
+  const pages: HTMLElement[] = []
+
+  for (let i = 0; i < totalPages; i++) {
+    const pageNum = i + 1
+    const pageItems = data.items.slice(i * itemsPerPage, (i + 1) * itemsPerPage)
+    const isMultiPage = totalPages > 1
+
+    const pageWrap = document.createElement('div')
+    pageWrap.dir = 'rtl'
+    pageWrap.className = 'a4-export-page'
+    pageWrap.style.cssText = [
+      'width: 1122px',
+      'height: 794px',
+      'padding: 38px',
+      'box-sizing: border-box',
+      'background: #ffffff',
+      "font-family: 'Tajawal', 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif",
+      'position: fixed',
+      'top: -9999px',
+      'left: -9999px',
+      'color: #0f172a',
+      'display: flex',
+      'flex-direction: column',
+      'justify-content: space-between',
+      'letter-spacing: normal !important',
+      'border: 1px solid #cbd5e1',
+    ].join(';')
+
+    // Top Header
+    const headerHtml = `
+      <div style="
+        border-bottom: 2px solid #0f172a;
+        padding-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+        box-sizing: border-box;
+      ">
+        <div style="text-align: right; line-height: 1.55; font-size: 11px; font-weight: 700; color: #334155;">
+          <div>جمهورية العراق</div>
+          <div>وزارة التربية</div>
+          <div>المديرية العامة لتربية الانبار</div>
+        </div>
+
+        <div style="text-align: center; flex: 1; padding: 0 16px;">
+          <div style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: normal; line-height: 1.2;">
+            ${escapeHtml(data.schoolName)}
+          </div>
+          <div style="font-size: 13px; font-weight: 700; color: #475569; margin-top: 3px;">
+            جدول التحاضير اليومية ${isMultiPage ? `(صفحة ${pageNum} من ${totalPages})` : ''}
+          </div>
+        </div>
+
+        <div style="text-align: left; line-height: 1.75; font-size: 12px; font-weight: 600; color: #1e293b; direction: rtl;">
+          <div><span style="color: #64748b; font-size: 11px; font-weight: 500;">التاريخ: </span><span dir="ltr" style="font-weight: 700;">${escapeHtml(data.date)}</span></div>
+          <div><span style="color: #64748b; font-size: 11px; font-weight: 500;">الصف: </span><span style="font-weight: 700;">${escapeHtml(data.sectionName)}</span></div>
+        </div>
+      </div>
+    `
+
+    // Cards Grid (3 columns for 3, 5, 6+; 2 columns for 2 or 4)
+    const cols = (pageItems.length === 2 || pageItems.length === 4) ? 2 : (pageItems.length <= 1 ? 1 : 3)
+    const cardsHtml = pageItems.map(item => {
+      const icon = getSubjectIcon(item.subject)
+      const formattedBody = formatMathAndArabic(item.body)
+      return `
+        <div style="
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 9px 12px;
+          background: #ffffff;
+          display: flex;
+          flex-direction: column;
+          box-sizing: border-box;
+          min-height: 140px;
+        ">
+          <div style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1.5px solid #1e293b;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+          ">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="color: #0f172a; display: flex; align-items: center;">${icon}</span>
+              <span style="font-size: 15px; font-weight: 800; color: #0f172a;">${escapeHtml(item.subject)}</span>
+            </div>
+            <span style="font-size: 11.5px; font-weight: 600; color: #64748b; white-space: nowrap;">${escapeHtml(item.teacher)}</span>
+          </div>
+          <div style="
+            flex: 1;
+            font-size: 12.5px;
+            color: #1e293b;
+            line-height: 1.65;
+            word-break: break-word;
+          ">
+            ${formattedBody}
+          </div>
+        </div>
+      `
+    }).join('')
+
+    // Notices row appears on the final page of the document
+    const noticesHtml = (pageNum === totalPages) ? buildNoticesAndWarningsRow(data.warnings, data.notices) : ''
+
+    // Footer
+    const footerHtml = `
+      <div style="
+        text-align: center;
+        padding-top: 8px;
+        font-size: 10px;
+        color: #94a3b8;
+        border-top: 1px solid #e2e8f0;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      ">
+        <span>واجباتي · المنظومة الإلكترونية لإدارة الواجبات المدرسية</span>
+        <span>${escapeHtml(data.schoolName)}</span>
+        <span>${isMultiPage ? `صفحة ${pageNum} من ${totalPages}` : 'A4 أفقي'}</span>
+      </div>
+    `
+
+    pageWrap.innerHTML = `
+      <div>
+        ${headerHtml}
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(${cols}, 1fr);
+          gap: 10px;
+          margin-top: 12px;
+        ">
+          ${cardsHtml}
+        </div>
+        ${noticesHtml}
+      </div>
+      ${footerHtml}
+    `
+
+    pages.push(pageWrap)
+  }
+
+  return pages
+}
+
+// ── Offline Rendering & Export Functions ──
+
 async function renderCardToCanvas(card: HTMLElement): Promise<HTMLCanvasElement> {
   const { toCanvas } = await import('html-to-image')
   return toCanvas(card, {
@@ -56,142 +376,80 @@ async function loadBundledJsPDF(): Promise<typeof import('jspdf').jsPDF> {
   return mod.jsPDF || (mod as any).default?.jsPDF || (mod as any).default
 }
 
-function gridCols(count: number): number {
-  if (count <= 3) return count
-  if (count === 4) return 4
-  if (count <= 6) return 3
-  return 4
-}
-
-function buildExportCard(data: HomeworkExportData): HTMLElement {
-  const wrap = document.createElement('div')
-  wrap.dir = 'rtl'
-  wrap.style.cssText = [
-    'width:1100px',
-    'background:#ffffff',
-    "font-family:'Tajawal','Arial',sans-serif",
-    'position:fixed',
-    'top:-9999px',
-    'left:-9999px',
-    'color:#111',
-    'border:1.5px solid #bbb',
-    'box-sizing:border-box',
-  ].join(';')
-
-  const cols = gridCols(data.items.length)
-
-  const subjectCards = data.items.map(item => {
-    const icon = getSubjectIcon(item.subject)
-    return `
-      <div style="
-        border:1px solid #ccc;
-        border-radius:6px;
-        padding:12px 14px;
-        min-height:120px;
-        display:flex;
-        flex-direction:column;
-        gap:6px;
-        break-inside:avoid;
-      ">
-        <div style="display:flex;align-items:center;gap:7px;border-bottom:1.5px solid #222;padding-bottom:7px;margin-bottom:4px">
-          <span style="color:#111;flex-shrink:0;display:flex;align-items:center">${icon}</span>
-          <span style="font-size:14px;font-weight:800;color:#111">${item.subject}</span>
-          <span style="font-size:11px;color:#666;margin-right:auto">${item.teacher}</span>
-        </div>
-        <div style="flex:1;font-size:13px;color:#222;line-height:1.7">${item.body || ''}</div>
-      </div>
-    `
-  }).join('')
-
-  const noticesRow = `
-    <div style="display:grid;grid-template-columns:1fr 220px;gap:8px;margin-top:8px">
-      <div style="border:1px solid #ccc;border-radius:6px;padding:12px 14px;min-height:60px">
-        <div style="font-size:12px;font-weight:800;color:#111;border-bottom:1px solid #ccc;padding-bottom:5px;margin-bottom:6px">ملاحظات</div>
-        <div style="font-size:12px;color:#333;line-height:1.6">${data.notices || ''}</div>
-      </div>
-      <div style="border:1.5px solid #c0392b;border-radius:6px;padding:12px 14px;min-height:60px">
-        <div style="font-size:12px;font-weight:800;color:#c0392b;border-bottom:1px solid #f5c6c6;padding-bottom:5px;margin-bottom:6px">تنبيهات</div>
-        <div style="font-size:12px;color:#333;line-height:1.6">${data.warnings || ''}</div>
-      </div>
-    </div>
-  `
-
-  wrap.innerHTML = `
-    <!-- Official header -->
-    <div style="
-      border-bottom:2px solid #111;
-      padding:14px 20px 12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-    ">
-      <div style="text-align:right;line-height:1.75;font-size:11px;color:#333">
-        <div>جمهورية العراق</div>
-        <div>وزارة التربية</div>
-        <div>المديرية العامة لتربية الانبار</div>
-      </div>
-
-      <div style="text-align:center;flex:1;padding:0 16px">
-        <div style="font-size:20px;font-weight:900;color:#111;letter-spacing:0.3px">
-          اعدادية الرميلة للبنين
-        </div>
-        <div style="font-size:13px;font-weight:700;color:#333;margin-top:2px">
-          جدول التحاضير اليومية
-        </div>
-      </div>
-
-      <div style="text-align:left;line-height:1.9;font-size:12px;color:#111">
-        <div><span style="color:#555;font-size:11px">التاريخ: </span>${data.date}</div>
-        <div><span style="color:#555;font-size:11px">الصف: </span>${data.sectionName}</div>
-      </div>
-    </div>
-
-    <!-- Subject grid -->
-    <div style="padding:14px 18px 0">
-      <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px">
-        ${subjectCards}
-      </div>
-      ${noticesRow}
-    </div>
-
-    <!-- Footer -->
-    <div style="text-align:center;padding:8px 18px;font-size:9px;color:#aaa;border-top:1px solid #ddd;margin-top:10px">
-      واجباتي · ${data.schoolName}
-    </div>
-  `
-
-  return wrap
-}
-
 export async function exportAsImage(data: HomeworkExportData): Promise<void> {
-  const card = buildExportCard(data)
-  document.body.appendChild(card)
+  const pages = buildExportPages(data)
+  pages.forEach(p => document.body.appendChild(p))
+
   try {
-    const canvas = await renderCardToCanvas(card)
-    const link = document.createElement('a')
-    link.download = `واجبات-${data.sectionName}-${data.date}.png`
-    link.href = canvas.toDataURL('image/png')
-    link.click()
+    if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready } catch {}
+    }
+
+    if (pages.length === 1) {
+      const canvas = await renderCardToCanvas(pages[0])
+      const link = document.createElement('a')
+      link.download = `واجبات-${data.sectionName}-${data.date}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } else {
+      // Multi-page stitch vertically with subtle separator
+      const canvases: HTMLCanvasElement[] = []
+      for (const p of pages) {
+        canvases.push(await renderCardToCanvas(p))
+      }
+      const combinedCanvas = document.createElement('canvas')
+      combinedCanvas.width = canvases[0].width
+      const gap = 30
+      combinedCanvas.height = canvases.reduce((acc, c) => acc + c.height, 0) + (canvases.length - 1) * gap
+      const ctx = combinedCanvas.getContext('2d')
+      if (ctx) {
+        ctx.fillStyle = '#f1f5f9'
+        ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height)
+        let currentY = 0
+        for (const c of canvases) {
+          ctx.drawImage(c, 0, currentY)
+          currentY += c.height + gap
+        }
+        const link = document.createElement('a')
+        link.download = `واجبات-${data.sectionName}-${data.date}.png`
+        link.href = combinedCanvas.toDataURL('image/png')
+        link.click()
+      }
+    }
   } finally {
-    document.body.removeChild(card)
+    pages.forEach(p => {
+      if (p.parentNode) p.parentNode.removeChild(p)
+    })
   }
 }
 
 export async function exportAsPDF(data: HomeworkExportData): Promise<void> {
-  const card = buildExportCard(data)
-  document.body.appendChild(card)
+  const pages = buildExportPages(data)
+  pages.forEach(p => document.body.appendChild(p))
+
   try {
-    const [canvas, JsPDF] = await Promise.all([
-      renderCardToCanvas(card),
-      loadBundledJsPDF(),
-    ])
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new JsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' })
-    const pdfW = pdf.internal.pageSize.getWidth()
-    const pdfH = (canvas.height * pdfW) / canvas.width
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH)
+    if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready } catch {}
+    }
+
+    const JsPDF = await loadBundledJsPDF()
+    // Standard A4 Landscape: 297mm × 210mm
+    const pdf = new JsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+    for (let i = 0; i < pages.length; i++) {
+      const canvas = await renderCardToCanvas(pages[i])
+      const imgData = canvas.toDataURL('image/png')
+      if (i > 0) {
+        pdf.addPage('a4', 'landscape')
+      }
+      // Add image precisely spanning the 297mm × 210mm landscape A4 page
+      pdf.addImage(imgData, 'PNG', 0, 0, 297, 210, undefined, 'FAST')
+    }
+
     pdf.save(`واجبات-${data.sectionName}-${data.date}.pdf`)
   } finally {
-    document.body.removeChild(card)
+    pages.forEach(p => {
+      if (p.parentNode) p.parentNode.removeChild(p)
+    })
   }
 }

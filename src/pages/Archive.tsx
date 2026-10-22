@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { HomeworkSearch } from '../components/HomeworkSearch'
 import { Spinner } from '../components/Spinner'
 import { EmptyState } from '../components/EmptyState'
+import { CalendarIcon, HomeIcon, BookIcon } from '../components/Icons'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section {
@@ -253,7 +254,7 @@ export default function Archive() {
           </div>
         ) : items.length === 0 ? (
           <EmptyState
-            icon="📭"
+            icon={<BookIcon size={36} />}
             title="لا واجبات هنا"
             subtitle={search.trim() ? 'جرّب كلمات بحث مختلفة' : 'لم يُنشر أي واجب بعد'}
           />
@@ -262,8 +263,9 @@ export default function Archive() {
             <div className="archive-list hw-list">
               {items.map(item => (
                 <article key={item.id} className="archive-entry hw-card">
-                  <p className="archive-entry__date" style={{ margin: 0, fontSize: '.82rem', color: 'var(--accent)', fontWeight: 700 }}>
-                    📅 {arDate(item.due_date)}
+                  <p className="archive-entry__date" style={{ margin: 0, fontSize: '.82rem', color: 'var(--accent)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    <CalendarIcon size={14} />
+                    <span>{arDate(item.due_date)}</span>
                   </p>
                   <div className="archive-chips hw-header">
                     {item.period != null && (
@@ -307,7 +309,8 @@ export default function Archive() {
       <nav className="bottom-bar" aria-label="التنقل الرئيسي">
         <div className="bottom-bar-inner">
           <button type="button" className="archive-link" onClick={() => nav('/')}>
-            🏠 العودة إلى واجبات اليوم
+            <HomeIcon size={16} />
+            <span>العودة إلى واجبات اليوم</span>
           </button>
         </div>
       </nav>

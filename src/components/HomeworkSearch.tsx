@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react'
+import { CloseIcon } from './Icons'
 
 interface Props {
   value: string
@@ -48,11 +49,11 @@ export function HomeworkSearch({ value, onChange, placeholder = 'ابحث في �
       {value && (
         <button
           type="button"
-          className="icon-btn"
+          className="icon-btn btn-sm"
           onClick={handleClear}
           aria-label="مسح البحث"
         >
-          ✕
+          <CloseIcon size={14} />
         </button>
       )}
     </div>

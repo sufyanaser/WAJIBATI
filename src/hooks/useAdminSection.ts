@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { assertCanWrite } from '../services/platform'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
@@ -202,6 +203,9 @@ export function useAdminSection(
   }
 
   async function deleteHomework(period: number): Promise<{ ok: boolean; error?: string }> {
+    const writeCheck = await assertCanWrite('حذف الواجب')
+    if (!writeCheck.allowed) return { ok: false, error: writeCheck.error }
+
     const slot = periodsWithOverrides.find(p => p.period === period)
     if (!slot?.hw_id) return { ok: false, error: 'لا يوجد واجب محفوظ لحذفه' }
     const { error } = await supabase.from('homework').delete().eq('id', slot.hw_id)
@@ -222,6 +226,11 @@ export function useAdminSection(
   }
 
   async function upsertAll(status: 'draft' | 'published'): Promise<SaveResult> {
+    const writeCheck = await assertCanWrite(status === 'published' ? 'نشر الواجبات' : 'حفظ الواجبات')
+    if (!writeCheck.allowed) {
+      return { saved: 0, failed: periodsWithOverrides.length, errors: [writeCheck.error || 'عملية الكتابة محظورة'] }
+    }
+
     const sid = Number(sectionId)
     const merged = periodsWithOverrides
     const result: SaveResult = { saved: 0, failed: 0, errors: [] }
@@ -302,6 +311,9 @@ export function useAdminSection(
     if (uploadingPeriodsRef.current.has(period)) {
       return { ok: false, error: 'جارٍ رفع الملف بالفعل' }
     }
+    const writeCheck = await assertCanWrite('رفع المرفق')
+    if (!writeCheck.allowed) return { ok: false, error: writeCheck.error }
+
     uploadingPeriodsRef.current.add(period)
     try {
       const slot = periodsWithOverrides.find(p => p.period === period)
@@ -355,6 +367,9 @@ export function useAdminSection(
     if (deletingIdsRef.current.has(attachmentId)) {
       return { ok: false, error: 'جارٍ الحذف بالفعل' }
     }
+    const writeCheck = await assertCanWrite('حذف المرفق')
+    if (!writeCheck.allowed) return { ok: false, error: writeCheck.error }
+
     deletingIdsRef.current.add(attachmentId)
     try {
       const { error: dbErr } = await supabase.from('attachments').delete().eq('id', attachmentId)

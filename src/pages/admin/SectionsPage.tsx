@@ -3,6 +3,16 @@ import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
+import { PageHeader } from '../../components/admin/PageHeader'
+import { StatusBadge } from '../../components/admin/StatusBadge'
+import {
+  PlusIcon,
+  EditIcon,
+  CheckIcon,
+  CloseIcon,
+  TrashIcon,
+  GraduationCapIcon,
+} from '../../components/Icons'
 
 interface SectionRow {
   id: number
@@ -112,21 +122,34 @@ export default function SectionsPage() {
     setSaving(false)
   }
 
+  async function toggleActive(s: SectionRow) {
+    const newActive = !s.active
+    const { error } = await supabase.from('sections').update({ active: newActive }).eq('id', s.id)
+    if (error) { showToast(`خطأ: ${error.message}`, 'error'); return }
+    showToast(newActive ? 'تم تفعيل الشعبة' : 'تم تعطيل الشعبة', 'info')
+    await load()
+  }
+
   if (!ready || loading) return <Spinner />
+
+  const activeCount = sections.filter(s => s.active).length
 
   return (
     <div className="dash-page" dir="rtl">
-      <div className="dash-toolbar">
-        <div>
-          <h2 className="dash-page-title">الشعب الدراسية</h2>
-          <span className="muted">{sections.filter(s => s.active).length} شعبة فعّالة</span>
-        </div>
-        {canEdit && (
-          <button type="button" className="btn-publish-all" style={{ width: 'auto' }} onClick={startAdd}>
-            + إضافة شعبة
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title="إدارة الشعب والمراحل الدراسية"
+        subtitle={`${activeCount} شعبة فعّالة في النظام`}
+        badgeText={`${activeCount} شعبة`}
+        badgeVariant="blue"
+        actions={
+          canEdit ? (
+            <button type="button" className="btn btn-primary" onClick={startAdd}>
+              <PlusIcon size={16} />
+              <span>إضافة شعبة جديدة</span>
+            </button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <form className="dash-form" onSubmit={handleSave}>
@@ -152,8 +175,18 @@ export default function SectionsPage() {
             </label>
           </div>
           <div className="dash-form-actions">
-            <button type="submit" disabled={saving}>{saving ? '…' : 'حفظ'}</button>
-            <button type="button" className="icon-btn" onClick={() => { setShowForm(false); setEditing(null) }}>إلغاء</button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              <CheckIcon size={16} />
+              <span>{saving ? '…' : 'حفظ'}</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => { setShowForm(false); setEditing(null) }}
+            >
+              <CloseIcon size={16} />
+              <span>إلغاء</span>
+            </button>
           </div>
         </form>
       )}
@@ -163,17 +196,36 @@ export default function SectionsPage() {
           <div key={s.id} className="dash-sec-card">
             <div className="dash-sec-header">
               <strong className="dash-sec-name">{s.stage.name} {s.stage.branch} / {s.letter}</strong>
-              <span className={`dash-badge ${s.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
-                {s.active ? 'فعّالة' : 'معطّلة'}
-              </span>
+              <StatusBadge
+                variant={s.active ? 'active' : 'suspended'}
+                label={s.active ? 'فعّالة' : 'معطّلة'}
+              />
             </div>
             <div className="dash-sec-meta">
-              <span>👨‍🎓 {s.studentCount} طالب</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <GraduationCapIcon size={15} />
+                <span>{s.studentCount} طالب</span>
+              </span>
               <span className="muted">{s.year.label}</span>
             </div>
             {canEdit && (
-              <div style={{ marginTop: 8 }}>
-                <button type="button" className="icon-btn" onClick={() => startEdit(s)}>تعديل</button>
+              <div style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => startEdit(s)}
+                >
+                  <EditIcon size={14} />
+                  <span>تعديل</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => void toggleActive(s)}
+                >
+                  {s.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                  <span>{s.active ? 'تعطيل' : 'تفعيل'}</span>
+                </button>
               </div>
             )}
           </div>

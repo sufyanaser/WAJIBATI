@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
+import { ImageIcon, FileTextIcon, CloseIcon } from './Icons'
 
 interface Attachment {
   id: string
@@ -85,8 +86,10 @@ export function HomeworkCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="attach-link"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                {isImage ? '🖼' : '📄'} {name}
+                {isImage ? <ImageIcon size={14} /> : <FileTextIcon size={14} />}
+                <span>{name}</span>
               </a>
             )
           })}
@@ -120,10 +123,13 @@ export function HomeworkCard({
               position: 'absolute', top: 16, left: 16,
               background: 'rgba(255,255,255,.15)', border: 'none',
               color: '#fff', borderRadius: '50%', width: 42, height: 42,
-              fontSize: '1.3rem', cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
             }}
             aria-label="إغلاق"
-          >×</button>
+          >
+            <CloseIcon size={20} />
+          </button>
         </div>
       )}
     </article>

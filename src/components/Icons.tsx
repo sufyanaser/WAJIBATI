@@ -334,3 +334,22 @@ export function SettingsIcon({ size = 18, className, ...props }: IconProps) {
     </svg>
   )
 }
+
+export function SearchIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  )
+}
+
+export function DatabaseIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+    </svg>
+  )
+}

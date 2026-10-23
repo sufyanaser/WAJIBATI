@@ -1,19 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ExportModal } from '../components/ExportModal'
 import { BottomNavBar } from '../components/BottomNavBar'
 import { DateNavigator } from '../components/DateNavigator'
 import { Toast, useToast } from '../components/Toast'
-import { useHomework } from '../hooks/useHomework'
-import type { HwItem } from '../hooks/useHomework'
 import { useSchoolSettings } from '../services/schoolSettings'
+import { useGuardianSchedule, clearSessionScheduleCache } from '../hooks/useGuardianSchedule'
+import type { GuardianPeriodSlot, UnmatchedHomeworkItem } from '../hooks/useGuardianSchedule'
+import { SubjectGrid } from '../components/guardian/SubjectGrid'
+import { PeriodDetailDrawer } from '../components/guardian/PeriodDetailDrawer'
 import {
-  BookIcon,
   CloseIcon,
   DownloadIcon,
-  ImageIcon,
-  FileTextIcon,
   FamilyIcon,
 } from '../components/Icons'
 
@@ -26,9 +25,15 @@ interface Child {
   section_letter: string
 }
 
-interface SRow extends HwItem {
+interface SRow {
+  id: string
+  period: number | null
+  body: string
   due_date: string
   section_id: number
+  subject: { name: string; color: string | null } | null
+  teacher: { full_name: string } | null
+  attachments: Array<{ id: string; storage_path: string; mime: string }>
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -49,6 +54,7 @@ function vapidKey(b64: string): ArrayBuffer {
 // ── component ─────────────────────────────────────────────────────────────────
 export default function Today() {
   const nav = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // ── auth / children / settings state ───────────────────────────────────────
   const { settings } = useSchoolSettings()
@@ -87,11 +93,69 @@ export default function Today() {
   // ── current child ─────────────────────────────────────────────────────────
   const child = children[idx] ?? null
 
-  // ── homework hook ─────────────────────────────────────────────────────────
-  const { items: hw, notices, loading, offline } = useHomework(
-    child?.section_id ?? null,
-    toISO(date),
-  )
+  // ── schedule & homework hook (Task 13) ────────────────────────────────────
+  const {
+    periods: schedulePeriods,
+    unmatchedHomework,
+    notices,
+    loading,
+    error: scheduleError,
+    isWeekend,
+    isTimetableAvailable,
+    refetch: refetchSchedule,
+  } = useGuardianSchedule(child?.section_id ?? null, toISO(date))
+
+  // ── Drawer navigation state via URL search param ?lesson=<period> ─────────
+  const lessonParam = searchParams.get('lesson')
+  const activePeriodNumber = lessonParam ? Number(lessonParam) : null
+  const [selectedUnmatched, setSelectedUnmatched] = useState<UnmatchedHomeworkItem | null>(null)
+
+  const activeSlot = activePeriodNumber != null
+    ? schedulePeriods.find(s => s.period === activePeriodNumber) ?? null
+    : null
+
+  const isDrawerOpen = activeSlot != null || selectedUnmatched != null
+
+  function handleSelectPeriod(slot: GuardianPeriodSlot) {
+    setSelectedUnmatched(null)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('lesson', String(slot.period))
+      return next
+    }, { replace: activePeriodNumber != null })
+  }
+
+  function handleSelectUnmatched(item: UnmatchedHomeworkItem) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('lesson')
+      return next
+    }, { replace: true })
+    setSelectedUnmatched(item)
+  }
+
+  function handleCloseDrawer() {
+    setSelectedUnmatched(null)
+    if (activePeriodNumber != null) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('lesson')
+        return next
+      })
+    }
+  }
+
+  // Clear drawer when active student or date changes
+  useEffect(() => {
+    setSelectedUnmatched(null)
+    if (searchParams.has('lesson')) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('lesson')
+        return next
+      }, { replace: true })
+    }
+  }, [idx, date])
 
   // ── boot ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -140,7 +204,11 @@ export default function Today() {
 
   // ── signed URLs for attachments ───────────────────────────────────────────
   useEffect(() => {
-    const paths = hw.flatMap(h => h.attachments.map(a => a.storage_path))
+    const allAttachments = [
+      ...schedulePeriods.flatMap(s => s.homework?.attachments ?? []),
+      ...unmatchedHomework.flatMap(u => u.homework.attachments ?? []),
+    ]
+    const paths = allAttachments.map(a => a.storage_path)
     if (!paths.length) { setSignedUrls({}); return }
     supabase.storage.from('attachments').createSignedUrls(paths, 3600).then(({ data }) => {
       const map: Record<string, string> = {}
@@ -153,7 +221,7 @@ export default function Today() {
       console.error('signed URL generation failed', e)
       showToast('فشل تحميل المرفقات، حاول مجدداً', 'error')
     })
-  }, [hw])
+  }, [schedulePeriods, unmatchedHomework])
 
   // ── calendar homework dots ────────────────────────────────────────────────
   useEffect(() => {
@@ -198,6 +266,7 @@ export default function Today() {
 
   // ── logout ────────────────────────────────────────────────────────────────
   async function handleLogout() {
+    clearSessionScheduleCache()
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_AUTH_CACHES' })
     }
@@ -231,20 +300,27 @@ export default function Today() {
   }
 
   // ── export data payload ───────────────────────────────────────────────────
+  const allHomeworkForExport = [
+    ...schedulePeriods.filter(s => s.has_homework && s.homework).map(s => s.homework!),
+    ...unmatchedHomework.map(u => u.homework),
+  ]
+
   const exportData = {
     schoolName: settings.name,
     sectionName: child?.section_label ?? '',
     date: toISO(date),
     notices: notices.filter(n => n.priority <= 1).map(n => n.title + (n.body ? ': ' + n.body : '')).join('\n'),
     warnings: notices.filter(n => n.priority > 1).map(n => n.title + (n.body ? ': ' + n.body : '')).join('\n'),
-    items: hw.map(h => ({
+    items: allHomeworkForExport.map(h => ({
       period: h.period ?? 0,
-      subject: h.subject?.name ?? 'غير محدد',
-      teacher: h.teacher?.full_name ?? 'غير محدد',
+      subject: h.subject_name ?? 'غير محدد',
+      teacher: h.teacher_name ?? 'غير محدد',
       body: h.body,
     })),
     settings,
   }
+
+  const hasExportableItems = allHomeworkForExport.length > 0
 
   // ── calendar cells ────────────────────────────────────────────────────────
   function calCells(): (Date | null)[] {
@@ -256,13 +332,6 @@ export default function Today() {
 
   const todISO = toISO(new Date())
   const selISO = toISO(date)
-
-  // ── Arabic-formatted today's date ────────────────────────────────────────
-  const todayArabic = new Date().toLocaleDateString('ar-IQ', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 
   // ── no children state ─────────────────────────────────────────────────────
   if (childrenLoaded && !children.length) {
@@ -299,7 +368,7 @@ export default function Today() {
       dir="rtl"
       style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
     >
-      {/* ── compact header (clean, reduced height, no redundant buttons) ── */}
+      {/* ── compact header ── */}
       <header className="today-header today-header-compact" style={{ padding: '10px 14px', marginBottom: 6 }}>
         <div className="today-header-top" style={{ justifyContent: 'center' }}>
           <div className="brand-identity" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -481,7 +550,7 @@ export default function Today() {
                 </span>
               </div>
 
-              {!loading && hw.length > 0 && (
+              {!loading && hasExportableItems && (
                 <button
                   type="button"
                   onClick={() => setExportModalOpen(true)}
@@ -504,10 +573,6 @@ export default function Today() {
             </div>
           )}
 
-          {offline && (
-            <p className="offline-note">عرض مؤقت بدون اتصال</p>
-          )}
-
           {/* ── notices — latest 3 ─────────────────────────────────────── */}
           {notices.length > 0 && (
             <section className="notices">
@@ -520,78 +585,22 @@ export default function Today() {
             </section>
           )}
 
-          {/* ── homework list ──────────────────────────────────────────── */}
-          {loading ? (
-            /* skeleton loading */
-            <section className="hw-list" aria-busy="true" aria-label="جارٍ التحميل">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="hw-skeleton">
-                  <div className="skel-line skel-short" />
-                  <div className="skel-line skel-long" />
-                  <div className="skel-line skel-medium" />
-                </div>
-              ))}
-            </section>
-          ) : hw.length === 0 ? (
-            /* empty state */
-            <div className="empty-state">
-              <span className="empty-icon" aria-hidden="true">
-                <BookIcon size={44} />
-              </span>
-              <p className="empty-msg">لا توجد واجبات لهذا اليوم</p>
-            </div>
-          ) : (
-            /* subject cards */
-            <section className="hw-list">
-              {hw.map(h => (
-                <article key={h.id} className="hw-card" dir="rtl">
-                  <div className="hw-card-top">
-                    {h.period != null && (
-                      <span
-                        className="hw-period-circle"
-                        aria-label={`الحصة ${h.period}`}
-                      >
-                        {h.period}
-                      </span>
-                    )}
-                    <span
-                      className="hw-subject-name"
-                      style={h.subject?.color
-                        ? { background: h.subject.color + '33', borderColor: h.subject.color }
-                        : undefined}
-                    >
-                      {h.subject?.name ?? 'غير محدد'}
-                    </span>
-                    <span className="hw-read-check" aria-label="تمت القراءة">✓</span>
-                  </div>
-                  {h.teacher && (
-                    <p className="hw-teacher-row">{h.teacher.full_name}</p>
-                  )}
-                  <p className="hw-body">{h.body}</p>
-                  {h.attachments.length > 0 && (
-                    <div className="attachments">
-                      {h.attachments.map(a => (
-                        <a
-                          key={a.id}
-                          href={signedUrls[a.storage_path] ?? '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="attach-badge"
-                        >
-                          <span aria-hidden="true">
-                            {a.mime.startsWith('image/') ? <ImageIcon size={14} /> : <FileTextIcon size={14} />}
-                          </span>
-                          <span>مرفق</span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </section>
-          )}
+          {/* ── Guardian Subject Grid (Task 13) ─────────────────────────── */}
+          <SubjectGrid
+            periods={schedulePeriods}
+            unmatchedHomework={unmatchedHomework}
+            loading={loading}
+            error={scheduleError}
+            isWeekend={isWeekend}
+            isTimetableAvailable={isTimetableAvailable}
+            onSelectPeriod={handleSelectPeriod}
+            onSelectUnmatched={handleSelectUnmatched}
+            onRetry={refetchSchedule}
+            activePeriodNumber={activePeriodNumber}
+          />
         </>
       )}
+
       {toast && (
         <Toast message={toast.message} type={toast.type} onDone={clearToast} />
       )}
@@ -600,7 +609,7 @@ export default function Today() {
       <BottomNavBar
         onOpenExport={() => setExportModalOpen(true)}
         onLogout={handleLogout}
-        canExport={!loading && hw.length > 0}
+        canExport={!loading && hasExportableItems}
       />
 
       {/* ── unified export modal ────────────────────────────────────────── */}
@@ -608,6 +617,15 @@ export default function Today() {
         isOpen={exportModalOpen}
         onClose={() => setExportModalOpen(false)}
         data={exportData}
+      />
+
+      {/* ── Period Detail Drawer (Task 13) ─────────────────────────────── */}
+      <PeriodDetailDrawer
+        isOpen={isDrawerOpen}
+        onClose={handleCloseDrawer}
+        slot={activeSlot}
+        unmatchedItem={selectedUnmatched}
+        signedUrls={signedUrls}
       />
     </main>
   )

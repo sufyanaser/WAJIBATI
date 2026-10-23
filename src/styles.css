@@ -3787,3 +3787,595 @@ button:disabled {
 }
 
 
+
+/* ===== Guardian Subject Grid & Period Card (Task 13) ===== */
+.subject-grid-container {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.period-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .period-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  .period-grid {
+    gap: 8px;
+  }
+}
+
+.period-card {
+  background: var(--card2, #182A45);
+  border: 1px solid var(--border, #263B5C);
+  border-radius: 12px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 105px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  position: relative;
+  text-align: right;
+  user-select: none;
+}
+
+.period-card:hover {
+  border-color: rgba(232, 176, 74, 0.4);
+  transform: translateY(-1px);
+}
+
+.period-card:active {
+  transform: scale(0.98);
+}
+
+.period-card.active {
+  border-color: var(--accent, #E8B04A);
+  box-shadow: 0 0 0 2px rgba(232, 176, 74, 0.25);
+}
+
+.period-card.has-homework {
+  border-color: rgba(232, 176, 74, 0.35);
+}
+
+.period-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.period-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(15, 30, 51, 0.85);
+  border: 1px solid var(--border, #263B5C);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--accent, #E8B04A);
+  flex-shrink: 0;
+}
+
+.period-subject-chip {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+@media (max-width: 375px) {
+  .period-subject-chip {
+    font-size: 0.78rem;
+    max-width: 90px;
+    padding: 1px 6px;
+  }
+}
+
+.period-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.period-teacher-name {
+  font-size: 0.75rem;
+  color: var(--fg-muted, #94A3B8);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.period-hw-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.hw-status-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.hw-status-badge.has-hw {
+  background: rgba(232, 176, 74, 0.15);
+  color: var(--accent, #E8B04A);
+  border: 1px solid rgba(232, 176, 74, 0.35);
+}
+
+.hw-status-badge.no-hw {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--fg-muted, #94A3B8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.hw-preview-text {
+  font-size: 0.72rem;
+  color: var(--fg, #E2E8F0);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+.period-card-footer {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.attachment-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* Skeleton styling */
+.period-card.skeleton {
+  cursor: default;
+  background: var(--card2, #182A45);
+}
+
+.skeleton-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skeleton-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  animation: skel-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-pill {
+  width: 60px;
+  height: 18px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  animation: skel-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-body {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  animation: skel-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-line.short { width: 50%; }
+.skeleton-line.long { width: 85%; }
+
+/* Error card */
+.schedule-error-card {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.schedule-error-text {
+  color: #fca5a5;
+  font-size: 0.88rem;
+  margin-bottom: 12px;
+}
+
+.schedule-retry-btn {
+  background: var(--accent, #E8B04A);
+  color: #0F1E33;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Timetable notice banner */
+.timetable-notice-banner {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+  text-align: right;
+}
+
+/* Unmatched Homework Section */
+.unmatched-hw-section {
+  margin-top: 18px;
+  border-top: 1px solid var(--border, #263B5C);
+  padding-top: 14px;
+}
+
+.unmatched-hw-title {
+  font-size: 0.9rem;
+  color: var(--fg-muted, #94A3B8);
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.unmatched-hw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unmatched-hw-card {
+  background: var(--card2, #182A45);
+  border: 1px solid var(--border, #263B5C);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: right;
+}
+
+.unmatched-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.unmatched-reason-badge {
+  font-size: 0.72rem;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.unmatched-body-preview {
+  font-size: 0.82rem;
+  color: var(--fg, #E2E8F0);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Period Detail Drawer (Bottom Sheet) ===== */
+.period-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+.period-drawer-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 85dvh;
+  background: var(--card, #132238);
+  border-top: 1px solid var(--border, #263B5C);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+  animation: sheetSlideUp 0.22s ease-out;
+}
+
+@media (min-width: 640px) {
+  .period-drawer-sheet {
+    max-width: 540px;
+    margin: auto;
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 20px;
+    border: 1px solid var(--border, #263B5C);
+    max-height: 80vh;
+    animation: modalScaleIn 0.2s ease-out;
+  }
+}
+
+.drawer-drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 auto 10px;
+}
+
+@media (min-width: 640px) {
+  .drawer-drag-handle {
+    display: none;
+  }
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border, #263B5C);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.drawer-header-start {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.drawer-back-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border, #263B5C);
+  color: var(--fg, #E2E8F0);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+}
+
+.drawer-back-btn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.drawer-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-period-pill {
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--accent, #E8B04A);
+  border: 1px solid rgba(232, 176, 74, 0.4);
+}
+
+.drawer-subject-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.drawer-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted, #94A3B8);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawer-close-btn:hover {
+  color: #FFFFFF;
+}
+
+.drawer-body-content {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.drawer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--fg-muted, #94A3B8);
+  margin-bottom: 12px;
+}
+
+.drawer-meta-value {
+  color: var(--fg, #E2E8F0);
+  font-weight: 700;
+}
+
+.drawer-mismatch-banner {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+}
+
+.drawer-section {
+  margin-bottom: 16px;
+}
+
+.drawer-section-title {
+  font-size: 0.85rem;
+  color: var(--fg-muted, #94A3B8);
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.drawer-homework-text {
+  background: var(--card2, #182A45);
+  border: 1px solid var(--border, #263B5C);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--fg, #E2E8F0);
+  word-break: break-word;
+}
+
+.drawer-empty-hw {
+  background: var(--card2, #182A45);
+  border: 1px solid var(--border, #263B5C);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  color: var(--fg-muted, #94A3B8);
+  text-align: center;
+}
+
+.drawer-attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.drawer-attach-img-card {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border, #263B5C);
+}
+
+.drawer-img-thumb-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.drawer-img-thumb {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
+}
+
+.drawer-img-zoom-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #FFFFFF;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.drawer-attach-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card2, #182A45);
+  border: 1px solid var(--border, #263B5C);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--accent, #E8B04A);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.drawer-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.drawer-lightbox-img {
+  max-width: 95%;
+  max-height: 90vh;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.drawer-lightbox-close {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #FFFFFF;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

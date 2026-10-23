@@ -274,6 +274,7 @@ export default function Today() {
       const { exportA4PNG, fetchAsDataUrl } = await import('../utils/exportA4')
       const logoDataUrl = await fetchAsDataUrl('/icon-192.png')
 
+      const { saveOrShareBlob } = await import('../utils/fileSaver')
       const blob = await exportA4PNG({
         date: toISO(date),
         classLabel: child.section_label,
@@ -282,12 +283,11 @@ export default function Today() {
         publisherName,
         logoDataUrl,
       })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'واجباتي-' + toISO(date) + '.png'
-      a.click()
-      URL.revokeObjectURL(url)
+      await saveOrShareBlob({
+        filename: 'واجباتي-' + toISO(date) + '.png',
+        blob,
+        dialogTitle: 'تصدير كشف الواجبات A4'
+      })
     } catch (e) {
       console.error('A4 export failed', e)
       showToast('فشل التصدير — حاول مجدداً', 'error')
@@ -509,7 +509,14 @@ export default function Today() {
           {/* ── section badge + export ──────────────────────────────────── */}
           {child && (
             <div className="section-bar section-bar-between">
-              <span className="badge">{child.section_label}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
+                <span className="badge">{child.section_label}</span>
+                {children.length === 1 && (
+                  <span className="student-name-badge" style={{ fontSize: '.875rem', fontWeight: 600, color: 'var(--fg-muted)' }}>
+                    الطالب: {child.full_name}
+                  </span>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 {!loading && hw.length > 0 && (
                   <ExportButton

@@ -16,6 +16,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@capacitor/core": "^6.2.2",
+    "@capacitor/filesystem": "^6.0.2",
+    "@capacitor/share": "^6.0.2",
     "@supabase/supabase-js": "^2.45.0",
     "@tanstack/react-table": "^9.3.1",
     "@tauri-apps/api": "^2.12.4",
@@ -31,6 +34,8 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.2.2",
+    "@capacitor/cli": "^6.2.2",
     "@playwright/test": "^1.64.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",

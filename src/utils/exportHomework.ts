@@ -408,12 +408,18 @@ export async function exportAsImage(data: HomeworkExportData): Promise<void> {
     }
     await new Promise(resolve => setTimeout(resolve, 50))
 
+    const fileName = `واجبات-${data.sectionName}-${data.date}.png`
+    const { saveOrShareFile } = await import('./fileSaver')
+
     if (pages.length === 1) {
       const canvas = await renderCardToCanvas(pages[0])
-      const link = document.createElement('a')
-      link.download = `واجبات-${data.sectionName}-${data.date}.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
+      const dataUrl = canvas.toDataURL('image/png')
+      await saveOrShareFile({
+        filename: fileName,
+        base64Data: dataUrl.split(',')[1],
+        mimeType: 'image/png',
+        dialogTitle: 'تصدير جدول الواجبات كصورة'
+      })
     } else {
       // Multi-page stitch vertically with subtle separator
       const canvases: HTMLCanvasElement[] = []
@@ -433,10 +439,13 @@ export async function exportAsImage(data: HomeworkExportData): Promise<void> {
           ctx.drawImage(c, 0, currentY)
           currentY += c.height + gap
         }
-        const link = document.createElement('a')
-        link.download = `واجبات-${data.sectionName}-${data.date}.png`
-        link.href = combinedCanvas.toDataURL('image/png')
-        link.click()
+        const dataUrl = combinedCanvas.toDataURL('image/png')
+        await saveOrShareFile({
+          filename: fileName,
+          base64Data: dataUrl.split(',')[1],
+          mimeType: 'image/png',
+          dialogTitle: 'تصدير جدول الواجبات كصورة'
+        })
       }
     }
   } finally {
@@ -470,7 +479,20 @@ export async function exportAsPDF(data: HomeworkExportData): Promise<void> {
       pdf.addImage(imgData, 'PNG', 0, 0, 297, 210, undefined, 'FAST')
     }
 
-    pdf.save(`واجبات-${data.sectionName}-${data.date}.pdf`)
+    const fileName = `واجبات-${data.sectionName}-${data.date}.pdf`
+    const { Capacitor } = await import('@capacitor/core')
+    if (Capacitor.isNativePlatform()) {
+      const { saveOrShareFile } = await import('./fileSaver')
+      const dataUri = pdf.output('datauristring')
+      await saveOrShareFile({
+        filename: fileName,
+        base64Data: dataUri.split(',')[1],
+        mimeType: 'application/pdf',
+        dialogTitle: 'تصدير جدول الواجبات كـ PDF'
+      })
+    } else {
+      pdf.save(fileName)
+    }
   } finally {
     if (host.parentNode) {
       host.parentNode.removeChild(host)

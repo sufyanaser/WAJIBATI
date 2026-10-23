@@ -229,9 +229,10 @@ export function buildExportPages(data: HomeworkExportData): HTMLElement[] {
       'box-sizing: border-box',
       'background: #ffffff',
       "font-family: 'Tajawal', 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif",
-      'position: fixed',
-      'top: -9999px',
-      'left: -9999px',
+      'position: relative',
+      'top: 0',
+      'left: 0',
+      'margin: 0',
       'color: #0f172a',
       'display: flex',
       'flex-direction: column',
@@ -363,14 +364,35 @@ export function buildExportPages(data: HomeworkExportData): HTMLElement[] {
 
 // ── Offline Rendering & Export Functions ──
 
-async function renderCardToCanvas(card: HTMLElement): Promise<HTMLCanvasElement> {
+export async function renderCardToCanvas(card: HTMLElement): Promise<HTMLCanvasElement> {
   const { toCanvas } = await import('html-to-image')
   return toCanvas(card, {
     backgroundColor: '#ffffff',
     pixelRatio: 2,
+    width: 1122,
+    height: 794,
   })
 }
 
+
+export function mountOffscreenHost(pages: HTMLElement[]): HTMLDivElement {
+  const host = document.createElement("div")
+  host.dir = 'rtl'
+  host.setAttribute("aria-hidden", "true")
+  host.style.cssText = [
+    "position: fixed",
+    "left: -99999px",
+    "top: 0",
+    "width: 1122px",
+    `height: ${Math.max(794, 794 * pages.length)}px`,
+    "overflow: hidden",
+    "pointer-events: none",
+    "z-index: -9999",
+  ].join(";")
+  pages.forEach(p => host.appendChild(p))
+  document.body.appendChild(host)
+  return host
+}
 async function loadBundledJsPDF(): Promise<typeof import('jspdf').jsPDF> {
   const mod = await import('jspdf')
   return mod.jsPDF || (mod as any).default?.jsPDF || (mod as any).default
@@ -378,12 +400,13 @@ async function loadBundledJsPDF(): Promise<typeof import('jspdf').jsPDF> {
 
 export async function exportAsImage(data: HomeworkExportData): Promise<void> {
   const pages = buildExportPages(data)
-  pages.forEach(p => document.body.appendChild(p))
+  const host = mountOffscreenHost(pages)
 
   try {
     if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
       try { await document.fonts.ready } catch {}
     }
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     if (pages.length === 1) {
       const canvas = await renderCardToCanvas(pages[0])
@@ -417,20 +440,21 @@ export async function exportAsImage(data: HomeworkExportData): Promise<void> {
       }
     }
   } finally {
-    pages.forEach(p => {
-      if (p.parentNode) p.parentNode.removeChild(p)
-    })
+    if (host.parentNode) {
+      host.parentNode.removeChild(host)
+    }
   }
 }
 
 export async function exportAsPDF(data: HomeworkExportData): Promise<void> {
   const pages = buildExportPages(data)
-  pages.forEach(p => document.body.appendChild(p))
+  const host = mountOffscreenHost(pages)
 
   try {
     if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
       try { await document.fonts.ready } catch {}
     }
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     const JsPDF = await loadBundledJsPDF()
     // Standard A4 Landscape: 297mm × 210mm
@@ -448,8 +472,8 @@ export async function exportAsPDF(data: HomeworkExportData): Promise<void> {
 
     pdf.save(`واجبات-${data.sectionName}-${data.date}.pdf`)
   } finally {
-    pages.forEach(p => {
-      if (p.parentNode) p.parentNode.removeChild(p)
-    })
+    if (host.parentNode) {
+      host.parentNode.removeChild(host)
+    }
   }
 }

@@ -99,6 +99,19 @@ describe('Homework Export Engine — Offline & Arabic RTL Verification', () => {
     expect(cdnScripts.length).toBe(0)
   })
 
+  it('prevents blank image regression: export pages have position:relative at (0,0) instead of negative coordinates', () => {
+    const pages = buildExportPages(sampleData)
+    expect(pages.length).toBeGreaterThan(0)
+    for (const page of pages) {
+      expect(page.style.position).toBe('relative')
+      expect(page.style.top).toBe('0px')
+      expect(page.style.left).toBe('0px')
+      expect(page.style.width).toBe('1122px')
+      expect(page.style.height).toBe('794px')
+      expect(page.style.cssText).not.toContain('-9999px')
+    }
+  })
+
   it('runs PDF export successfully in offline mode with bundled jspdf', async () => {
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 

@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ExportButton } from '../components/ExportButton'
+import { ExportModal } from '../components/ExportModal'
+import { BottomNavBar } from '../components/BottomNavBar'
 import { DateNavigator } from '../components/DateNavigator'
 import { Toast, useToast } from '../components/Toast'
 import { useHomework } from '../hooks/useHomework'
 import type { HwItem } from '../hooks/useHomework'
+import { useSchoolSettings } from '../services/schoolSettings'
 import {
-  LogOutIcon,
   BookIcon,
-  CalendarIcon,
   CloseIcon,
-  RefreshIcon,
+  DownloadIcon,
   ImageIcon,
   FileTextIcon,
   FamilyIcon,
@@ -50,12 +50,12 @@ function vapidKey(b64: string): ArrayBuffer {
 export default function Today() {
   const nav = useNavigate()
 
-  // ── auth / children state ─────────────────────────────────────────────────
+  // ── auth / children / settings state ───────────────────────────────────────
+  const { settings } = useSchoolSettings()
   const [children, setChildren] = useState<Child[]>([])
   const [childrenLoaded, setChildrenLoaded] = useState(false)
   const [idx, setIdx] = useState(0)
   const [gid, setGid] = useState<string | null>(null)
-  const [schoolName, setSchoolName] = useState('اعدادية الرميلة للبنين')
 
   // ── date state ────────────────────────────────────────────────────────────
   const [date, setDate] = useState<Date>(() => {
@@ -77,8 +77,8 @@ export default function Today() {
   // ── push state ────────────────────────────────────────────────────────────
   const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
 
-  // ── A4 PDF export state ───────────────────────────────────────────────────
-  const [exporting, setExporting] = useState(false)
+  // ── export modal state ────────────────────────────────────────────────────
+  const [exportModalOpen, setExportModalOpen] = useState(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
   // ── signed URLs for attachments ───────────────────────────────────────────
@@ -98,15 +98,6 @@ export default function Today() {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) { nav('/login'); return }
       bootstrap()
-      supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'school')
-        .maybeSingle()
-        .then(({ data: s }) => {
-          if (s?.value && typeof s.value === 'object' && 'name' in s.value)
-            setSchoolName(String((s.value as { name: string }).name))
-        })
       if ('Notification' in window) {
         if (Notification.permission === 'default') setPushOpt('pending')
         else if (Notification.permission === 'granted') setPushOpt('granted')
@@ -160,7 +151,7 @@ export default function Today() {
       setSignedUrls(map)
     }).catch(e => {
       console.error('signed URL generation failed', e)
-      showToast('فشل تحميل المرفقات — حاول مجدداً', 'error')
+      showToast('فشل تحميل المرفقات، حاول مجدداً', 'error')
     })
   }, [hw])
 
@@ -239,61 +230,20 @@ export default function Today() {
     } catch { /* user denied */ }
   }
 
-  // ── A4 PDF export ─────────────────────────────────────────────────────────
-  async function handleExportA4PDF() {
-    if (!child) return
-    setExporting(true)
-    try {
-      // Build ordered homework items (hw is already sorted by period from useHomework)
-      const subjectMap = new Map<string, string>()
-      for (const h of hw) {
-        const name = h.subject?.name ?? ''
-        if (!name) continue
-        const entry = h.period ? `(ح${h.period}) ${h.body}` : h.body
-        subjectMap.set(name, subjectMap.has(name) ? subjectMap.get(name)! + '\n' + entry : entry)
-      }
-      const homeworkItems = Array.from(subjectMap.entries()).map(([subject, text]) => ({ subject, text }))
-
-      // Fetch publisher name from current admin session
-      let publisherName = 'مسؤول المدرسة'
-      try {
-        const { data: sess } = await supabase.auth.getSession()
-        if (sess.session?.user.id) {
-          const { data: adm } = await supabase
-            .from('admins')
-            .select('full_name')
-            .eq('user_id', sess.session.user.id)
-            .maybeSingle()
-          if (adm && (adm as { full_name?: string | null }).full_name) {
-            publisherName = (adm as { full_name: string }).full_name
-          }
-        }
-      } catch { /* keep default */ }
-
-      // Fetch app icon as base64 for embedding in the export
-      const { exportA4PNG, fetchAsDataUrl } = await import('../utils/exportA4')
-      const logoDataUrl = await fetchAsDataUrl('/icon-192.png')
-
-      const blob = await exportA4PNG({
-        date: toISO(date),
-        classLabel: child.section_label,
-        section: child.section_letter,
-        homeworkItems,
-        publisherName,
-        logoDataUrl,
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'واجباتي-' + toISO(date) + '.png'
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch (e) {
-      console.error('A4 export failed', e)
-      showToast('فشل التصدير — حاول مجدداً', 'error')
-    } finally {
-      setExporting(false)
-    }
+  // ── export data payload ───────────────────────────────────────────────────
+  const exportData = {
+    schoolName: settings.name,
+    sectionName: child?.section_label ?? '',
+    date: toISO(date),
+    notices: notices.filter(n => n.priority <= 1).map(n => n.title + (n.body ? ': ' + n.body : '')).join('\n'),
+    warnings: notices.filter(n => n.priority > 1).map(n => n.title + (n.body ? ': ' + n.body : '')).join('\n'),
+    items: hw.map(h => ({
+      period: h.period ?? 0,
+      subject: h.subject?.name ?? 'غير محدد',
+      teacher: h.teacher?.full_name ?? 'غير محدد',
+      body: h.body,
+    })),
+    settings,
   }
 
   // ── calendar cells ────────────────────────────────────────────────────────
@@ -317,20 +267,14 @@ export default function Today() {
   // ── no children state ─────────────────────────────────────────────────────
   if (childrenLoaded && !children.length) {
     return (
-      <main className="screen" dir="rtl">
-        <header className="today-header">
-          <div className="today-header-top">
-            <div className="brand-identity">
-              <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
-              <div className="today-header-titles">
-                <h1 className="app-title">واجباتي</h1>
-                <p className="school-subtitle">{schoolName}</p>
-              </div>
+      <main className="screen" dir="rtl" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+        <header className="today-header today-header-compact">
+          <div className="brand-identity">
+            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={40} height={40} />
+            <div className="today-header-titles">
+              <h1 className="app-title" style={{ fontSize: '1.25rem', margin: 0 }}>واجباتي</h1>
+              <p className="school-subtitle" style={{ fontSize: '.82rem', margin: 0 }}>{settings.name}</p>
             </div>
-            <button className="icon-btn" onClick={handleLogout}>
-              <LogOutIcon size={16} />
-              <span>خروج</span>
-            </button>
           </div>
         </header>
         <div className="empty-state">
@@ -339,39 +283,33 @@ export default function Today() {
           </span>
           <p className="empty-msg">لا أبناء مرتبطون بهذا الحساب</p>
         </div>
+        <BottomNavBar
+          onOpenExport={() => {}}
+          onLogout={handleLogout}
+          canExport={false}
+        />
       </main>
     )
   }
 
   // ── main render ───────────────────────────────────────────────────────────
   return (
-    <main className="screen today" dir="rtl">
-
-      {/* ── header ─────────────────────────────────────────────────────── */}
-      <header className="today-header">
-        <div className="today-header-top">
-          <div className="brand-identity">
-            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
-            <div className="today-header-titles">
-              <h1 className="app-title">واجباتي</h1>
-              <p className="school-subtitle">{schoolName}</p>
+    <main
+      className="screen today"
+      dir="rtl"
+      style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
+    >
+      {/* ── compact header (clean, reduced height, no redundant buttons) ── */}
+      <header className="today-header today-header-compact" style={{ padding: '10px 14px', marginBottom: 6 }}>
+        <div className="today-header-top" style={{ justifyContent: 'center' }}>
+          <div className="brand-identity" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={38} height={38} style={{ borderRadius: 10 }} />
+            <div className="today-header-titles" style={{ textAlign: 'right' }}>
+              <h1 className="app-title" style={{ fontSize: '1.25rem', margin: 0, lineHeight: 1.2 }}>واجباتي</h1>
+              <p className="school-subtitle" style={{ fontSize: '.8rem', margin: 0, color: 'var(--fg-muted)' }}>{settings.name}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link to="/archive" className="icon-btn">
-              <BookIcon size={16} />
-              <span>الأرشيف</span>
-            </Link>
-            <button className="icon-btn" onClick={handleLogout}>
-              <LogOutIcon size={16} />
-              <span>خروج</span>
-            </button>
-          </div>
         </div>
-        <p className="today-date-display" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <CalendarIcon size={15} />
-          <span>{todayArabic}</span>
-        </p>
       </header>
 
       {/* ── push opt-in banner ─────────────────────────────────────────── */}
@@ -416,7 +354,7 @@ export default function Today() {
                     ? { background: r.subject.color + '33', borderColor: r.subject.color }
                     : undefined}
                 >
-                  {r.subject?.name ?? '—'}
+                  {r.subject?.name ?? 'غير محدد'}
                 </span>
                 <span className="hw-date-label">
                   {new Date(r.due_date + 'T00:00:00').toLocaleDateString('ar-IQ', {
@@ -506,43 +444,63 @@ export default function Today() {
             </div>
           )}
 
-          {/* ── section badge + export ──────────────────────────────────── */}
+          {/* ── student & section info bar + unified export ──────────── */}
           {child && (
-            <div className="section-bar section-bar-between">
-              <span className="badge">{child.section_label}</span>
-              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                {!loading && hw.length > 0 && (
-                  <ExportButton
-                    data={{
-                      schoolName,
-                      sectionName: child.section_label,
-                      date: toISO(date),
-                      items: hw.map(h => ({
-                        period: h.period ?? 0,
-                        subject: h.subject?.name ?? '—',
-                        teacher: h.teacher?.full_name ?? '—',
-                        body: h.body,
-                      })),
-                    }}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={handleExportA4PDF}
-                  disabled={exporting || loading}
-                  className="icon-btn"
+            <div
+              className="student-bar"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                background: 'var(--card2)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                gap: 10,
+                flexWrap: 'wrap',
+                margin: '8px 0 12px 0',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '.92rem', fontWeight: 800, color: 'var(--fg)' }}>
+                  الطالب: {child.full_name}
+                </span>
+                <span
+                  className="badge"
                   style={{
-                    borderColor: 'var(--accent)',
-                    color: 'var(--accent)',
-                    cursor: (exporting || loading) ? 'wait' : 'pointer',
-                    opacity: (exporting || loading) ? 0.6 : 1,
-                    whiteSpace: 'nowrap',
+                    fontSize: '.82rem',
+                    fontWeight: 700,
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    color: '#38bdf8',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    padding: '3px 10px',
+                    borderRadius: 6,
                   }}
                 >
-                  {exporting ? <RefreshIcon size={16} /> : <ImageIcon size={16} />}
-                  <span>{exporting ? 'جارٍ التصدير…' : 'تصدير صورة A4'}</span>
-                </button>
+                  {child.section_label}
+                </span>
               </div>
+
+              {!loading && hw.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setExportModalOpen(true)}
+                  className="icon-btn"
+                  aria-label="تصدير جدول الواجبات"
+                  style={{
+                    borderColor: 'var(--border)',
+                    color: 'var(--accent)',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    padding: '6px 12px',
+                    fontSize: '.85rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  <DownloadIcon size={16} />
+                  <span>تصدير</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -602,7 +560,7 @@ export default function Today() {
                         ? { background: h.subject.color + '33', borderColor: h.subject.color }
                         : undefined}
                     >
-                      {h.subject?.name ?? '—'}
+                      {h.subject?.name ?? 'غير محدد'}
                     </span>
                     <span className="hw-read-check" aria-label="تمت القراءة">✓</span>
                   </div>
@@ -638,15 +596,19 @@ export default function Today() {
         <Toast message={toast.message} type={toast.type} onDone={clearToast} />
       )}
 
-      {/* ── bottom sticky archive bar ───────────────────────────────────── */}
-      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
-        <div className="bottom-bar-inner">
-          <Link to="/archive" className="archive-link">
-            <BookIcon size={18} />
-            <span>تصفح أرشيف الواجبات</span>
-          </Link>
-        </div>
-      </nav>
+      {/* ── fixed bottom navigation dock ───────────────────────────────── */}
+      <BottomNavBar
+        onOpenExport={() => setExportModalOpen(true)}
+        onLogout={handleLogout}
+        canExport={!loading && hw.length > 0}
+      />
+
+      {/* ── unified export modal ────────────────────────────────────────── */}
+      <ExportModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        data={exportData}
+      />
     </main>
   )
 }

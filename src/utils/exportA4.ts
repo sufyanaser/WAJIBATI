@@ -323,9 +323,10 @@ function buildA4Html(opts: ExportA4Options): string {
         min-height:${A4_H}px;
         background:#ffffff;
         box-sizing:border-box;
-        position:absolute;
-        left:-9999px;
-        top:-9999px;
+        position:relative;
+        left:0;
+        top:0;
+        margin:0;
         overflow:hidden;
         font-family:Tahoma,Arial,sans-serif;
       "
@@ -368,20 +369,41 @@ export async function fetchAsDataUrl(url: string): Promise<string | undefined> {
 // ---------------------------------------------------------------------------
 
 async function renderToPng(opts: ExportA4Options): Promise<string> {
-  const container = document.createElement('div')
+  const host = document.createElement("div")
+  host.setAttribute("aria-hidden", "true")
+  host.style.cssText = [
+    "position: fixed",
+    "left: -99999px",
+    "top: 0",
+    `width: ${A4_W}px`,
+    `height: ${A4_H}px`,
+    "overflow: hidden",
+    "pointer-events: none",
+    "z-index: -9999",
+  ].join(";")
+
+  const container = document.createElement("div")
   container.innerHTML = buildA4Html(opts)
   const sheet = container.firstElementChild as HTMLElement
-  document.body.appendChild(sheet)
+  host.appendChild(sheet)
+  document.body.appendChild(host)
   try {
+    if (typeof document !== "undefined" && document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready } catch {}
+    }
+    await new Promise(resolve => setTimeout(resolve, 50))
+
     const dataUrl = await toPng(sheet, {
       width: A4_W,
       height: A4_H,
       pixelRatio: 1,
-      backgroundColor: '#ffffff',
+      backgroundColor: "#ffffff",
     })
     return dataUrl
   } finally {
-    document.body.removeChild(sheet)
+    if (host.parentNode) {
+      host.parentNode.removeChild(host)
+    }
   }
 }
 
@@ -406,6 +428,11 @@ type JsPDFClass = {
 }
 
 async function loadJsPDF(): Promise<(new (opts: Record<string, unknown>) => JsPDFClass) | null> {
+  try {
+    const mod = await import("jspdf")
+    const cls = mod.jsPDF || (mod as any).default?.jsPDF || (mod as any).default
+    if (cls) return cls
+  } catch {}
   const win = window as unknown as Record<string, unknown>
   // Already loaded?
   const existing = win['jspdf'] as { jsPDF?: new (opts: Record<string, unknown>) => JsPDFClass } | undefined

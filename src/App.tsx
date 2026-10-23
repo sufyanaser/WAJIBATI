@@ -6,6 +6,7 @@ import AdminLogin from './pages/AdminLogin'
 
 const Today = lazy(() => import('./pages/Today'))
 const Archive = lazy(() => import('./pages/Archive'))
+const Inquiries = lazy(() => import('./pages/Inquiries'))
 const AdminShell = lazy(() => import('./pages/admin/AdminShell'))
 const DashboardHome = lazy(() => import('./pages/admin/DashboardHome'))
 const HomeworkEntry = lazy(() => import('./pages/admin/HomeworkEntry'))
@@ -30,6 +31,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/archive" element={<Archive />} />
+          <Route path="/inquiries" element={<Inquiries />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminShell />}>
             <Route index element={<Navigate to="dashboard" replace />} />

@@ -4280,6 +4280,11 @@ button:disabled {
   line-height: 1.75;
   color: var(--fg, #E2E8F0);
   word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.drawer-homework-text p {
+  margin: 0;
 }
 
 .drawer-empty-hw {

@@ -103,7 +103,7 @@ export default function Today() {
     isWeekend,
     isTimetableAvailable,
     refetch: refetchSchedule,
-  } = useGuardianSchedule(child?.section_id ?? null, toISO(date))
+  } = useGuardianSchedule(child?.section_id ?? null, toISO(date), gid)
 
   // ── Drawer navigation state via URL search param ?lesson=<period> ─────────
   const lessonParam = searchParams.get('lesson')

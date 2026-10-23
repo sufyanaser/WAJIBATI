@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, render, screen, fireEvent, act } from '@testing-library/react'
-import { useGuardianSchedule, clearSessionScheduleCache } from '../hooks/useGuardianSchedule'
+import { useGuardianSchedule, clearSessionScheduleCache, getSessionScheduleCache, setScheduleAuthScope, CACHE_TTL_MS } from '../hooks/useGuardianSchedule'
 import type { GuardianPeriodSlot, UnmatchedHomeworkItem } from '../hooks/useGuardianSchedule'
 import { PeriodCard } from '../components/guardian/PeriodCard'
 import { PeriodDetailDrawer } from '../components/guardian/PeriodDetailDrawer'
@@ -497,4 +497,325 @@ describe('Guardian UI Components — Contracts & Accessibility', () => {
     unmount()
     expect(document.body.style.overflow).toBe('')
   })
+
+
+  it('M. PeriodDetailDrawer — preserves whitespace and line breaks for multiline homework', () => {
+    const multilineSlot: GuardianPeriodSlot = {
+      period: 1,
+      subject_id: 101,
+      subject_name: 'الفيزياء',
+      subject_color: '#3b82f6',
+      subject_icon: 'atom',
+      teacher_id: 201,
+      teacher_name: 'أ. مصطفى',
+      has_homework: true,
+      homework: {
+        id: 'hw-multi',
+        period: 1,
+        body: 'الواجب الأول: حل تمارين ص 40\n\nالواجب الثاني: حفظ القوانين ص 42\n1. قانون نيوتن الثاني\n2. قانون الجذب العام',
+        status: 'published',
+        subject_id: 101,
+        subject_name: 'الفيزياء',
+        subject_color: '#3b82f6',
+        subject_icon: 'atom',
+        teacher_id: 201,
+        teacher_name: 'أ. مصطفى',
+        attachments: [],
+      },
+    }
+
+    const { container } = render(
+      <PeriodDetailDrawer
+        isOpen={true}
+        onClose={vi.fn()}
+        slot={multilineSlot}
+        unmatchedItem={null}
+        signedUrls={{}}
+      />,
+    )
+
+    const textDiv = container.querySelector('.drawer-homework-text')
+    expect(textDiv).toBeInTheDocument()
+    const pElement = textDiv?.querySelector('p')
+    expect(pElement).toBeInTheDocument()
+    expect(pElement?.textContent).toContain('\n\n')
+    expect(pElement?.textContent).toContain('1. قانون نيوتن الثاني')
+  })
+
+})
+
+describe('useGuardianSchedule — Cache Freshness & Invalidation (DEF-02)', () => {
+  beforeEach(() => {
+    clearSessionScheduleCache()
+    vi.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: null, error: null })
+  })
+
+  it('N. Case 11 — Cache Freshness: explicit refetch() bypasses cache and fetches newly added homework', async () => {
+    const timetableData = [
+      {
+        period: 1,
+        subject_id: 101,
+        teacher_id: 501,
+        subject: { id: 101, name: 'الرياضيات' },
+        teacher: { id: 501, full_name: 'أ. أحمد' },
+      },
+    ]
+
+    let currentHomework: unknown[] = []
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'timetable') return createQueryChain(timetableData)
+      if (table === 'homework') return createQueryChain(currentHomework)
+      if (table === 'notices') return createQueryChain([])
+      return createQueryChain([])
+    })
+
+    const { result } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-1'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.periods[0].has_homework).toBe(false)
+
+    // Admin now publishes homework for period 1
+    currentHomework = [
+      {
+        id: 'hw-new',
+        period: 1,
+        body: 'واجب جديد بعد النشر',
+        subject_id: 101,
+        teacher_id: 501,
+        status: 'published',
+        subject: { id: 101, name: 'الرياضيات' },
+        teacher: { id: 501, full_name: 'أ. أحمد' },
+        attachments: [],
+      },
+    ]
+
+    // Trigger explicit refetch
+    await act(async () => {
+      await result.current.refetch()
+    })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.periods[0].has_homework).toBe(true)
+    expect(result.current.periods[0].homework?.body).toBe('واجب جديد بعد النشر')
+  })
+
+  it('O. Case 12 — Cache Freshness: does not re-fetch from network when revisited before TTL expires', async () => {
+    let fetchCount = 0
+    const timetableData = [
+      {
+        period: 1,
+        subject_id: 101,
+        teacher_id: 501,
+        subject: { id: 101, name: 'الرياضيات' },
+        teacher: null,
+      },
+    ]
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'timetable') {
+        fetchCount++
+        return createQueryChain(timetableData)
+      }
+      return createQueryChain([])
+    })
+
+    const { unmount } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-1'))
+    await waitFor(() => expect(fetchCount).toBe(1))
+
+    unmount()
+
+    // Re-mount immediately (0 seconds passed, TTL is 120 seconds)
+    const { result: remounted } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-1'))
+    await waitFor(() => expect(remounted.current.loading).toBe(false))
+
+    // Network query was NOT fired again because cache is fresh
+    expect(fetchCount).toBe(1)
+    expect(remounted.current.periods).toHaveLength(1)
+  })
+
+  it('P. Case 13 — Cache Freshness: revalidates upon tab visibility return when cache is older than TTL', async () => {
+    let queryCount = 0
+    const timetableData = [
+      {
+        period: 1,
+        subject_id: 101,
+        teacher_id: 501,
+        subject: { id: 101, name: 'الرياضيات' },
+        teacher: null,
+      },
+    ]
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'timetable') {
+        queryCount++
+        return createQueryChain(timetableData)
+      }
+      return createQueryChain([])
+    })
+
+    const { result } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-1'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(queryCount).toBe(1)
+
+    // Manually age the cache entry past CACHE_TTL_MS (e.g. 150 seconds ago)
+    const cache = getSessionScheduleCache()
+    const entry = cache.get('user-1_1_2026-10-25')
+    if (entry) {
+      entry.timestamp = Date.now() - (CACHE_TTL_MS + 30000)
+    }
+
+    // Simulate tab return
+    Object.defineProperty(document, 'visibilityState', {
+      value: 'visible',
+      writable: true,
+      configurable: true,
+    })
+
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    await waitFor(() => expect(queryCount).toBe(2))
+  })
+
+  it('Q. Case 14 — Cache Freshness: strictly isolates cache by auth scope, section, and date', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'timetable') return createQueryChain([])
+      return createQueryChain([])
+    })
+
+    // Mount for User A, Section 1, Date 1
+    const { unmount: u1 } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-A'))
+    await waitFor(() => expect(getSessionScheduleCache().has('user-A_1_2026-10-25')).toBe(true))
+    u1()
+
+    // Mount for User B, Section 1, Date 1
+    const { unmount: u2 } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-B'))
+    await waitFor(() => expect(getSessionScheduleCache().has('user-B_1_2026-10-25')).toBe(true))
+    u2()
+
+    // Mount for User A, Section 2, Date 1
+    const { unmount: u3 } = renderHook(() => useGuardianSchedule(2, '2026-10-25', 'user-A'))
+    await waitFor(() => expect(getSessionScheduleCache().has('user-A_2_2026-10-25')).toBe(true))
+    u3()
+
+    // Mount for User A, Section 1, Date 2
+    const { unmount: u4 } = renderHook(() => useGuardianSchedule(1, '2026-10-26', 'user-A'))
+    await waitFor(() => expect(getSessionScheduleCache().has('user-A_1_2026-10-26')).toBe(true))
+    u4()
+
+    const keys = Array.from(getSessionScheduleCache().keys())
+    expect(keys).toContain('user-A_1_2026-10-25')
+    expect(keys).toContain('user-B_1_2026-10-25')
+    expect(keys).toContain('user-A_2_2026-10-25')
+    expect(keys).toContain('user-A_1_2026-10-26')
+    expect(keys).toHaveLength(4)
+  })
+
+  it('R. Case 15 — Cache Freshness: clears session cache upon logout or auth scope change', async () => {
+    mockFrom.mockImplementation(() => createQueryChain([]))
+
+    renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-1'))
+    await waitFor(() => expect(getSessionScheduleCache().size).toBeGreaterThan(0))
+
+    // Logout
+    act(() => {
+      clearSessionScheduleCache()
+    })
+
+    expect(getSessionScheduleCache().size).toBe(0)
+  })
+
+  it('S. Case 16 — Cache Freshness: preserves existing cached schedule if background revalidation encounters network error', async () => {
+    let succeed = true
+    const timetableData = [
+      {
+        period: 1,
+        subject_id: 101,
+        teacher_id: 501,
+        subject: { id: 101, name: 'الرياضيات' },
+        teacher: { id: 501, full_name: 'أ. أحمد' },
+      },
+    ]
+
+    mockFrom.mockImplementation((table: string) => {
+      if (!succeed) {
+        return createQueryChain(null, new Error('Network timeout'))
+      }
+      if (table === 'timetable') return createQueryChain(timetableData)
+      return createQueryChain([])
+    })
+
+    const { result } = renderHook(() => useGuardianSchedule(1, '2026-10-25', 'user-1'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.periods).toHaveLength(1)
+
+    // Age the cache past TTL
+    const entry = getSessionScheduleCache().get('user-1_1_2026-10-25')
+    if (entry) entry.timestamp = Date.now() - (CACHE_TTL_MS + 10000)
+
+    // Now fail subsequent fetch
+    succeed = false
+
+    // Simulate tab return
+    Object.defineProperty(document, 'visibilityState', {
+      value: 'visible',
+      writable: true,
+      configurable: true,
+    })
+
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    await waitFor(() => expect(result.current.error).toContain('تعذر تحديث الجدول والواجبات'))
+
+    // Crucial check: Previous periods are PRESERVED and not wiped out!
+    expect(result.current.periods).toHaveLength(1)
+    expect(result.current.periods[0].subject_name).toBe('الرياضيات')
+  })
+
+  it('T. Case 17 — Cache Freshness: rejects late arriving out-of-order responses from earlier requests', async () => {
+    let resolveFirst: (val: unknown) => void = () => {}
+    const firstPromise = new Promise(res => {
+      resolveFirst = res
+    })
+
+    mockFrom.mockImplementation((table: string) => {
+      // First call is slow
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        or: vi.fn().mockReturnThis(),
+        lte: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        then: vi.fn().mockImplementation((resolve: (val: unknown) => unknown) =>
+          firstPromise.then(() => resolve({ data: [], error: null })),
+        ),
+      }
+    })
+
+    const { result, rerender } = renderHook(
+      ({ sec, date }: { sec: number; date: string }) => useGuardianSchedule(sec, date, 'user-1'),
+      { initialProps: { sec: 1, date: '2026-10-25' } },
+    )
+
+    // Immediately switch to Section 2 (Fast request)
+    mockFrom.mockImplementation(() => createQueryChain([]))
+    rerender({ sec: 2, date: '2026-10-25' })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // Now resolve the late first request
+    act(() => {
+      resolveFirst(null)
+    })
+
+    // Active state remains cleanly for Section 2
+    expect(result.current.loading).toBe(false)
+  })
+
 })

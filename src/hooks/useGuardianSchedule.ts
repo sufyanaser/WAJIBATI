@@ -63,19 +63,52 @@ export interface UseGuardianScheduleResult {
   refetch: () => Promise<void>
 }
 
+// ── Cache Configuration & Management ──────────────────────────────────────────
+export const CACHE_TTL_MS = 120 * 1000 // 120 seconds TTL
+
+export interface ScheduleCacheEntry {
+  periods: GuardianPeriodSlot[]
+  unmatchedHomework: UnmatchedHomeworkItem[]
+  notices: NoticeItem[]
+  isTimetableAvailable: boolean
+  timestamp: number
+}
+
 // In-memory session cache (scoped to browser tab lifecycle only — NEVER stored in localStorage)
-const sessionScheduleCache = new Map<
-  string,
-  {
-    periods: GuardianPeriodSlot[]
-    unmatchedHomework: UnmatchedHomeworkItem[]
-    notices: NoticeItem[]
-    isTimetableAvailable: boolean
-  }
->()
+const sessionScheduleCache = new Map<string, ScheduleCacheEntry>()
 
 export function clearSessionScheduleCache(): void {
   sessionScheduleCache.clear()
+}
+
+export function getSessionScheduleCache(): Map<string, ScheduleCacheEntry> {
+  return sessionScheduleCache
+}
+
+let currentAuthUserId = 'anonymous'
+
+export function setScheduleAuthScope(scope: string): void {
+  currentAuthUserId = scope
+}
+
+if (typeof window !== 'undefined' && supabase?.auth) {
+  try {
+    supabase.auth.getSession?.().then(({ data }: { data: { session: { user?: { id: string } } | null } }) => {
+      if (data?.session?.user?.id) {
+        currentAuthUserId = data.session.user.id
+      }
+    }).catch(() => {})
+
+    supabase.auth.onAuthStateChange?.((event: string, session: { user?: { id: string } } | null) => {
+      const newUserId = session?.user?.id ?? 'anonymous'
+      if (newUserId !== currentAuthUserId || event === 'SIGNED_OUT') {
+        clearSessionScheduleCache()
+        currentAuthUserId = newUserId
+      }
+    })
+  } catch {
+    // Ignore in non-browser or test mock environments
+  }
 }
 
 /**
@@ -85,6 +118,7 @@ export function clearSessionScheduleCache(): void {
 export function useGuardianSchedule(
   sectionId: number | string | null,
   date: string,
+  authScope?: string | null,
 ): UseGuardianScheduleResult {
   const [periods, setPeriods] = useState<GuardianPeriodSlot[]>([])
   const [unmatchedHomework, setUnmatchedHomework] = useState<UnmatchedHomeworkItem[]>([])
@@ -104,7 +138,7 @@ export function useGuardianSchedule(
     return w === 5 || w === 6
   })()
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (forceBypass = false) => {
     if (sectionId === null || sectionId === undefined || !date) {
       setPeriods([])
       setUnmatchedHomework([])
@@ -114,22 +148,32 @@ export function useGuardianSchedule(
 
     const sec = Number(sectionId)
     const fetchId = ++activeFetchIdRef.current
-    const cacheKey = `${sec}_${date}`
+    const effectiveAuth = authScope || currentAuthUserId || 'anon'
+    const cacheKey = `${effectiveAuth}_${sec}_${date}`
 
-    // Check in-memory session cache first
     const cached = sessionScheduleCache.get(cacheKey)
-    if (cached) {
+    const isCacheFresh = cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)
+
+    if (forceBypass) {
+      sessionScheduleCache.delete(cacheKey)
+      setLoading(true)
+    } else if (cached) {
+      // Optimistically display cached data immediately
       setPeriods(cached.periods)
       setUnmatchedHomework(cached.unmatchedHomework)
       setNotices(cached.notices)
       setIsTimetableAvailable(cached.isTimetableAvailable)
-      setLoading(false)
       setError(null)
-      return
-    }
 
-    setLoading(true)
-    setError(null)
+      if (isCacheFresh) {
+        setLoading(false)
+        return
+      }
+      // Stale cache: keep displaying previous data, but revalidate in background
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
 
     const weekday = new Date(date + 'T00:00:00').getDay()
     const now = new Date().toISOString()
@@ -326,12 +370,13 @@ export function useGuardianSchedule(
       setUnmatchedHomework(unmatched)
       setNotices(noticesData)
 
-      // Store in session cache
+      // Store in session cache with fresh timestamp
       sessionScheduleCache.set(cacheKey, {
         periods: timetableSlots,
         unmatchedHomework: unmatched,
         notices: noticesData,
         isTimetableAvailable: hasTimetable,
+        timestamp: Date.now(),
       })
 
       // Mark read side effect (non-critical)
@@ -341,18 +386,49 @@ export function useGuardianSchedule(
       )
     } catch {
       if (fetchId !== activeFetchIdRef.current) return
-      setPeriods([])
-      setUnmatchedHomework([])
-      setError('تعذر تحميل الجدول والواجبات — يرجى التحقق من اتصال الإنترنت والمحاولة مجدداً')
+      // If we don't have existing cached data, clear periods; otherwise preserve previous data
+      if (!cached) {
+        setPeriods([])
+        setUnmatchedHomework([])
+        setError('تعذر تحميل الجدول والواجبات — يرجى التحقق من اتصال الإنترنت والمحاولة مجدداً')
+      } else {
+        setError('تعذر تحديث الجدول والواجبات — يتم عرض آخر بيانات متوفرة')
+      }
     } finally {
       if (fetchId === activeFetchIdRef.current) {
         setLoading(false)
       }
     }
-  }, [sectionId, date])
+  }, [sectionId, date, authScope])
 
   useEffect(() => {
     fetchData()
+  }, [fetchData])
+
+  // Tab visibility revalidation when returning after TTL (120s)
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && sectionId != null && date) {
+        const sec = Number(sectionId)
+        const effectiveAuth = authScope || currentAuthUserId || 'anon'
+        const key = `${effectiveAuth}_${sec}_${date}`
+        const cached = sessionScheduleCache.get(key)
+        if (cached && Date.now() - cached.timestamp >= CACHE_TTL_MS) {
+          fetchData(false)
+        }
+      }
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+      }
+    }
+  }, [fetchData, sectionId, date, authScope])
+
+  const refetch = useCallback(async () => {
+    await fetchData(true)
   }, [fetchData])
 
   return {
@@ -363,6 +439,6 @@ export function useGuardianSchedule(
     error,
     isWeekend,
     isTimetableAvailable,
-    refetch: fetchData,
+    refetch,
   }
 }

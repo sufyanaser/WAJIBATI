@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, isValidPhone } from '../../lib/supabase'
+import { supabase, isValidPhone, normalizePhone } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
@@ -107,7 +107,7 @@ export default function GuardiansPage() {
   function startAdd() {
     setEditing(null)
     setFullName('')
-    setPhone('+9647')
+    setPhone('07')
     setAltPhone('')
     setSelectedStudentId('')
     setRelation('أب')
@@ -125,17 +125,18 @@ export default function GuardiansPage() {
   }
 
   function formatIraqiPhone(raw: string): string {
-    let p = raw.trim().replace(/\s+/g, '')
-    if (p.startsWith('07')) p = '+964' + p.slice(1)
-    else if (p.startsWith('7') && p.length === 10) p = '+964' + p
-    return p
+    try {
+      return normalizePhone(raw)
+    } catch {
+      return raw.trim()
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
 const cleanPhone = formatIraqiPhone(phone)
-    if (!/^\+9647[0-9]{9}$/.test(cleanPhone)) {
-      showToast('يرجى إدخال رقم هاتف عراقي صالح (07XXXXXXXXX أو +9647XXXXXXXXX)', 'error')
+    if (!/^07[0-9]{9}$/.test(cleanPhone)) {
+      showToast('يرجى إدخال رقم هاتف عراقي صالح مكون من 11 رقماً يبدأ بـ 07 (مثال: 07XXXXXXXXX)', 'error')
       return
     }
 
@@ -272,9 +273,9 @@ const cleanPhone = formatIraqiPhone(phone)
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 dir="ltr"
-                placeholder="07XXXXXXXXX أو +9647XXXXXXXXX"
-                pattern="^(\+9647[0-9]{9}|07[0-9]{9})$"
-                title="07 متبوعاً بـ 9 أرقام أو +9647 متبوعاً بـ 9 أرقام"
+                placeholder="07XXXXXXXXX"
+                pattern="^07[0-9]{9}$"
+                title="رقم هاتف عراقي مكون من 11 رقماً يبدأ بـ 07"
                 required
               />
             </label>
@@ -284,7 +285,7 @@ const cleanPhone = formatIraqiPhone(phone)
                 value={altPhone}
                 onChange={e => setAltPhone(e.target.value)}
                 dir="ltr"
-                placeholder="+9647XXXXXXXXX"
+                placeholder="07XXXXXXXXX"
               />
             </label>
             <label>

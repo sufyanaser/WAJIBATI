@@ -180,6 +180,12 @@ export default function AdminShell() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileOpen])
 
+  // Lock body scroll when mobile drawer is open (prevents background scroll on iOS)
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
+
   function toggleCollapse() {
     setCollapsed(prev => {
       const next = !prev

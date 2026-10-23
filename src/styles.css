@@ -3707,6 +3707,10 @@ button:disabled {
   .admin-content-area {
     padding: 16px 14px 36px;
   }
+
+  .admin-sidebar-footer {
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (max-width: 520px) {
@@ -3714,6 +3718,25 @@ button:disabled {
     display: none !important;
   }
 }
+
+@media (max-width: 375px) {
+  .admin-top-bar {
+    padding: 0 8px;
+  }
+
+  .admin-top-bar-end {
+    gap: 6px;
+  }
+
+  .admin-breadcrumb-title {
+    max-width: 110px;
+  }
+
+  .admin-content-area {
+    padding: 12px 10px 28px;
+  }
+}
+
 
 /* ===== Export Sheet Modal & Animations ===== */
 @keyframes sheetSlideUp {

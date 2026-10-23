@@ -21,7 +21,9 @@ Deno.serve(async (req) => {
 
   const { phone, new_pin } = await req.json()
   if (!phone || !new_pin) return new Response('missing phone or new_pin', { status: 400, headers: CORS })
-  if (!/^07[0-9]{9}$/.test(phone)) return new Response('invalid phone (expected 07XXXXXXXXX)', { status: 400, headers: CORS })
+  let cleanPhone = String(phone).trim().replace(/\D/g, '')
+  if (/^9647\d{9}$/.test(cleanPhone)) cleanPhone = '0' + cleanPhone.slice(3)
+  if (!/^07[0-9]{9}$/.test(cleanPhone)) return new Response('invalid phone (expected 07XXXXXXXXX)', { status: 400, headers: CORS })
   if (!/^[0-9]{6}$/.test(new_pin)) return new Response('PIN must be 6 digits', { status: 400, headers: CORS })
 
   const db = createClient(SUPABASE_URL, SERVICE_KEY)
@@ -30,7 +32,7 @@ Deno.serve(async (req) => {
   const { data: guardian, error: gErr } = await db
     .from('guardians')
     .select('user_id')
-    .eq('phone', phone)
+    .eq('phone', cleanPhone)
     .single()
 
   if (gErr || !guardian?.user_id) return new Response('guardian not found', { status: 404, headers: CORS })

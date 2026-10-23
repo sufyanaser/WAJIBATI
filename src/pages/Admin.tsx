@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, normalizePhone } from '../lib/supabase'
 import { fetchSubjects } from '../lib/subjects'
 import type { Subject } from '../lib/subjects'
 import { validateFile } from '../lib/attachmentUtils'
@@ -396,11 +396,17 @@ export default function Admin() {
 
   async function handleResetPin(e: React.FormEvent) {
     e.preventDefault()
-    if (!resetPhone.trim() || !resetPin.trim()) return
+    let cleanPhone = resetPhone.trim()
+    try {
+      cleanPhone = normalizePhone(cleanPhone)
+    } catch {
+      // keep raw
+    }
+    if (!cleanPhone || !resetPin.trim()) return
     setResetting(true)
     setResetMsg('')
     const res = await supabase.functions.invoke('reset-pin', {
-      body: { phone: resetPhone.trim(), new_pin: resetPin.trim() },
+      body: { phone: cleanPhone, new_pin: resetPin.trim() },
     })
     setResetMsg(res.error ? `خطأ: ${res.error.message}` : 'تم تحديث الـ PIN بنجاح ✓')
     setResetting(false)
@@ -707,7 +713,7 @@ export default function Admin() {
           <div className="import-section">
             <h2 className="import-heading">إعادة تعيين PIN</h2>
             <form className="notice-form" onSubmit={handleResetPin}>
-              <input placeholder="رقم الهاتف (+9647XXXXXXXXX)" value={resetPhone}
+              <input placeholder="رقم الهاتف (07XXXXXXXXX)" value={resetPhone}
                 onChange={e => setResetPhone(e.target.value)} dir="ltr" />
               <input placeholder="PIN الجديد (6 أرقام)" value={resetPin} maxLength={6}
                 onChange={e => setResetPin(e.target.value)} dir="ltr" />

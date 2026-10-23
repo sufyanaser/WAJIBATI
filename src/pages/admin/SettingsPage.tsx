@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
+import { supabase, normalizePhone } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { platform } from '../../services/platform'
 import {
@@ -47,12 +47,17 @@ export default function SettingsPage() {
 
   async function handleResetPin(e: React.FormEvent) {
     e.preventDefault()
-    const cleanPhone = resetPhone.trim()
+    let cleanPhone = resetPhone.trim()
+    try {
+      cleanPhone = normalizePhone(cleanPhone)
+    } catch {
+      // keep raw if normalization fails
+    }
     const cleanPin = resetPin.trim()
 
-    if (!/^\+9647[0-9]{9}$/.test(cleanPhone)) {
+    if (!/^07[0-9]{9}$/.test(cleanPhone)) {
       setMessage({
-        text: 'يرجى كتابة رقم هاتف صالح بالصيغة العراقية الدولية: +9647XXXXXXXXX',
+        text: 'يرجى كتابة رقم هاتف عراقي صالح مكون من 11 رقماً يبدأ بـ 07 (مثال: 07801234567)',
         isError: true,
       })
       return
@@ -179,11 +184,11 @@ export default function SettingsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
-                  رقم هاتف ولي الأمر (بالصيغة الدولية)
+                  رقم هاتف ولي الأمر (11 رقماً يبدأ بـ 07)
                 </label>
                 <input
                   type="text"
-                  placeholder="+9647XXXXXXXXX"
+                  placeholder="07XXXXXXXXX"
                   value={resetPhone}
                   onChange={e => setResetPhone(e.target.value)}
                   dir="ltr"

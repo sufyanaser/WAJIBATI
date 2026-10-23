@@ -37,13 +37,19 @@ interface PSlot extends TtSlot {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const toISO = (d: Date) => d.toLocaleDateString('en-CA')
+const isSchoolDay = (d: Date) => { const w = d.getDay(); return w !== 5 && w !== 6 }
+function nearestSchoolDay(d: Date): Date {
+  const r = new Date(d)
+  while (!isSchoolDay(r)) { r.setDate(r.getDate() - 1) }
+  return r
+}
 
 export default function Admin() {
   const nav = useNavigate()
   const [ready, setReady] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
   const [secId, setSecId] = useState<number | null>(null)
-  const [date, setDate] = useState(toISO(new Date()))
+  const [date, setDate] = useState(() => toISO(nearestSchoolDay(new Date())))
   const [slots, setSlots] = useState<PSlot[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [tab, setTab] = useState<'واجبات' | 'إشعارات' | 'استيراد'>('واجبات')

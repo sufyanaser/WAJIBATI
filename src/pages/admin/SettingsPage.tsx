@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, normalizePhone } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { platform } from '../../services/platform'
+import { useSchoolSettings, SchoolSettings } from '../../services/schoolSettings'
 import {
   ShieldIcon,
   KeyIcon,
@@ -32,10 +33,32 @@ const ROLE_LABELS: Record<'owner' | 'editor' | 'viewer', { title: string; desc: 
 
 export default function SettingsPage() {
   const { user, role } = useAdmin()
+  const { settings, saveSettings, loading: loadingSchool } = useSchoolSettings()
+  const [schoolForm, setSchoolForm] = useState<SchoolSettings>(settings)
+  const [savingSchool, setSavingSchool] = useState(false)
+  const [schoolMsg, setSchoolMsg] = useState<{ text: string; isError: boolean } | null>(null)
+
   const [resetPhone, setResetPhone] = useState('')
   const [resetPin, setResetPin] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null)
+
+  useEffect(() => {
+    setSchoolForm(settings)
+  }, [settings])
+
+  async function handleSaveSchool(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingSchool(true)
+    setSchoolMsg(null)
+    const res = await saveSettings(schoolForm)
+    setSavingSchool(false)
+    if (res.success) {
+      setSchoolMsg({ text: 'تم حفظ وتحديث بيانات المدرسة والتقارير بنجاح.', isError: false })
+    } else {
+      setSchoolMsg({ text: res.error || 'فشل حفظ الإعدادات', isError: true })
+    }
+  }
 
   const displayName = user?.email
     ? user.email.replace(/@admin\.rumaila\.local$/i, '')
@@ -113,6 +136,217 @@ export default function SettingsPage() {
       </div>
 
       <div className="admin-cards-grid" style={{ display: 'grid', gap: 20 }}>
+        {/* School Identity & Official Report Settings Card */}
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+            <div className="card-icon-wrapper" style={{ background: 'rgba(56, 189, 248, 0.12)', padding: 10, borderRadius: 10 }}>
+              <SchoolIcon size={24} style={{ color: '#38BDF8' }} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF' }}>
+                بيانات وهوية المدرسة الرسمية
+              </h3>
+              <p className="muted" style={{ margin: 0, fontSize: '.85rem' }}>
+                المصدر المركزي لاسم المدرسة وبيانات الترويسة والتذييل المستخدمة في الواجهات وتقارير التصدير والطباعة.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveSchool} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                  اسم المدرسة الرسمي
+                </label>
+                <input
+                  type="text"
+                  value={schoolForm.name}
+                  onChange={e => setSchoolForm(f => ({ ...f, name: e.target.value }))}
+                  required
+                  placeholder="مثال: إعدادية الرميلة للبنين"
+                  disabled={savingSchool || role === 'viewer'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    border: '1px solid #1F3A5F',
+                    background: '#0F1E33',
+                    color: '#FFFFFF',
+                    fontSize: '.95rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                  الوزارة التابعة
+                </label>
+                <input
+                  type="text"
+                  value={schoolForm.ministry}
+                  onChange={e => setSchoolForm(f => ({ ...f, ministry: e.target.value }))}
+                  required
+                  placeholder="مثال: وزارة التربية"
+                  disabled={savingSchool || role === 'viewer'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    border: '1px solid #1F3A5F',
+                    background: '#0F1E33',
+                    color: '#FFFFFF',
+                    fontSize: '.95rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                  المديرية العامة للتربية
+                </label>
+                <input
+                  type="text"
+                  value={schoolForm.directorate}
+                  onChange={e => setSchoolForm(f => ({ ...f, directorate: e.target.value }))}
+                  required
+                  placeholder="مثال: المديرية العامة لتربية الأنبار"
+                  disabled={savingSchool || role === 'viewer'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    border: '1px solid #1F3A5F',
+                    background: '#0F1E33',
+                    color: '#FFFFFF',
+                    fontSize: '.95rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                  المحافظة
+                </label>
+                <input
+                  type="text"
+                  value={schoolForm.governorate}
+                  onChange={e => setSchoolForm(f => ({ ...f, governorate: e.target.value }))}
+                  required
+                  placeholder="مثال: الأنبار"
+                  disabled={savingSchool || role === 'viewer'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    border: '1px solid #1F3A5F',
+                    background: '#0F1E33',
+                    color: '#FFFFFF',
+                    fontSize: '.95rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                  الموقع الجغرافي / القضاء
+                </label>
+                <input
+                  type="text"
+                  value={schoolForm.location}
+                  onChange={e => setSchoolForm(f => ({ ...f, location: e.target.value }))}
+                  required
+                  placeholder="مثال: الرمادي - الرميلة"
+                  disabled={savingSchool || role === 'viewer'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    border: '1px solid #1F3A5F',
+                    background: '#0F1E33',
+                    color: '#FFFFFF',
+                    fontSize: '.95rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                  هاتف التواصل أو الاستعلامات
+                </label>
+                <input
+                  type="text"
+                  value={schoolForm.contact}
+                  onChange={e => setSchoolForm(f => ({ ...f, contact: e.target.value }))}
+                  dir="ltr"
+                  placeholder="+964..."
+                  disabled={savingSchool || role === 'viewer'}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    border: '1px solid #1F3A5F',
+                    background: '#0F1E33',
+                    color: '#FFFFFF',
+                    fontSize: '.95rem',
+                  }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                نص المسؤولية والاعتماد (يظهر في تذييل التقارير الرسمية A4)
+              </label>
+              <input
+                type="text"
+                value={schoolForm.disclaimer}
+                onChange={e => setSchoolForm(f => ({ ...f, disclaimer: e.target.value }))}
+                required
+                placeholder="مثال: مسؤول إدخال البيانات والواجبات: إدارة المدرسة"
+                disabled={savingSchool || role === 'viewer'}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 6,
+                  border: '1px solid #1F3A5F',
+                  background: '#0F1E33',
+                  color: '#FFFFFF',
+                  fontSize: '.95rem',
+                }}
+              />
+            </div>
+
+            {schoolMsg && (
+              <div
+                role="alert"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 6,
+                  fontSize: '.9rem',
+                  background: schoolMsg.isError ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                  border: `1px solid ${schoolMsg.isError ? '#ef4444' : '#22c55e'}`,
+                  color: schoolMsg.isError ? '#fca5a5' : '#86efac',
+                }}
+              >
+                {schoolMsg.text}
+              </div>
+            )}
+
+            {role !== 'viewer' && (
+              <div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={savingSchool}
+                >
+                  <CheckIcon size={18} />
+                  <span>{savingSchool ? 'جارٍ حفظ الإعدادات…' : 'حفظ وتحديث بيانات المدرسة'}</span>
+                </button>
+              </div>
+            )}
+          </form>
+        </div>
+
         {/* Session & Role Card */}
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -279,7 +513,7 @@ export default function SettingsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
             <div style={{ background: '#0F1E33', padding: 12, borderRadius: 6, border: '1px solid #1F3A5F' }}>
               <span className="muted" style={{ fontSize: '.78rem', display: 'block' }}>المؤسسة التعليمية</span>
-              <span style={{ fontWeight: 600, color: '#FFFFFF', fontSize: '.9rem' }}>إعدادية الرميلة للبنين</span>
+              <span style={{ fontWeight: 600, color: '#FFFFFF', fontSize: '.9rem' }}>{settings.name}</span>
             </div>
             <div style={{ background: '#0F1E33', padding: 12, borderRadius: 6, border: '1px solid #1F3A5F' }}>
               <span className="muted" style={{ fontSize: '.78rem', display: 'block' }}>البيئة الحالية</span>

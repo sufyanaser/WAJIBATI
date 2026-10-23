@@ -76,7 +76,7 @@ describe('Homework Export Engine — Offline & Arabic RTL Verification', () => {
     const html = appendedCard!.innerHTML
     expect(html).toContain('جمهورية العراق')
     expect(html).toContain('وزارة التربية')
-    expect(html).toContain('المديرية العامة لتربية الانبار')
+    expect(html).toContain('المديرية العامة لتربية الأنبار')
     expect(html).toContain('إعدادية الرميلة للبنين')
     expect(html).toContain('الخامس علمي أ')
     expect(html).toContain('اللغة العربية')
@@ -106,8 +106,8 @@ describe('Homework Export Engine — Offline & Arabic RTL Verification', () => {
       expect(page.style.position).toBe('relative')
       expect(page.style.top).toBe('0px')
       expect(page.style.left).toBe('0px')
-      expect(page.style.width).toBe('1122px')
-      expect(page.style.height).toBe('794px')
+      expect(page.style.width).toBe('794px')
+      expect(page.style.height).toBe('1123px')
       expect(page.style.cssText).not.toContain('-9999px')
     }
   })
@@ -189,7 +189,7 @@ describe('Alerts & Notes (التنبيهات والملاحظات) Rules Verific
   })
 })
 
-describe('Multi-page A4 Landscape Partitioning', () => {
+describe('Multi-page A4 Portrait Partitioning', () => {
   it('creates 1 page when items <= 6', () => {
     const data: HomeworkExportData = {
       schoolName: 'إعدادية الرميلة',
@@ -203,8 +203,8 @@ describe('Multi-page A4 Landscape Partitioning', () => {
     }
     const pages = buildExportPages(data)
     expect(pages.length).toBe(1)
-    expect(pages[0].style.width).toBe('1122px')
-    expect(pages[0].style.height).toBe('794px')
+    expect(pages[0].style.width).toBe('794px')
+    expect(pages[0].style.height).toBe('1123px')
   })
 
   it('creates 2 pages when items = 9', () => {

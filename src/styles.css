@@ -1049,6 +1049,22 @@ button:disabled {
   background: linear-gradient(90deg, var(--accent), var(--academic-blue));
 }
 
+.auth-card-admin {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 20px 50px rgba(15, 30, 51, 0.8), 0 0 28px rgba(56, 189, 248, 0.12);
+}
+
+.auth-card-admin::before {
+  background: linear-gradient(90deg, #38BDF8, #6366F1, #E8B04A);
+  height: 5px;
+}
+
+.auth-role-badge-admin {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
 .auth-brand {
   text-align: center;
   display: flex;
@@ -3699,6 +3715,52 @@ button:disabled {
   }
 }
 
+/* ===== Export Sheet Modal & Animations ===== */
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
+@keyframes modalScaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 640px) {
+  .export-sheet-container {
+    border-radius: 20px !important;
+    margin-bottom: auto !important;
+    margin-top: auto !important;
+    animation: modalScaleIn 0.18s ease-out !important;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export-sheet-container,
+  .spinning {
+    animation: none !important;
+  }
+}
 
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState, createContext, useContext, useMemo } from '
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import { useSchoolSettings } from '../../services/schoolSettings'
 import {
   HomeIcon,
   BookIcon,
@@ -128,6 +129,7 @@ const ROLE_BADGES: Record<'owner' | 'editor' | 'viewer', { label: string; bg: st
 export default function AdminShell() {
   const nav = useNavigate()
   const location = useLocation()
+  const { settings } = useSchoolSettings()
   const [user, setUser] = useState<User | null>(null)
   const [role, setRole] = useState<'owner' | 'editor' | 'viewer'>('viewer')
   const [ready, setReady] = useState(false)
@@ -248,7 +250,7 @@ export default function AdminShell() {
               />
               <div className="admin-sidebar-brand-text">
                 <span className="admin-sidebar-title">واجباتي</span>
-                <span className="admin-sidebar-subtitle">إعدادية الرميلة للبنين</span>
+                <span className="admin-sidebar-subtitle">{settings.name}</span>
               </div>
             </Link>
 

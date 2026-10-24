@@ -9,7 +9,7 @@
  *           and subject selection without timetable data.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import React from 'react'
@@ -286,6 +286,20 @@ async function renderAdmin() {
 
 describe('Admin component — integration', () => {
   beforeEach(() => {
+    // Keep integration tests on a school day regardless of CI runner date.
+    // Stub Date without replacing timers used by Testing Library's waitFor.
+    const RealDate = Date
+    vi.stubGlobal('Date', class extends RealDate {
+      constructor(...args: ConstructorParameters<typeof Date>) {
+        if (args.length === 0) {
+          super('2026-10-26T09:00:00+03:00')
+        } else {
+          super(...args)
+        }
+      }
+      static now() { return new RealDate('2026-10-26T09:00:00+03:00').getTime() }
+    })
+
     vi.clearAllMocks()
 
     mockGetSession.mockResolvedValue({

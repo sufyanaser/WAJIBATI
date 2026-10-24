@@ -285,20 +285,11 @@ async function renderAdmin() {
 }
 
 describe('Admin component — integration', () => {
+  afterEach(() => vi.useRealTimers())
   beforeEach(() => {
-    // Keep integration tests on a school day regardless of CI runner date.
-    // Stub Date without replacing timers used by Testing Library's waitFor.
-    const RealDate = Date
-    vi.stubGlobal('Date', class extends RealDate {
-      constructor(...args: ConstructorParameters<typeof Date>) {
-        if (args.length === 0) {
-          super('2026-10-26T09:00:00+03:00')
-        } else {
-          super(...args)
-        }
-      }
-      static now() { return new RealDate('2026-10-26T09:00:00+03:00').getTime() }
-    })
+    // Freeze only Date; leave timers used by Testing Library functional.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-26T09:00:00+03:00'))
 
     vi.clearAllMocks()
 

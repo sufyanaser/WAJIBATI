@@ -5,6 +5,7 @@ on:
       - feature/ios-capacitor-codemagic
     paths:
       - '.github/workflows/capacitor-dependencies.yml'
+      - 'src/test/homework.test.ts'
   workflow_dispatch:
 
 permissions:

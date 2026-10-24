@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import { normalizePhone, phoneToEmail, isValidPhone, isValidPin } from '../supabase'
 
+// These tests cover pure validation helpers; importing supabase.ts also
+// constructs a client, so mock that unrelated side effect in CI.
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({})),
+}))
+
 // ── normalizePhone ─────────────────────────────────────────────────────────────
 
 describe('normalizePhone', () => {

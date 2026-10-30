@@ -375,7 +375,7 @@ export default function Today() {
             <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={38} height={38} style={{ borderRadius: 10 }} />
             <div className="today-header-titles" style={{ textAlign: 'right' }}>
               <h1 className="app-title" style={{ fontSize: '1.25rem', margin: 0, lineHeight: 1.2 }}>واجباتي</h1>
-              <p className="school-subtitle" style={{ fontSize: '.8rem', margin: 0, color: 'var(--fg-muted)' }}>{settings.name}</p>
+              <p className="school-subtitle" style={{ fontSize: '.8rem', margin: 0, color: 'rgba(255, 255, 255, 0.9)' }}>{settings.name}</p>
             </div>
           </div>
         </div>
@@ -522,9 +522,9 @@ export default function Today() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '10px 14px',
-                background: 'var(--card2)',
+                background: 'rgba(255, 255, 255, 0.88)',
                 border: '1px solid var(--border)',
-                borderRadius: 12,
+                borderRadius: 16, boxShadow: '0 4px 18px rgba(0, 102, 255, 0.05)',
                 gap: 10,
                 flexWrap: 'wrap',
                 margin: '8px 0 12px 0',
@@ -539,9 +539,9 @@ export default function Today() {
                   style={{
                     fontSize: '.82rem',
                     fontWeight: 700,
-                    background: 'rgba(56, 189, 248, 0.12)',
-                    color: '#38bdf8',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    background: 'rgba(0, 123, 254, 0.08)',
+                    color: '#007BFE',
+                    border: '1px solid rgba(0, 123, 254, 0.25)',
                     padding: '3px 10px',
                     borderRadius: 6,
                   }}

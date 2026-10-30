@@ -36,7 +36,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
             style={{
               position: 'fixed',
               inset: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              backgroundColor: 'rgba(15, 23, 42, 0.45)',
               backdropFilter: 'blur(4px)',
               zIndex: 90,
             }}
@@ -53,17 +53,17 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
               right: 12,
               maxWidth: 480,
               margin: '0 auto',
-              backgroundColor: 'var(--bg-surface, #14243b)',
-              border: '1px solid var(--border-color, rgba(31, 58, 95, 0.8))',
+              backgroundColor: 'rgba(255, 255, 255, 0.98)',
+              border: '1px solid rgba(226, 232, 240, 0.9)',
               borderRadius: 16,
-              boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.5)',
+              boxShadow: '0 -10px 36px rgba(0, 80, 200, 0.12)',
               padding: '16px 14px',
               zIndex: 95,
               animation: 'drawerSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--fg-primary, #fff)' }}>
+              <span style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>
                 المزيد من الإجراءات
               </span>
               <button
@@ -73,7 +73,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--fg-secondary, #94a3b8)',
+                  color: '#64748B',
                   cursor: 'pointer',
                   padding: 4,
                   display: 'flex',
@@ -100,9 +100,9 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                     gap: 12,
                     padding: '12px 14px',
                     borderRadius: 10,
-                    border: '1px solid rgba(232, 176, 74, 0.25)',
-                    backgroundColor: 'rgba(232, 176, 74, 0.08)',
-                    color: canExport ? 'var(--accent, #e8b04a)' : 'var(--muted, #64748b)',
+                    border: '1px solid rgba(0, 123, 254, 0.25)',
+                    backgroundColor: 'rgba(0, 123, 254, 0.08)',
+                    color: canExport ? 'var(--accent, #007BFE)' : 'var(--muted, #94A3B8)',
                     cursor: canExport ? 'pointer' : 'not-allowed',
                     opacity: canExport ? 1 : 0.6,
                     fontSize: '0.9rem',
@@ -131,9 +131,9 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                     gap: 12,
                     padding: '12px 14px',
                     borderRadius: 10,
-                    border: '1px solid rgba(248, 113, 113, 0.25)',
-                    backgroundColor: 'rgba(248, 113, 113, 0.08)',
-                    color: '#f87171',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                    color: '#EF4444',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
                     fontWeight: 600,
@@ -161,11 +161,11 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
           left: 0,
           right: 0,
           zIndex: 50,
-          background: 'rgba(15, 30, 51, 0.94)',
+          background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(31, 58, 95, 0.8)',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.45)',
+          borderTop: '1px solid rgba(226, 232, 240, 0.85)',
+          boxShadow: '0 -4px 25px rgba(0, 80, 200, 0.08)',
           paddingTop: 4,
           paddingBottom: 'max(6px, env(safe-area-inset-bottom, 0px))',
           paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
@@ -192,7 +192,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
             style={{
               background: 'none',
               border: 'none',
-              color: currentPath === '/' ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+              color: currentPath === '/' ? 'var(--accent, #007BFE)' : '#64748B',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -215,7 +215,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                   width: 4,
                   height: 4,
                   borderRadius: '50%',
-                  backgroundColor: 'var(--accent, #e8b04a)',
+                  backgroundColor: 'var(--accent, #007BFE)',
                 }}
               />
             )}
@@ -231,7 +231,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
             style={{
               background: 'none',
               border: 'none',
-              color: currentPath === '/timetable' ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+              color: currentPath === '/timetable' ? 'var(--accent, #007BFE)' : '#64748B',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -254,7 +254,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                   width: 4,
                   height: 4,
                   borderRadius: '50%',
-                  backgroundColor: 'var(--accent, #e8b04a)',
+                  backgroundColor: 'var(--accent, #007BFE)',
                 }}
               />
             )}
@@ -270,7 +270,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
             style={{
               background: 'none',
               border: 'none',
-              color: currentPath === '/archive' ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+              color: currentPath === '/archive' ? 'var(--accent, #007BFE)' : '#64748B',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -293,7 +293,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                   width: 4,
                   height: 4,
                   borderRadius: '50%',
-                  backgroundColor: 'var(--accent, #e8b04a)',
+                  backgroundColor: 'var(--accent, #007BFE)',
                 }}
               />
             )}
@@ -309,7 +309,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
             style={{
               background: 'none',
               border: 'none',
-              color: currentPath === '/inquiries' ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+              color: currentPath === '/inquiries' ? 'var(--accent, #007BFE)' : '#64748B',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -332,7 +332,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
                   width: 4,
                   height: 4,
                   borderRadius: '50%',
-                  backgroundColor: 'var(--accent, #e8b04a)',
+                  backgroundColor: 'var(--accent, #007BFE)',
                 }}
               />
             )}
@@ -348,7 +348,7 @@ export function BottomNavBar({ onOpenExport, onLogout, canExport = true }: Botto
             style={{
               background: 'none',
               border: 'none',
-              color: moreOpen ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+              color: moreOpen ? 'var(--accent, #007BFE)' : '#64748B',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',

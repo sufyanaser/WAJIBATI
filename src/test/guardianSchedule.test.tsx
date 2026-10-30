@@ -448,9 +448,9 @@ describe('Guardian UI Components — Contracts & Accessibility', () => {
     render(<PeriodCard slot={slot} onClick={onClick} />)
 
     expect(screen.getByText('الرياضيات')).toBeInTheDocument()
-    expect(screen.getByText('أ. أحمد')).toBeInTheDocument()
-    expect(screen.getByText('يوجد واجب 📝')).toBeInTheDocument()
-    expect(screen.getByText('حل المعادلة ص 12')).toBeInTheDocument()
+    // Compact tile requirement: subject name only inside the card tile
+    expect(screen.queryByText('أ. أحمد')).not.toBeInTheDocument()
+    expect(screen.queryByText('يوجد واجب 📝')).not.toBeInTheDocument()
     // Verify that the prohibited word "مكتمل" does NOT appear
     expect(screen.queryByText(/مكتمل/)).not.toBeInTheDocument()
 

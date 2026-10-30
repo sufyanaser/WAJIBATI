@@ -3965,6 +3965,61 @@ button:disabled {
   padding: 1px 6px;
 }
 
+/* Gate 3: compact subject-only tiles; details open in PeriodDetailDrawer. */
+.period-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+}
+
+@media (min-width: 768px) {
+  .period-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.period-card--compact {
+  appearance: none;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 64px;
+  padding: 12px;
+  align-items: center;
+  justify-content: center;
+  border-inline-start-width: 3px;
+  border-inline-start-style: solid;
+  font: inherit;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.period-card--compact .period-card-subject {
+  display: block;
+  width: 100%;
+  overflow-wrap: anywhere;
+  font-weight: 750;
+  color: var(--fg, #E2E8F0);
+}
+
+.period-card--compact:focus-visible {
+  outline: 3px solid var(--accent, #E8B04A);
+  outline-offset: 2px;
+}
+
+@media (max-width: 375px) {
+  .period-card--compact {
+    min-height: 56px;
+    padding: 9px 7px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .period-card--compact {
+    transition: none;
+  }
+}
+
 /* Skeleton styling */
 .period-card.skeleton {
   cursor: default;

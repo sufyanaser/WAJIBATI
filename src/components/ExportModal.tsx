@@ -147,7 +147,7 @@ export function ExportModal({ isOpen, onClose, data }: ExportModalProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div
               style={{
-                background: 'rgba(232, 176, 74, 0.15)',
+                background: 'var(--accent-soft, rgba(0, 123, 254, 0.12))',
                 color: 'var(--accent)',
                 padding: 8,
                 borderRadius: 10,

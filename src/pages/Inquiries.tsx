@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useSchoolSettings } from '../services/schoolSettings'
+import { PageHeader } from '../components/PageHeader'
+import { BottomNavBar } from '../components/BottomNavBar'
 import {
-  ChevronRightIcon,
   SendIcon,
   FamilyIcon,
   BookIcon,
@@ -98,7 +99,7 @@ export default function Inquiries() {
       style={{
         maxWidth: 720,
         margin: '0 auto',
-        padding: 'max(16px, env(safe-area-inset-top, 0px)) 16px max(32px, env(safe-area-inset-bottom, 0px)) 16px',
+        padding: 'max(14px, env(safe-area-inset-top, 0px)) 16px calc(84px + env(safe-area-inset-bottom, 0px)) 16px',
         minHeight: '100dvh',
         boxSizing: 'border-box',
         display: 'flex',
@@ -106,77 +107,21 @@ export default function Inquiries() {
         gap: 16,
       }}
     >
-      {/* Top Header with Back Navigation */}
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingBottom: 12,
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => nav('/')}
-          className="icon-btn"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 14px',
-            fontSize: '.9rem',
-            color: 'var(--fg)',
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)',
-            cursor: 'pointer',
-          }}
-        >
-          <ChevronRightIcon size={18} />
-          <span>العودة للرئيسية</span>
-        </button>
+      {/* ── Unified Header ── */}
+      <PageHeader
+        title="الاستفسارات والتواصل"
+        subtitle={settings.name || 'إعدادية الرميلة للبنين'}
+        onBack={() => nav('/')}
+        backLabel="العودة للرئيسية"
+      />
 
-        <div style={{ textAlign: 'left' }}>
-          <span style={{ fontSize: '.8rem', color: 'var(--fg-muted)' }}>{settings.name}</span>
-        </div>
-      </header>
-
-      {/* Page Title */}
-      <div>
-        <h1
-          style={{
-            fontSize: '1.4rem',
-            fontWeight: 800,
-            color: 'var(--accent)',
-            margin: '0 0 6px 0',
-          }}
-        >
-          استفسارات أولياء الأمور
-        </h1>
-        <p style={{ margin: 0, fontSize: '.9rem', color: 'var(--fg-secondary)', lineHeight: 1.5 }}>
-          منصة التواصل والاستفسار المباشر مع إدارة وكادر المدرسة حول التحاضير والواجبات والملاحظات اليومية.
-        </p>
-      </div>
-
-      {/* Notice Banner: Coming Soon */}
-      <div
-        role="status"
-        style={{
-          background: 'rgba(232, 176, 74, 0.12)',
-          border: '1.5px solid rgba(232, 176, 74, 0.4)',
-          borderRadius: 12,
-          padding: '14px 18px',
-          display: 'flex',
-          gap: 12,
-          alignItems: 'flex-start',
-        }}
-      >
-        <div style={{ color: 'var(--accent)', marginTop: 2, flexShrink: 0 }}>
+      {/* ── Notice Banner: Coming Soon ── */}
+      <div role="status" className="info-banner">
+        <div className="info-banner-icon">
           <FileTextIcon size={22} />
         </div>
-        <div style={{ fontSize: '.9rem', lineHeight: 1.6, color: '#F8FAFC' }}>
-          <strong style={{ display: 'block', color: 'var(--accent)', marginBottom: 2 }}>
+        <div className="info-banner-content">
+          <strong className="info-banner-title">
             تنويه تنظيمي لخدمة المراسلة
           </strong>
           خدمة إرسال واستقبال الاستفسارات المباشرة قيد التجهيز الفني والربط المباشر مع قسم شؤون الطلاب، وستُفعّل قريباً لتسهيل التواصل الفوري مع كادر المدرسة.
@@ -362,6 +307,14 @@ export default function Inquiries() {
           </span>
         </div>
       </form>
+
+      {/* ── Unified 5-Item Bottom Navigation Bar ── */}
+      <BottomNavBar
+        onLogout={async () => {
+          await supabase.auth.signOut()
+          nav('/login')
+        }}
+      />
     </main>
   )
 }

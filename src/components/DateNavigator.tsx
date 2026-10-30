@@ -35,56 +35,41 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
   const todISO = toISO(new Date())
   const selISO = toISO(date)
   const isToday = selISO === todISO
+  const weekdayName = date.toLocaleDateString('ar-IQ', { weekday: 'long' })
 
   return (
-    <div className="date-nav" dir="rtl" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-      {/* next (left arrow in RTL) */}
+    <div className="date-nav" dir="rtl">
+      {/* right arrow (prev day in RTL) */}
       <button
-        className="icon-btn"
-        aria-label="يوم تالي"
-        onClick={() => onChange(stepDay(date, 1))}
-        style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <ChevronLeftIcon size={18} />
-      </button>
-
-      {/* date label - compact numbers only */}
-      <button
-        className="date-label"
-        onClick={onLabelClick}
-        aria-label={isToday ? `اليوم، ${arNumericDate(date)}` : `التاريخ: ${arNumericDate(date)}`}
-        style={{
-          fontFamily: 'inherit',
-          fontSize: '0.88rem',
-          fontWeight: 700,
-          padding: '6px 14px',
-          borderRadius: 8,
-          border: '1px solid',
-          borderColor: isToday ? 'var(--accent, #007BFE)' : 'rgba(203, 213, 225, 0.85)',
-          backgroundColor: isToday ? 'rgba(0, 123, 254, 0.08)' : 'rgba(255, 255, 255, 0.9)',
-          color: isToday ? 'var(--accent, #007BFE)' : '#0F172A',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          cursor: onLabelClick ? 'pointer' : 'default',
-        }}
-      >
-        {isToday && (
-          <span style={{ fontSize: '0.75rem', padding: '1px 6px', borderRadius: 4, background: 'linear-gradient(135deg, #007BFE 0%, #00C4FF 100%)', color: '#FFFFFF', fontWeight: 800 }}>
-            اليوم
-          </span>
-        )}
-        <span style={{ letterSpacing: '0.5px' }}>{arNumericDate(date)}</span>
-      </button>
-
-      {/* prev (right arrow in RTL) */}
-      <button
-        className="icon-btn"
+        type="button"
+        className="date-nav-btn"
         aria-label="يوم سابق"
         onClick={() => onChange(stepDay(date, -1))}
-        style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <ChevronRightIcon size={18} />
+      </button>
+
+      {/* date label - 2 lines: date on top, weekday below */}
+      <button
+        type="button"
+        className="date-nav-center"
+        onClick={onLabelClick}
+        aria-label={isToday ? `اليوم ${weekdayName}، ${arNumericDate(date)}` : `${weekdayName}، ${arNumericDate(date)}`}
+      >
+        <span className="date-nav-num">{arNumericDate(date)}</span>
+        <span className="date-nav-day">
+          {isToday ? `اليوم (${weekdayName})` : weekdayName}
+        </span>
+      </button>
+
+      {/* left arrow (next day in RTL) */}
+      <button
+        type="button"
+        className="date-nav-btn"
+        aria-label="يوم تالي"
+        onClick={() => onChange(stepDay(date, 1))}
+      >
+        <ChevronLeftIcon size={18} />
       </button>
     </div>
   )

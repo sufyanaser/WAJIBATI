@@ -121,7 +121,7 @@ export default function TimetablePage() {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 4px 8px 4px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
           marginBottom: 10,
         }}
       >
@@ -131,8 +131,7 @@ export default function TimetablePage() {
               width: 36,
               height: 36,
               borderRadius: 10,
-              backgroundColor: 'rgba(232, 176, 74, 0.15)',
-              color: 'var(--accent, #e8b04a)',
+              backgroundColor: 'rgba(0, 123, 254, 0.1)', color: 'var(--accent, #007BFE)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -141,10 +140,10 @@ export default function TimetablePage() {
             <CalendarDaysIcon size={20} />
           </div>
           <div>
-            <h1 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#fff', lineHeight: 1.2 }}>
+            <h1 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#0F172A', lineHeight: 1.2 }}>
               الجدول الأسبوعي
             </h1>
-            <p style={{ fontSize: '0.78rem', margin: 0, color: 'var(--fg-secondary, #94a3b8)' }}>
+            <p style={{ fontSize: '0.78rem', margin: 0, color: 'var(--fg-secondary, #64748B)' }}>
               جدول الحصص المعتمد للصف والشعبة
             </p>
           </div>
@@ -178,9 +177,9 @@ export default function TimetablePage() {
                 padding: '6px 14px',
                 borderRadius: 8,
                 border: '1px solid',
-                borderColor: i === childIdx ? 'var(--accent, #e8b04a)' : 'rgba(31, 58, 95, 0.6)',
-                backgroundColor: i === childIdx ? 'rgba(232, 176, 74, 0.15)' : 'rgba(15, 30, 51, 0.6)',
-                color: i === childIdx ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+                borderColor: i === childIdx ? 'var(--accent, #007BFE)' : 'rgba(203, 213, 225, 0.75)',
+                backgroundColor: i === childIdx ? 'rgba(0, 123, 254, 0.1)' : 'rgba(255, 255, 255, 0.85)',
+                color: i === childIdx ? 'var(--accent, #007BFE)' : '#64748B',
                 fontWeight: 700,
                 fontSize: '0.85rem',
                 cursor: 'pointer',
@@ -201,21 +200,21 @@ export default function TimetablePage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '8px 12px',
-            backgroundColor: 'var(--card2, #182a45)',
-            border: '1px solid var(--border, #263b5c)',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            border: '1px solid rgba(203, 213, 225, 0.85)',
             borderRadius: 10,
             marginBottom: 12,
             fontSize: '0.86rem',
           }}
         >
-          <span style={{ fontWeight: 700, color: '#fff' }}>{currentChild.full_name}</span>
+          <span style={{ fontWeight: 700, color: '#0F172A' }}>{currentChild.full_name}</span>
           <span
             style={{
               padding: '2px 8px',
               borderRadius: 6,
-              backgroundColor: 'rgba(56, 189, 248, 0.12)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
-              color: '#38bdf8',
+              backgroundColor: 'rgba(0, 123, 254, 0.08)',
+              border: '1px solid rgba(0, 123, 254, 0.25)',
+              color: '#007BFE',
               fontWeight: 600,
               fontSize: '0.78rem',
             }}
@@ -251,17 +250,9 @@ export default function TimetablePage() {
                 padding: '8px 4px',
                 borderRadius: 10,
                 border: '1px solid',
-                borderColor: isSelected
-                  ? 'var(--accent, #e8b04a)'
-                  : isSmart
-                  ? 'rgba(232, 176, 74, 0.4)'
-                  : 'rgba(31, 58, 95, 0.7)',
-                backgroundColor: isSelected
-                  ? 'rgba(232, 176, 74, 0.18)'
-                  : isSmart
-                  ? 'rgba(232, 176, 74, 0.05)'
-                  : 'rgba(15, 30, 51, 0.5)',
-                color: isSelected ? 'var(--accent, #e8b04a)' : 'var(--fg-secondary, #94a3b8)',
+                borderColor: isSelected ? 'var(--accent, #007BFE)' : isSmart ? 'rgba(0, 123, 254, 0.4)' : 'rgba(203, 213, 225, 0.8)',
+                background: isSelected ? 'linear-gradient(135deg, #007BFE 0%, #00B4D8 100%)' : isSmart ? 'rgba(0, 123, 254, 0.06)' : 'rgba(255, 255, 255, 0.85)',
+                color: isSelected ? '#FFFFFF' : isSmart ? '#007BFE' : '#64748B',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
@@ -278,7 +269,7 @@ export default function TimetablePage() {
                   style={{
                     fontSize: '0.65rem',
                     fontWeight: 700,
-                    color: isSelected ? 'var(--accent, #e8b04a)' : 'rgba(232, 176, 74, 0.8)',
+                    color: isSelected ? 'var(--accent, #38bdf8)' : 'rgba(56, 189, 248, 0.8)',
                   }}
                 >
                   الدوام
@@ -300,7 +291,7 @@ export default function TimetablePage() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
             جدول يوم {daySchedule.academicDayName}
           </h2>
           {daySchedule.relativeBadge && (
@@ -310,9 +301,9 @@ export default function TimetablePage() {
                 fontWeight: 700,
                 padding: '2px 8px',
                 borderRadius: 6,
-                backgroundColor: 'rgba(232, 176, 74, 0.15)',
-                color: 'var(--accent, #e8b04a)',
-                border: '1px solid rgba(232, 176, 74, 0.3)',
+                backgroundColor: 'rgba(0, 123, 254, 0.1)',
+                color: 'var(--accent, #007BFE)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
               }}
             >
               {daySchedule.relativeBadge}
@@ -362,17 +353,17 @@ export default function TimetablePage() {
         /* State 3: لا توجد حصص مسجلة لهذه الشعبة */
         <div
           style={{
-            backgroundColor: 'rgba(15, 30, 51, 0.6)',
+            backgroundColor: 'rgba(10, 15, 29, 0.6)',
             border: '1px dashed rgba(255, 255, 255, 0.15)',
             borderRadius: 12,
             padding: '28px 16px',
             textAlign: 'center',
-            color: 'var(--fg-secondary, #94a3b8)',
+            color: 'var(--fg-secondary, #64748B)',
             margin: '20px 0',
           }}
         >
           <CalendarDaysIcon size={36} style={{ color: 'var(--muted, #64748b)', margin: '0 auto 10px auto' }} />
-          <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#fff', margin: '0 0 6px 0' }}>
+          <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A', margin: '0 0 6px 0' }}>
             لا توجد حصص مسجلة لهذه الشعبة
           </p>
           <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--muted, #64748b)' }}>
@@ -395,8 +386,8 @@ export default function TimetablePage() {
                     justifyContent: 'space-between',
                     padding: '10px 14px',
                     borderRadius: 10,
-                    backgroundColor: 'var(--card2, #182a45)',
-                    border: '1px solid var(--border, #263b5c)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
                     borderInlineStartWidth: 4,
                     borderInlineStartColor: subColor,
                     borderInlineStartStyle: 'solid',
@@ -409,7 +400,7 @@ export default function TimetablePage() {
                         height: 28,
                         borderRadius: 6,
                         backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                        color: 'var(--fg-secondary, #94a3b8)',
+                        color: 'var(--fg-secondary, #64748B)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -420,10 +411,10 @@ export default function TimetablePage() {
                       {s.period}
                     </span>
                     <div>
-                      <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#fff' }}>
+                      <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>
                         {s.subject?.name ?? 'مادة مسجلة'}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--fg-secondary, #94a3b8)', marginTop: 2 }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--fg-secondary, #64748B)', marginTop: 2 }}>
                         {s.teacher?.full_name ?? 'المدرس: لم يُحدد'}
                       </div>
                     </div>
@@ -434,7 +425,7 @@ export default function TimetablePage() {
 
             if (item.type === 'UNASSIGNED_TEACHER') {
               const s = item.slot
-              const subColor = s.subject?.color || '#e8b04a'
+              const subColor = s.subject?.color || '#38bdf8'
 
               return (
                 <div
@@ -445,8 +436,8 @@ export default function TimetablePage() {
                     justifyContent: 'space-between',
                     padding: '10px 14px',
                     borderRadius: 10,
-                    backgroundColor: 'var(--card2, #182a45)',
-                    border: '1px solid var(--border, #263b5c)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
                     borderInlineStartWidth: 4,
                     borderInlineStartColor: subColor,
                     borderInlineStartStyle: 'solid',
@@ -459,7 +450,7 @@ export default function TimetablePage() {
                         height: 28,
                         borderRadius: 6,
                         backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                        color: 'var(--fg-secondary, #94a3b8)',
+                        color: 'var(--fg-secondary, #64748B)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -470,7 +461,7 @@ export default function TimetablePage() {
                       {s.period}
                     </span>
                     <div>
-                      <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#fff' }}>
+                      <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>
                         {s.subject?.name ?? 'مادة مسجلة'}
                       </div>
                       <div style={{ fontSize: '0.76rem', color: 'var(--muted, #64748b)', marginTop: 2 }}>
@@ -503,7 +494,7 @@ export default function TimetablePage() {
                   justifyContent: 'space-between',
                   padding: '10px 14px',
                   borderRadius: 10,
-                  backgroundColor: 'rgba(15, 30, 51, 0.4)',
+                  backgroundColor: 'rgba(10, 15, 29, 0.4)',
                   border: '1px dashed rgba(255, 255, 255, 0.08)',
                 }}
               >

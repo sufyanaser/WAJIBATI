@@ -60,9 +60,9 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
           padding: '6px 14px',
           borderRadius: 8,
           border: '1px solid',
-          borderColor: isToday ? 'var(--accent, #e8b04a)' : 'rgba(31, 58, 95, 0.7)',
-          backgroundColor: isToday ? 'rgba(232, 176, 74, 0.12)' : 'rgba(15, 30, 51, 0.6)',
-          color: isToday ? 'var(--accent, #e8b04a)' : 'var(--fg-primary, #fff)',
+          borderColor: isToday ? 'var(--accent, #007BFE)' : 'rgba(203, 213, 225, 0.85)',
+          backgroundColor: isToday ? 'rgba(0, 123, 254, 0.08)' : 'rgba(255, 255, 255, 0.9)',
+          color: isToday ? 'var(--accent, #007BFE)' : '#0F172A',
           display: 'inline-flex',
           alignItems: 'center',
           gap: 6,
@@ -70,7 +70,7 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
         }}
       >
         {isToday && (
-          <span style={{ fontSize: '0.75rem', padding: '1px 6px', borderRadius: 4, backgroundColor: 'var(--accent, #e8b04a)', color: '#0f1e33', fontWeight: 800 }}>
+          <span style={{ fontSize: '0.75rem', padding: '1px 6px', borderRadius: 4, background: 'linear-gradient(135deg, #007BFE 0%, #00C4FF 100%)', color: '#FFFFFF', fontWeight: 800 }}>
             اليوم
           </span>
         )}

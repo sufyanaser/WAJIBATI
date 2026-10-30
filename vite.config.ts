@@ -34,7 +34,7 @@ export default defineConfig({
         description: 'واجباتي — متابعة الواجبات اليومية لطلاب اعدادية الرميلة للبنين',
         lang: 'ar', dir: 'rtl',
         start_url: '/', display: 'standalone',
-        background_color: '#0F1E33', theme_color: '#1F3A5F',
+        background_color: '#EDF4FE', theme_color: '#007BFE',
         icons: [
           { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }

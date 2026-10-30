@@ -1,36 +1,39 @@
 /* ===== Wajibati Unified Arabic RTL Design System ===== */
 :root {
-  /* ── base palette (Modern Academic Glassmorphism - Blue & Emerald Mesh) ── */
-  --bg:                 #EDF4FE;
-  --bg-deep:            #E2EEFD;
-  --bg-secondary:       #F4F8FE;
+  /* ── official platform tokens (Executive Approved) ── */
+  --primary:            #007BFE;
+  --secondary:          #00B4D8;
+  --gradient-end:       #00C29F;
+  --success:            #05D380;
+  --bg:                 #F8FAFC;
+  --bg-deep:            #F1F5F9;
+  --bg-secondary:       #F1F5F9;
   --card:               #FFFFFF;
-  --card2:              rgba(255, 255, 255, 0.88);
-  --card-glass:         rgba(255, 255, 255, 0.75);
-  --surface2:           #F0F6FE;
-  --surface3:           #E1EDFC;
+  --card2:              rgba(255, 255, 255, 0.92);
+  --card-glass:         rgba(255, 255, 255, 0.85);
+  --surface2:           #F1F5F9;
+  --surface3:           #E2E8F0;
 
   /* ── text hierarchy (Deep Slate on Luminous Light) ─────────────────── */
   --fg:                 #0F172A;
-  --fg-secondary:       #475569;
+  --fg-secondary:       #334155;
   --fg-inverse:         #FFFFFF;
   --fg-muted:           #64748B;
   --muted:              #64748B;
   --faint:              #94A3B8;
 
-  /* ── vibrant modern brand tokens (Azure Blue & Mint/Emerald Mesh) ──── */
+  /* ── vibrant modern brand tokens (Azure Blue & Emerald Mesh) ──── */
   --accent:             #007BFE;
   --accent-dim:         #0062CC;
   --accent-hover:       #0091FF;
   --accent-active:      #0056B3;
   --accent-soft:        rgba(0, 123, 254, 0.10);
-  --accent-gradient:    linear-gradient(135deg, #007BFE 0%, #00C4FF 100%);
-  --brand-gradient:     linear-gradient(135deg, #007BFE 0%, #00B4D8 45%, #05D380 100%);
+  --accent-gradient:    linear-gradient(135deg, #007BFE 0%, #00B4D8 45%, #00C29F 100%);
+  --brand-gradient:     linear-gradient(135deg, #007BFE 0%, #00B4D8 45%, #00C29F 100%);
   --academic-blue:      #007BFE;
   --academic-blue-soft: rgba(0, 123, 254, 0.12);
 
   /* ── semantic tokens ──────────────────────────────────────────────── */
-  --success:            #05D380;
   --success-bg:         rgba(5, 211, 128, 0.12);
   --err:                #EF4444;
   --danger:             #EF4444;
@@ -38,21 +41,21 @@
   --warn:               #F59E0B;
   --warning:            #F59E0B;
   --warn-bg:            rgba(245, 158, 11, 0.12);
-  --info:               #0284C7;
-  --info-bg:            rgba(2, 132, 199, 0.12);
+  --info:               #00B4D8;
+  --info-bg:            rgba(0, 180, 216, 0.12);
 
   /* ── borders & glassmorphic shadows ──────────────────────────────── */
-  --border:             rgba(203, 213, 225, 0.75);
+  --border:             rgba(226, 232, 240, 0.90);
   --border-glass:       rgba(255, 255, 255, 0.85);
   --border-strong:      #CBD5E1;
   --border-focus:       #007BFE;
   --focus-ring:         0 0 0 3px rgba(0, 123, 254, 0.20);
-  --shadow:             rgba(0, 80, 200, 0.06);
-  --shadow-sm:          0 2px 6px rgba(0, 60, 160, 0.05);
-  --shadow-md:          0 6px 18px rgba(0, 60, 160, 0.08);
-  --shadow-glass:       0 10px 30px rgba(0, 102, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
-  --shadow-float:       0 14px 36px rgba(0, 90, 220, 0.12);
-  --brand-gradient-subtle: linear-gradient(135deg, rgba(0, 123, 254, 0.08) 0%, rgba(0, 180, 216, 0.05) 50%, rgba(5, 211, 128, 0.06) 100%);
+  --shadow:             rgba(0, 80, 200, 0.05);
+  --shadow-sm:          0 2px 6px rgba(0, 60, 160, 0.04);
+  --shadow-md:          0 6px 18px rgba(0, 60, 160, 0.06);
+  --shadow-glass:       0 10px 30px rgba(0, 102, 255, 0.06), 0 2px 8px rgba(0, 0, 0, 0.02);
+  --shadow-float:       0 14px 36px rgba(0, 90, 220, 0.10);
+  --brand-gradient-subtle: linear-gradient(135deg, rgba(0, 123, 254, 0.08) 0%, rgba(0, 180, 216, 0.05) 50%, rgba(0, 194, 159, 0.06) 100%);
 
   /* ── safe area insets ─────────────────────────────────────────────── */
   --safe-top:           env(safe-area-inset-top, 0px);
@@ -109,21 +112,21 @@
 
 /* Light theme override */
 [data-theme="light"] {
-  --bg:            #EDF4FE;
-  --bg-deep:       #E2EEFD;
-  --bg-secondary:  #F4F8FE;
+  --bg:            #F8FAFC;
+  --bg-deep:       #F1F5F9;
+  --bg-secondary:  #F1F5F9;
   --card:          #FFFFFF;
-  --card2:         rgba(255, 255, 255, 0.88);
-  --surface2:      #F0F6FE;
-  --surface3:      #E1EDFC;
+  --card2:         rgba(255, 255, 255, 0.92);
+  --surface2:      #F1F5F9;
+  --surface3:      #E2E8F0;
   --fg:            #0F172A;
-  --fg-secondary:  #475569;
+  --fg-secondary:  #334155;
   --fg-inverse:    #FFFFFF;
   --muted:         #64748B;
-  --border:        rgba(203, 213, 225, 0.75);
+  --border:        rgba(226, 232, 240, 0.90);
   --border-strong: #CBD5E1;
   --border-focus:  #007BFE;
-  --shadow:        rgba(0, 80, 200, 0.06);
+  --shadow:        rgba(0, 80, 200, 0.05);
   color-scheme: light;
 }
 
@@ -141,9 +144,9 @@ body {
   margin: 0;
   background-color: var(--bg);
   background-image:
-    radial-gradient(circle at 10% 0%, rgba(0, 123, 254, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 90% 15%, rgba(5, 211, 128, 0.09) 0%, transparent 40%),
-    radial-gradient(circle at 50% 60%, rgba(0, 196, 255, 0.06) 0%, transparent 50%);
+    radial-gradient(circle at 10% 0%, rgba(0, 123, 254, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 90% 15%, rgba(0, 194, 159, 0.07) 0%, transparent 40%),
+    radial-gradient(circle at 50% 60%, rgba(0, 180, 216, 0.05) 0%, transparent 50%);
   background-attachment: fixed;
   color: var(--fg);
   font: 17px/1.65 var(--font-family-arabic);
@@ -1123,19 +1126,19 @@ button:disabled {
 }
 
 .auth-card-admin {
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 20px 50px rgba(15, 30, 51, 0.8), 0 0 28px rgba(56, 189, 248, 0.12);
+  border-color: rgba(0, 123, 254, 0.25);
+  box-shadow: 0 20px 50px rgba(0, 80, 200, 0.08), 0 0 24px rgba(0, 180, 216, 0.08);
 }
 
 .auth-card-admin::before {
-  background: linear-gradient(90deg, #38BDF8, #6366F1, #38BDF8);
+  background: var(--brand-gradient);
   height: 5px;
 }
 
 .auth-role-badge-admin {
-  background: rgba(56, 189, 248, 0.14);
-  color: #38BDF8;
-  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: rgba(0, 123, 254, 0.10);
+  color: var(--accent);
+  border: 1px solid rgba(0, 123, 254, 0.25);
 }
 
 .auth-brand {
@@ -1149,9 +1152,10 @@ button:disabled {
 .auth-logo {
   width: 76px;
   height: 76px;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 123, 254, 0.18);
   border: 2px solid rgba(0, 123, 254, 0.35);
+  object-fit: cover;
 }
 
 .auth-role-badge {
@@ -3043,18 +3047,21 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(145deg, #162D4C 0%, #11192A 100%);
-  border: 1px solid var(--border-strong);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 18px 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 16px var(--shadow);
 }
 
 .dash-logo {
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  background: rgba(0, 123, 254, 0.10);
-  padding: 2px;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  border: 2px solid rgba(0, 123, 254, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 194, 159, 0.20);
+  background: var(--surface2);
+  object-fit: cover;
   flex-shrink: 0;
 }
 
@@ -3398,14 +3405,14 @@ button:disabled {
 }
 
 .dash-header {
-  background: linear-gradient(135deg, var(--card2) 0%, var(--card) 100%);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 22px 24px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 16px var(--shadow);
 }
 
 .dash-header__icon {
@@ -3770,14 +3777,14 @@ button:disabled {
   right: 0;
   bottom: 0;
   width: 260px;
-  background: #0B192E;
-  border-left: 1px solid var(--border);
+  background: #0F172A;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   z-index: 100;
   transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .admin-sidebar.collapsed {
@@ -3791,7 +3798,7 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
@@ -3806,10 +3813,13 @@ button:disabled {
 }
 
 .admin-sidebar-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  object-fit: cover;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 194, 159, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
 }
 
 .admin-sidebar-brand-text {
@@ -3964,11 +3974,11 @@ button:disabled {
 /* Sidebar Footer */
 .admin-sidebar-footer {
   padding: 14px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: #0A0F1D;
+  background: #090E1A;
   flex-shrink: 0;
 }
 
@@ -4028,7 +4038,7 @@ button:disabled {
 /* ── Sticky Top Bar ────────────────────────────────────────────────────── */
 .admin-top-bar {
   height: 64px;
-  background: rgba(11, 25, 46, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -4039,6 +4049,7 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .admin-top-bar-start {
@@ -4063,9 +4074,10 @@ button:disabled {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--accent);
-  background: rgba(0, 123, 254, 0.10);
+  background: rgba(0, 123, 254, 0.08);
+  border: 1px solid rgba(0, 123, 254, 0.16);
   padding: 3px 10px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .admin-breadcrumb-sep {
@@ -4077,7 +4089,7 @@ button:disabled {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #FFFFFF;
+  color: var(--fg);
 }
 
 .admin-mobile-menu-btn {

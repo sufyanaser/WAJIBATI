@@ -202,8 +202,8 @@ export default function NoticesPage() {
           </div>
         </form>
       ) : (
-        <div className="card" style={{ padding: '14px 18px', borderRight: '4px solid #5B9DD9', background: 'var(--card)' }}>
-          <p style={{ margin: 0, fontSize: '.88rem', color: '#B3C0D0', lineHeight: 1.5 }}>
+        <div className="card" style={{ padding: '14px 18px', borderRight: '4px solid var(--accent)', background: 'var(--card)' }}>
+          <p style={{ margin: 0, fontSize: '.88rem', color: 'var(--fg-secondary)', lineHeight: 1.5 }}>
             <strong>وضع المشاهدة (Viewer):</strong> تصفح الإعلانات متاح للقراءة فقط. لإضافة إشعار جديد أو تعديل أو حذف إشعار سابق، يلزم تسجيل الدخول بحساب محرر أو مالك النظام.
           </p>
         </div>

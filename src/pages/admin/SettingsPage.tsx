@@ -139,11 +139,11 @@ export default function SettingsPage() {
         {/* School Identity & Official Report Settings Card */}
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div className="card-icon-wrapper" style={{ background: 'rgba(56, 189, 248, 0.12)', padding: 10, borderRadius: 10 }}>
-              <SchoolIcon size={24} style={{ color: '#38BDF8' }} />
+            <div className="card-icon-wrapper" style={{ background: 'rgba(0, 123, 254, 0.10)', padding: 10, borderRadius: 10 }}>
+              <SchoolIcon size={24} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--fg)' }}>
                 بيانات وهوية المدرسة الرسمية
               </h3>
               <p className="muted" style={{ margin: 0, fontSize: '.85rem' }}>
@@ -155,164 +155,108 @@ export default function SettingsPage() {
           <form onSubmit={handleSaveSchool} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   اسم المدرسة الرسمي
                 </label>
                 <input
                   type="text"
+                  className="input"
                   value={schoolForm.name}
                   onChange={e => setSchoolForm(f => ({ ...f, name: e.target.value }))}
                   required
                   placeholder="مثال: إعدادية الرميلة للبنين"
                   disabled={savingSchool || role === 'viewer'}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   الوزارة التابعة
                 </label>
                 <input
                   type="text"
+                  className="input"
                   value={schoolForm.ministry}
                   onChange={e => setSchoolForm(f => ({ ...f, ministry: e.target.value }))}
                   required
                   placeholder="مثال: وزارة التربية"
                   disabled={savingSchool || role === 'viewer'}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   المديرية العامة للتربية
                 </label>
                 <input
                   type="text"
+                  className="input"
                   value={schoolForm.directorate}
                   onChange={e => setSchoolForm(f => ({ ...f, directorate: e.target.value }))}
                   required
                   placeholder="مثال: المديرية العامة لتربية الأنبار"
                   disabled={savingSchool || role === 'viewer'}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   المحافظة
                 </label>
                 <input
                   type="text"
+                  className="input"
                   value={schoolForm.governorate}
                   onChange={e => setSchoolForm(f => ({ ...f, governorate: e.target.value }))}
                   required
                   placeholder="مثال: الأنبار"
                   disabled={savingSchool || role === 'viewer'}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   الموقع الجغرافي / القضاء
                 </label>
                 <input
                   type="text"
+                  className="input"
                   value={schoolForm.location}
                   onChange={e => setSchoolForm(f => ({ ...f, location: e.target.value }))}
                   required
                   placeholder="مثال: الرمادي - الرميلة"
                   disabled={savingSchool || role === 'viewer'}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   هاتف التواصل أو الاستعلامات
                 </label>
                 <input
                   type="text"
+                  className="input"
                   value={schoolForm.contact}
                   onChange={e => setSchoolForm(f => ({ ...f, contact: e.target.value }))}
                   dir="ltr"
                   placeholder="+964..."
                   disabled={savingSchool || role === 'viewer'}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+              <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                 نص المسؤولية والاعتماد (يظهر في تذييل التقارير الرسمية A4)
               </label>
               <input
                 type="text"
+                className="input"
                 value={schoolForm.disclaimer}
                 onChange={e => setSchoolForm(f => ({ ...f, disclaimer: e.target.value }))}
                 required
                 placeholder="مثال: مسؤول إدخال البيانات والواجبات: إدارة المدرسة"
                 disabled={savingSchool || role === 'viewer'}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: 6,
-                  border: '1px solid #1F3A5F',
-                  background: '#0F1E33',
-                  color: '#FFFFFF',
-                  fontSize: '.95rem',
-                }}
               />
             </div>
 
@@ -354,7 +298,7 @@ export default function SettingsPage() {
               <ShieldIcon size={24} style={{ color: '#E8B04A' }} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--fg)' }}>
                 جلسة المشرف الحالية
               </h3>
               <p className="muted" style={{ margin: 0, fontSize: '.85rem' }}>
@@ -363,13 +307,13 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div style={{ background: '#0F1E33', padding: 16, borderRadius: 8, border: '1px solid #1F3A5F', marginBottom: 16 }}>
+          <div style={{ background: 'var(--surface2)', padding: 16, borderRadius: 8, border: '1px solid var(--border)', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <span className={`badge ${roleInfo.badgeClass}`} style={{ fontSize: '.85rem', padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>
                 {roleInfo.title}
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: '.9rem', color: '#B3C0D0', lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: '.9rem', color: 'var(--fg-secondary)', lineHeight: 1.6 }}>
               {roleInfo.desc}
             </p>
           </div>
@@ -397,11 +341,11 @@ export default function SettingsPage() {
         {/* Guardian PIN Reset Card */}
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div className="card-icon-wrapper" style={{ background: 'rgba(61, 132, 200, 0.12)', padding: 10, borderRadius: 10 }}>
-              <KeyIcon size={24} style={{ color: '#5B9DD9' }} />
+            <div className="card-icon-wrapper" style={{ background: 'rgba(0, 123, 254, 0.10)', padding: 10, borderRadius: 10 }}>
+              <KeyIcon size={24} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--fg)' }}>
                 إعادة تعيين رمز دخول ولي الأمر
               </h3>
               <p className="muted" style={{ margin: 0, fontSize: '.85rem' }}>
@@ -417,50 +361,34 @@ export default function SettingsPage() {
           <form onSubmit={handleResetPin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   رقم هاتف ولي الأمر (11 رقماً يبدأ بـ 07)
                 </label>
                 <input
                   type="text"
+                  className="input"
                   placeholder="07XXXXXXXXX"
                   value={resetPhone}
                   onChange={e => setResetPhone(e.target.value)}
                   dir="ltr"
                   disabled={busy}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                  }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: '#B3C0D0' }}>
+                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   الرمز السري الجديد (6 أرقام)
                 </label>
                 <input
                   type="text"
+                  className="input"
                   maxLength={6}
                   placeholder="مثال: 123456"
                   value={resetPin}
                   onChange={e => setResetPin(e.target.value.replace(/\D/g, ''))}
                   dir="ltr"
                   disabled={busy}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    borderRadius: 6,
-                    border: '1px solid #1F3A5F',
-                    background: '#0F1E33',
-                    color: '#FFFFFF',
-                    fontSize: '.95rem',
-                    letterSpacing: '3px',
-                  }}
+                  style={{ letterSpacing: '3px' }}
                 />
               </div>
             </div>
@@ -497,11 +425,11 @@ export default function SettingsPage() {
         {/* System & Environment Info */}
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div className="card-icon-wrapper" style={{ background: 'rgba(255, 255, 255, 0.08)', padding: 10, borderRadius: 10 }}>
-              <SchoolIcon size={24} style={{ color: '#E2E8F0' }} />
+            <div className="card-icon-wrapper" style={{ background: 'rgba(0, 123, 254, 0.08)', padding: 10, borderRadius: 10 }}>
+              <SchoolIcon size={24} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#FFFFFF' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--fg)' }}>
                 بيانات المدرسة وبيئة التشغيل
               </h3>
               <p className="muted" style={{ margin: 0, fontSize: '.85rem' }}>
@@ -511,25 +439,25 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-            <div style={{ background: '#0F1E33', padding: 12, borderRadius: 6, border: '1px solid #1F3A5F' }}>
+            <div style={{ background: 'var(--surface2)', padding: 12, borderRadius: 6, border: '1px solid var(--border)' }}>
               <span className="muted" style={{ fontSize: '.78rem', display: 'block' }}>المؤسسة التعليمية</span>
-              <span style={{ fontWeight: 600, color: '#FFFFFF', fontSize: '.9rem' }}>{settings.name}</span>
+              <span style={{ fontWeight: 600, color: 'var(--fg)', fontSize: '.9rem' }}>{settings.name}</span>
             </div>
-            <div style={{ background: '#0F1E33', padding: 12, borderRadius: 6, border: '1px solid #1F3A5F' }}>
+            <div style={{ background: 'var(--surface2)', padding: 12, borderRadius: 6, border: '1px solid var(--border)' }}>
               <span className="muted" style={{ fontSize: '.78rem', display: 'block' }}>البيئة الحالية</span>
-              <span style={{ fontWeight: 600, color: '#FFFFFF', fontSize: '.9rem' }}>
+              <span style={{ fontWeight: 600, color: 'var(--fg)', fontSize: '.9rem' }}>
                 {isDesktop ? 'تطبيق سطح المكتب (Windows Tauri 2)' : 'تطبيق الويب (PWA Web Browser)'}
               </span>
             </div>
-            <div style={{ background: '#0F1E33', padding: 12, borderRadius: 6, border: '1px solid #1F3A5F' }}>
+            <div style={{ background: 'var(--surface2)', padding: 12, borderRadius: 6, border: '1px solid var(--border)' }}>
               <span className="muted" style={{ fontSize: '.78rem', display: 'block' }}>حالة حماية التوافق (Version Guard)</span>
-              <span style={{ fontWeight: 600, color: '#86efac', fontSize: '.9rem', direction: 'ltr', display: 'inline-block' }}>
+              <span style={{ fontWeight: 600, color: 'var(--success)', fontSize: '.9rem', direction: 'ltr', display: 'inline-block' }}>
                 {guardState}
               </span>
             </div>
-            <div style={{ background: '#0F1E33', padding: 12, borderRadius: 6, border: '1px solid #1F3A5F' }}>
+            <div style={{ background: 'var(--surface2)', padding: 12, borderRadius: 6, border: '1px solid var(--border)' }}>
               <span className="muted" style={{ fontSize: '.78rem', display: 'block' }}>قاعدة البيانات السحابية</span>
-              <span style={{ fontWeight: 600, color: '#86efac', fontSize: '.9rem' }}>Supabase Postgres + RLS Active</span>
+              <span style={{ fontWeight: 600, color: 'var(--success)', fontSize: '.9rem' }}>Supabase Postgres + RLS Active</span>
             </div>
           </div>
         </div>

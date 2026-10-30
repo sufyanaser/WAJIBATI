@@ -43,7 +43,7 @@ export function PageHeader({
               margin: 0,
               fontSize: '1.25rem',
               fontWeight: 800,
-              color: '#FFFFFF',
+              color: 'var(--fg)',
               fontFamily: 'var(--font-family-heading)',
             }}
           >

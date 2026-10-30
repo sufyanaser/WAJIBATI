@@ -60,14 +60,14 @@ export default function AdminLogin() {
                 position: 'absolute',
                 bottom: -4,
                 right: -4,
-                background: '#0F1E33',
+                background: 'var(--surface2)',
                 borderRadius: '50%',
                 padding: '4px',
-                border: '1.5px solid #38BDF8',
+                border: '1.5px solid var(--accent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#38BDF8',
+                color: 'var(--accent)',
               }}
               title="لوحة الإدارة المؤمنة"
             >
@@ -77,20 +77,20 @@ export default function AdminLogin() {
 
           <span className="auth-role-badge auth-role-badge-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <ShieldIcon size={14} />
-            <span>بوابة الإدارة والمدرسين</span>
+            <span>بوابة الإدارة المدرسية</span>
           </span>
 
           <div>
-            <h1 className="login-title" style={{ color: '#F8FAFC', fontSize: '1.45rem' }}>
+            <h1 className="login-title" style={{ color: 'var(--fg)', fontSize: '1.45rem' }}>
               لوحة التحكم والإشراف
             </h1>
-            <p className="school-subtitle" style={{ marginTop: 4, color: '#38BDF8', fontWeight: 600 }}>
+            <p className="school-subtitle" style={{ marginTop: 4, color: 'var(--accent)', fontWeight: 600 }}>
               {settings.name}
             </p>
           </div>
         </div>
 
-        <div className="divider" style={{ margin: 0, borderColor: 'rgba(56, 189, 248, 0.2)' }} />
+        <div className="divider" style={{ margin: 0, borderColor: 'var(--border)' }} />
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="auth-field">

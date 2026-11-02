@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
-import { CheckIcon, CloseIcon } from '../../components/Icons'
 
 // ── types ──────────────────────────────────────────────────────────────────────
 
@@ -54,10 +53,9 @@ export default function TimetablePage() {
   const [secId, setSecId] = useState<number | null>(null)
   const [grid, setGrid] = useState<Map<string, TtCell>>(new Map())
   const [loading, setLoading] = useState(true)
-  const [editCell, setEditCell] = useState<{ weekday: number; period: number } | null>(null)
-  const [eSubject, setESubject] = useState<number | ''>('')
-  const [eTeacher, setETeacher] = useState<number | ''>('')
   const [saving, setSaving] = useState(false)
+  const [pending, setPending] = useState<{ key: string; subject: number | ''; teacher: number | '' } | null>(null)
+  const savingRef = useRef(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
   const canEdit = role === 'owner' || role === 'editor'
@@ -121,66 +119,53 @@ export default function TimetablePage() {
 
   function resolveTeacherForSubject(sectionId: number | null, subjectId: number): number | '' {
     if (sectionId) {
-      const assigned = assignments.find(
+      const assigned = assignments.filter(
         a => a.section_id === sectionId && a.subject_id === subjectId,
       )
-      if (assigned) return assigned.teacher_id
+      if (assigned.length === 1 && teachers.some(t => t.id === assigned[0].teacher_id)) return assigned[0].teacher_id
+      if (assigned.length > 0) return ''
     }
-    const bySubject = teachers.find(t => t.subject_id === subjectId)
-    return bySubject ? bySubject.id : ''
+    const bySubject = teachers.filter(t => t.subject_id === subjectId)
+    return bySubject.length === 1 ? bySubject[0].id : ''
   }
 
-  function handleSubjectChange(nextSubId: number | '') {
-    setESubject(nextSubId)
-    if (nextSubId !== '') {
-      const autoTeacher = resolveTeacherForSubject(secId, nextSubId)
-      setETeacher(autoTeacher)
-    } else {
-      setETeacher('')
-    }
-  }
-
-  async function handleSaveCell(e: React.FormEvent) {
-    e.preventDefault()
-    if (!editCell || !secId) return
+  async function saveCell(weekday: number, period: number, subject: number | '', teacher: number | '') {
+    if (!secId || !canEdit || savingRef.current) return
+    savingRef.current = true
     setSaving(true)
-    const { weekday, period } = editCell
     const key = `${weekday}-${period}`
     const existing = grid.get(key)
-
-    if (!eSubject) {
-      // Clear slot if exists
-      if (existing?.id) {
-        const { error } = await supabase.from('timetable').delete().eq('id', existing.id)
-        if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
+    setPending({ key, subject, teacher })
+    try {
+      if (!subject) {
+        if (existing?.id) {
+          const { data, error } = await supabase.from('timetable').delete().eq('id', existing.id).select('id').maybeSingle()
+          if (error || !data) throw new Error(error?.message || 'لم يُحذف السجل')
+        }
+        setGrid(prev => { const next = new Map(prev); next.delete(key); return next })
+      } else {
+        const payload = { section_id: secId, weekday, period, subject_id: subject, teacher_id: teacher || null }
+        const result = existing?.id
+          ? await supabase.from('timetable').update(payload).eq('id', existing.id).select('id').maybeSingle()
+          : await supabase.from('timetable').insert(payload).select('id').maybeSingle()
+        if (result.error || !result.data) throw new Error(result.error?.message || 'لم يُحفظ السجل')
+        const savedId = result.data.id
+        const chosenSubject = subjects.find(s => s.id === subject)
+        const chosenTeacher = teachers.find(t => t.id === teacher)
+        setGrid(prev => new Map(prev).set(key, {
+          id: savedId, weekday, period, subject_id: subject, teacher_id: teacher || null,
+          subject_name: chosenSubject?.name ?? '', subject_color: chosenSubject?.color ?? null,
+          teacher_name: chosenTeacher?.full_name ?? '',
+        }))
       }
-      setEditCell(null)
-      await loadTimetable()
+      showToast('تم الحفظ تلقائياً', 'success')
+    } catch (error) {
+      showToast(`تعذر تأكيد الحفظ. أعد تحميل الجدول للتحقق: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, 'error')
+    } finally {
+      setPending(null)
       setSaving(false)
-      showToast('تم مسح الحصة', 'info')
-      return
+      savingRef.current = false
     }
-
-    const payload = {
-      section_id: secId,
-      weekday,
-      period,
-      subject_id: Number(eSubject),
-      teacher_id: eTeacher ? Number(eTeacher) : null,
-    }
-
-    if (existing?.id) {
-      const { error } = await supabase.from('timetable').update(payload).eq('id', existing.id)
-      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
-    } else {
-      const { error } = await supabase.from('timetable').insert(payload)
-      if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
-    }
-
-    showToast('تم حفظ الحصة ✓', 'success')
-    setEditCell(null)
-    await loadTimetable()
-    setSaving(false)
   }
 
   if (!ready) return <Spinner />
@@ -196,7 +181,8 @@ export default function TimetablePage() {
           className="admin-select"
           style={{ width: 'auto', minWidth: 180 }}
           value={secId ?? ''}
-          onChange={e => { setEditCell(null); setSecId(Number(e.target.value)) }}
+          onChange={e => setSecId(Number(e.target.value))}
+          disabled={saving}
           aria-label="اختر الشعبة للجدول"
         >
           {sections.map(s => (
@@ -209,7 +195,7 @@ export default function TimetablePage() {
 
       {/* Timetable Grid */}
       <p className="tt-scroll-hint">اسحب الجدول أفقياً لعرض بقية الحصص.</p>
-      {editCell && <p className="tt-edit-hint" role="status">احفظ التعديل أو ألغِه قبل تعديل حصة أخرى.</p>}
+      {saving && <p className="tt-edit-hint" role="status">جارٍ حفظ التغيير…</p>}
       {loading ? <Spinner /> : (
         <div className="tt-grid-wrap">
           <table className="tt-grid">
@@ -225,8 +211,7 @@ export default function TimetablePage() {
                   <td className="tt-day-label">{w.label}</td>
                   {PERIODS.map(p => {
                     const cell = grid.get(`${w.day}-${p}`)
-                    const editing = editCell?.weekday === w.day && editCell.period === p
-                    const otherEdit = editCell !== null && !editing
+                    const active = pending?.key === `${w.day}-${p}` ? pending : null
                     return (
                       <td
                         key={p}
@@ -234,26 +219,22 @@ export default function TimetablePage() {
                         style={cell?.subject_color ? { borderRightColor: cell.subject_color, borderRightWidth: 3 } : undefined}
                       >
                         {canEdit ? (
-                          <form className="tt-inline-edit" onSubmit={handleSaveCell} onKeyDown={e => { if (e.key === 'Escape' && !saving) setEditCell(null) }}>
+                          <div className="tt-inline-edit">
                             <select className="admin-select tt-inline-select tt-subject-field" aria-label={`مادة ${w.label} الحصة ${p}`}
-                              value={editing ? eSubject : (cell?.subject_id ?? '')}
-                              onChange={e => { setEditCell({ weekday: w.day, period: p }); handleSubjectChange(e.target.value ? Number(e.target.value) : '') }}
-                              disabled={saving || otherEdit}>
+                              value={active ? active.subject : (cell?.subject_id ?? '')}
+                              onChange={e => { const subject = e.target.value ? Number(e.target.value) : ''; void saveCell(w.day, p, subject, subject ? resolveTeacherForSubject(secId, subject) : '') }}
+                              disabled={saving}>
                               <option value="">حصة فارغة</option>
                               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                             <select className="admin-select tt-inline-select tt-teacher-field" aria-label={`مدرس ${w.label} الحصة ${p}`}
-                              value={editing ? eTeacher : (cell?.teacher_id ?? '')}
-                              onChange={e => { if (!editing) { setEditCell({ weekday: w.day, period: p }); setESubject(cell?.subject_id ?? '') }; setETeacher(e.target.value ? Number(e.target.value) : '') }}
-                              disabled={saving || otherEdit || !(editing ? eSubject : cell?.subject_id)}>
+                              value={active ? active.teacher : (cell?.teacher_id ?? '')}
+                              onChange={e => { if (cell?.subject_id) void saveCell(w.day, p, cell.subject_id, e.target.value ? Number(e.target.value) : '') }}
+                              disabled={saving || !(active ? active.subject : cell?.subject_id)}>
                               <option value="">بدون مدرس</option>
                               {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                             </select>
-                            {editing && <div className="tt-inline-actions">
-                              <button type="submit" className="tt-inline-save" disabled={saving} title="حفظ الحصة"><CheckIcon size={16} /> <span>{saving ? '…' : 'حفظ'}</span></button>
-                              <button type="button" className="tt-inline-cancel" disabled={saving} onClick={() => setEditCell(null)} title="إلغاء التعديل"><CloseIcon size={16} /><span>إلغاء</span></button>
-                            </div>}
-                          </form>
+                          </div>
                         ) : cell?.subject_name ? (
                           <div className="tt-inline-edit">
                             <strong className="tt-readonly-field tt-subject-field">{cell.subject_name}</strong>

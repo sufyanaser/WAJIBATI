@@ -1785,7 +1785,7 @@ button:disabled {
   padding: 16px;
   display: grid;
   gap: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (min-width: 768px) {
@@ -1818,15 +1818,16 @@ button:disabled {
 /* Sticky Batch Action Bar */
 .he-action-bar {
   position: sticky;
-  top: 0;
-  z-index: 90;
+  top: 64px;
+  z-index: 40;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px;
-  background: rgba(8, 21, 42, 0.92);
-  backdrop-filter: blur(10px);
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .he-btn-draft {
@@ -1906,11 +1907,11 @@ button:disabled {
 .he-period-row {
   display: grid;
   grid-template-columns: auto 1fr;
-  background: linear-gradient(180deg, var(--card2) 0%, var(--card) 100%);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
   transition: border-color var(--transition-fast);
 }
 
@@ -1923,7 +1924,7 @@ button:disabled {
   flex-direction: column;
   gap: 6px;
   padding: 14px;
-  background: rgba(15, 30, 51, 0.65);
+  background: var(--surface2);
   border-inline-end: 1px solid var(--border);
   min-width: 104px;
   max-width: 132px;
@@ -1949,7 +1950,7 @@ button:disabled {
 
 .he-teacher-name {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--fg-secondary);
   line-height: 1.35;
 }
 
@@ -1962,9 +1963,9 @@ button:disabled {
 
 .he-hw-textarea {
   flex: 1;
-  border: 1px solid transparent !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: var(--radius-md) !important;
-  background: rgba(8, 21, 42, 0.45) !important;
+  background: var(--card) !important;
   min-height: 68px;
   resize: vertical;
   padding: 10px 12px !important;
@@ -3730,6 +3731,7 @@ button:disabled {
   }
 
   .he-action-bar {
+    position: static;
     gap: 6px;
   }
 
@@ -3845,7 +3847,7 @@ button:disabled {
 
 .admin-sidebar-subtitle {
   font-size: 0.72rem;
-  color: var(--muted);
+  color: #b5c4d8;
   margin: 0;
 }
 
@@ -3898,7 +3900,7 @@ button:disabled {
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  color: var(--fg-secondary);
+  color: #d0dbe9;
   text-decoration: none;
   border-radius: 8px;
   font-size: 0.88rem;
@@ -3910,7 +3912,7 @@ button:disabled {
 
 .admin-nav-item:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: var(--fg);
+  color: #ffffff;
 }
 
 .admin-nav-item.active {
@@ -3953,7 +3955,7 @@ button:disabled {
 .admin-nav-sublink {
   font-size: 0.8rem;
   padding: 6px 10px;
-  color: var(--muted);
+  color: #b5c4d8;
   text-decoration: none;
   border-radius: 6px;
   transition: all 0.15s ease;
@@ -3961,7 +3963,7 @@ button:disabled {
 }
 
 .admin-nav-sublink:hover {
-  color: var(--fg);
+  color: #ffffff;
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -4004,7 +4006,7 @@ button:disabled {
   border-radius: 6px;
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--fg-secondary);
+  color: #d0dbe9;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;

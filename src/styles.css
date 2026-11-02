@@ -1905,8 +1905,8 @@ button:disabled {
 }
 
 .he-period-row {
-  display: grid;
-  grid-template-columns: minmax(165px, 35%) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -1920,25 +1920,23 @@ button:disabled {
 }
 
 .he-period-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px;
-  background: var(--surface2);
-  border-inline-end: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: auto minmax(130px, 1fr) minmax(90px, 1fr) auto;
+  grid-template-areas: 'period subject teacher status';
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
   min-width: 0;
 }
 
 .he-period-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-  width: 100%;
+  display: contents;
 }
 
 .he-period-heading .he-status {
+  grid-area: status;
   margin: 0;
   white-space: nowrap;
 }
@@ -1947,6 +1945,7 @@ button:disabled {
 .he-period-heading .he-status--draft { color: #905600; }
 
 .he-period-num {
+  grid-area: period;
   font-size: 0.8rem;
   font-weight: 800;
   color: var(--accent);
@@ -1954,7 +1953,8 @@ button:disabled {
   border: 1px solid rgba(0, 123, 254, 0.22);
   border-radius: var(--radius-full);
   padding: 2px 10px;
-  align-self: flex-start;
+  align-self: center;
+  white-space: nowrap;
 }
 
 .he-subject-name {
@@ -1965,6 +1965,7 @@ button:disabled {
 }
 
 .he-subject-select {
+  grid-area: subject;
   width: 100%;
   min-width: 0;
   min-height: 44px;
@@ -1973,13 +1974,23 @@ button:disabled {
 }
 
 .he-teacher-name {
-  font-size: 0.78rem;
+  grid-area: teacher;
+  min-width: 0;
+  font-size: 0.84rem;
   color: var(--fg-secondary);
   line-height: 1.35;
 }
 
+@media (max-width: 1200px) {
+  .he-period-meta {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'period subject status' 'teacher teacher teacher';
+    gap: 8px;
+  }
+}
+
 .he-period-input {
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3749,18 +3760,11 @@ button:disabled {
   }
 
   /* admin timetable: stack meta above textarea */
-  .he-period-row {
-    grid-template-columns: 1fr;
-  }
-
   .he-period-meta {
-    border-inline-end: none;
-    border-bottom: 1px solid var(--border);
-    max-width: none;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 10px 12px;
-    gap: 6px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'period subject status' 'teacher teacher teacher';
+    gap: 8px;
+    padding: 12px;
   }
 
   .he-period-num {

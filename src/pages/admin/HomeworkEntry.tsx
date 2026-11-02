@@ -147,7 +147,7 @@ function firstWorkday(d: Date): Date {
 // ── status badge ───────────────────────────────────────────────────────────────
 
 function StatusDot({ status }: { status: 'draft' | 'published' | 'archived' | null }) {
-  if (status === 'published') return <span className="he-status he-status--published" title="الواجب منشور">الواجب منشور</span>
+  if (status === 'published') return <span className="he-status he-status--published" title="حالة الواجب: منشور" aria-label="حالة الواجب: منشور">منشور</span>
   if (status === 'draft') return <span className="he-status he-status--draft" title="الواجب محفوظ كمسودة">مسودة</span>
   if (status === 'archived') return <span className="he-status he-status--empty">مؤرشف</span>
   return <span className="he-status he-status--empty">لا يوجد واجب</span>

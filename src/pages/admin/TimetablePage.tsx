@@ -162,7 +162,8 @@ export default function TimetablePage() {
     if (!eSubject) {
       // Clear slot if exists
       if (existing?.id) {
-        await supabase.from('timetable').delete().eq('id', existing.id)
+        const { error } = await supabase.from('timetable').delete().eq('id', existing.id)
+        if (error) { showToast(`خطأ: ${error.message}`, 'error'); setSaving(false); return }
       }
       setEditCell(null)
       await loadTimetable()
@@ -206,7 +207,7 @@ export default function TimetablePage() {
           className="admin-select"
           style={{ width: 'auto', minWidth: 180 }}
           value={secId ?? ''}
-          onChange={e => setSecId(Number(e.target.value))}
+          onChange={e => { setEditCell(null); setSecId(Number(e.target.value)) }}
           aria-label="اختر الشعبة للجدول"
         >
           {sections.map(s => (
@@ -216,53 +217,6 @@ export default function TimetablePage() {
           ))}
         </select>
       </div>
-
-      {/* Edit modal */}
-      {editCell && (
-        <form className="dash-form" onSubmit={handleSaveCell}>
-          <h3 className="dash-form-title">
-            {WEEKDAYS.find(w => w.day === editCell.weekday)?.label} — الحصة {editCell.period}
-          </h3>
-          <div className="dash-form-grid">
-            <label>
-              <span>المادة</span>
-              <select
-                className="admin-select"
-                value={eSubject}
-                onChange={e => handleSubjectChange(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">-- فارغ (مسح الحصة) --</option>
-                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>المدرس (يُسند تلقائياً حسب المادة والشعبة)</span>
-              <select
-                className="admin-select"
-                value={eTeacher}
-                onChange={e => setETeacher(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">-- بدون مدرس --</option>
-                {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
-              </select>
-            </label>
-          </div>
-          <div className="dash-form-actions">
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              <CheckIcon size={16} />
-              <span>{saving ? '…' : 'حفظ'}</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setEditCell(null)}
-            >
-              <CloseIcon size={16} />
-              <span>إلغاء</span>
-            </button>
-          </div>
-        </form>
-      )}
 
       {/* Timetable Grid */}
       {loading ? <Spinner /> : (
@@ -284,10 +238,30 @@ export default function TimetablePage() {
                       <td
                         key={p}
                         className={'tt-cell' + (canEdit ? ' clickable' : '') + (cell?.subject_id ? ' filled' : '')}
-                        onClick={() => openEdit(w.day, p)}
                         style={cell?.subject_color ? { borderRightColor: cell.subject_color, borderRightWidth: 3 } : undefined}
                       >
-                        {cell?.subject_name ? (
+                        {editCell?.weekday === w.day && editCell.period === p ? (
+                          <form className="tt-inline-edit" onSubmit={handleSaveCell} onKeyDown={e => { if (e.key === 'Escape' && !saving) setEditCell(null) }}>
+                            <select className="admin-select tt-inline-select" aria-label={`مادة ${w.label} الحصة ${p}`}
+                              value={eSubject} onChange={e => handleSubjectChange(e.target.value ? Number(e.target.value) : '')} disabled={saving}>
+                              <option value="">حصة فارغة</option>
+                              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                            <select className="admin-select tt-inline-select" aria-label={`مدرس ${w.label} الحصة ${p}`}
+                              value={eTeacher} onChange={e => setETeacher(e.target.value ? Number(e.target.value) : '')} disabled={saving || !eSubject}>
+                              <option value="">بدون مدرس</option>
+                              {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+                            </select>
+                            <div className="tt-inline-actions">
+                              <button type="submit" className="tt-inline-save" disabled={saving} title="حفظ الحصة"><CheckIcon size={16} /> <span>{saving ? '…' : 'حفظ'}</span></button>
+                              <button type="button" className="tt-inline-cancel" disabled={saving} onClick={() => setEditCell(null)} title="إلغاء التعديل"><CloseIcon size={16} /><span>إلغاء</span></button>
+                            </div>
+                          </form>
+                        ) : canEdit ? (
+                          <button type="button" className="tt-cell-button" onClick={() => openEdit(w.day, p)} aria-label={`تعديل ${w.label} الحصة ${p}: ${cell?.subject_name || 'فارغة'}`}>
+                            {cell?.subject_name ? <><strong className="tt-subj">{cell.subject_name}</strong>{cell.teacher_name && <span className="tt-teach">{cell.teacher_name}</span>}</> : <span className="tt-empty">إضافة مادة</span>}
+                          </button>
+                        ) : cell?.subject_name ? (
                           <>
                             <strong className="tt-subj">{cell.subject_name}</strong>
                             {cell.teacher_name && <span className="tt-teach">{cell.teacher_name}</span>}

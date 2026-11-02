@@ -3448,6 +3448,57 @@ button:disabled {
   background: var(--card2);
 }
 
+.tt-cell-button {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.tt-cell-button:hover .tt-subj { color: var(--accent); }
+
+.tt-inline-edit {
+  display: grid;
+  min-width: 145px;
+  gap: 6px;
+}
+
+.tt-inline-edit .tt-inline-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 8px;
+  padding-inline-end: 32px;
+  font-size: 0.8rem;
+}
+
+.tt-inline-actions { display: flex; gap: 5px; }
+.tt-inline-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 2px;
+  min-height: 40px;
+  padding: 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.tt-inline-actions .tt-inline-save { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tt-inline-actions button:disabled { opacity: 0.6; cursor: wait; }
+
 .tt-subj {
   display: block;
   font-size: 0.86rem;

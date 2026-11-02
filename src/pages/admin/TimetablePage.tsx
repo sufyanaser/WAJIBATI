@@ -175,11 +175,10 @@ export default function TimetablePage() {
       <div className="dash-toolbar">
         <div>
           <h2 className="dash-page-title">الجدول الدراسي الأسبوعي</h2>
-          <span className="muted">اختر المادة من الحصة، وسيُحدد المدرس تلقائياً عند توفر إسناد له</span>
+          <span className="muted">اختر المادة من الدرس، وسيُحدد المدرس تلقائياً عند توفر إسناد له</span>
         </div>
         <select
-          className="admin-select"
-          style={{ width: 'auto', minWidth: 180 }}
+          className="admin-select tt-section-select"
           value={secId ?? ''}
           onChange={e => setSecId(Number(e.target.value))}
           disabled={saving}
@@ -201,8 +200,8 @@ export default function TimetablePage() {
           <table className="tt-grid">
             <thead>
               <tr>
-                <th className="tt-corner">اليوم / الحصة</th>
-                {PERIODS.map(p => <th key={p}>الحصة {p}</th>)}
+                <th className="tt-corner">اليوم / الدرس</th>
+                {PERIODS.map(p => <th key={p}>الدرس {p}</th>)}
               </tr>
             </thead>
             <tbody>

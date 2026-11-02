@@ -3441,6 +3441,12 @@ button:disabled {
 
 .tt-grid .tt-corner { width: 120px; }
 
+.dash-toolbar .tt-section-select {
+  width: 240px;
+  max-width: 100%;
+  flex: 0 1 240px;
+}
+
 .tt-scroll-hint {
   margin: -8px 0 -10px;
   color: var(--fg-secondary);
@@ -4043,6 +4049,27 @@ button:disabled {
   background: var(--surface2);
   color: var(--accent);
   border-color: var(--accent-dim);
+}
+
+@media (min-width: 1024px) {
+  .admin-sidebar.collapsed .admin-sidebar-header {
+    height: auto;
+    min-height: 96px;
+    padding: 10px 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-brand {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .admin-sidebar.collapsed .admin-sidebar-toggle {
+    min-width: 36px;
+    min-height: 36px;
+  }
 }
 
 /* Sidebar Nav Scrollable Container */

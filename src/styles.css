@@ -3505,6 +3505,38 @@ button:disabled {
   font-size: 0.9rem;
 }
 
+.tt-inline-edit .tt-subject-field,
+.tt-readonly-field.tt-subject-field {
+  background-color: #f1f7ff;
+  color: #173d64;
+  border-color: #cadff4;
+  font-weight: 700;
+}
+
+.tt-inline-edit .tt-teacher-field,
+.tt-readonly-field.tt-teacher-field {
+  background-color: #f8fafc;
+  color: #344960;
+  border-color: #dce5ee;
+  font-weight: 500;
+  font-size: 0.84rem;
+}
+
+.tt-readonly-field {
+  display: block;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid;
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+}
+
+.tt-edit-hint {
+  margin: -8px 0 -10px;
+  color: #18598f;
+  font-size: 0.85rem;
+}
+
 .tt-inline-actions { display: flex; gap: 5px; }
 .tt-inline-actions button {
   display: inline-flex;

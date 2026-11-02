@@ -130,17 +130,6 @@ export default function TimetablePage() {
     return bySubject ? bySubject.id : ''
   }
 
-  function openEdit(weekday: number, period: number) {
-    if (!canEdit) return
-    const cell = grid.get(`${weekday}-${period}`)
-    setEditCell({ weekday, period })
-    setESubject(cell?.subject_id ?? '')
-    setETeacher(
-      cell?.teacher_id ??
-      (cell?.subject_id ? resolveTeacherForSubject(secId, cell.subject_id) : ''),
-    )
-  }
-
   function handleSubjectChange(nextSubId: number | '') {
     setESubject(nextSubId)
     if (nextSubId !== '') {
@@ -201,7 +190,7 @@ export default function TimetablePage() {
       <div className="dash-toolbar">
         <div>
           <h2 className="dash-page-title">الجدول الدراسي الأسبوعي</h2>
-          <span className="muted">انقر على أي حصة لتعيين المادة والمدرس تلقائياً</span>
+          <span className="muted">اختر المادة من الحصة، وسيُحدد المدرس تلقائياً عند توفر إسناد له</span>
         </div>
         <select
           className="admin-select"
@@ -220,6 +209,7 @@ export default function TimetablePage() {
 
       {/* Timetable Grid */}
       <p className="tt-scroll-hint">اسحب الجدول أفقياً لعرض بقية الحصص.</p>
+      {editCell && <p className="tt-edit-hint" role="status">احفظ التعديل أو ألغِه قبل تعديل حصة أخرى.</p>}
       {loading ? <Spinner /> : (
         <div className="tt-grid-wrap">
           <table className="tt-grid">
@@ -235,38 +225,40 @@ export default function TimetablePage() {
                   <td className="tt-day-label">{w.label}</td>
                   {PERIODS.map(p => {
                     const cell = grid.get(`${w.day}-${p}`)
+                    const editing = editCell?.weekday === w.day && editCell.period === p
+                    const otherEdit = editCell !== null && !editing
                     return (
                       <td
                         key={p}
                         className={'tt-cell' + (canEdit ? ' clickable' : '') + (cell?.subject_id ? ' filled' : '')}
                         style={cell?.subject_color ? { borderRightColor: cell.subject_color, borderRightWidth: 3 } : undefined}
                       >
-                        {editCell?.weekday === w.day && editCell.period === p ? (
+                        {canEdit ? (
                           <form className="tt-inline-edit" onSubmit={handleSaveCell} onKeyDown={e => { if (e.key === 'Escape' && !saving) setEditCell(null) }}>
-                            <select className="admin-select tt-inline-select" aria-label={`مادة ${w.label} الحصة ${p}`}
-                              value={eSubject} onChange={e => handleSubjectChange(e.target.value ? Number(e.target.value) : '')} disabled={saving}>
+                            <select className="admin-select tt-inline-select tt-subject-field" aria-label={`مادة ${w.label} الحصة ${p}`}
+                              value={editing ? eSubject : (cell?.subject_id ?? '')}
+                              onChange={e => { setEditCell({ weekday: w.day, period: p }); handleSubjectChange(e.target.value ? Number(e.target.value) : '') }}
+                              disabled={saving || otherEdit}>
                               <option value="">حصة فارغة</option>
                               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
-                            <select className="admin-select tt-inline-select" aria-label={`مدرس ${w.label} الحصة ${p}`}
-                              value={eTeacher} onChange={e => setETeacher(e.target.value ? Number(e.target.value) : '')} disabled={saving || !eSubject}>
+                            <select className="admin-select tt-inline-select tt-teacher-field" aria-label={`مدرس ${w.label} الحصة ${p}`}
+                              value={editing ? eTeacher : (cell?.teacher_id ?? '')}
+                              onChange={e => { if (!editing) { setEditCell({ weekday: w.day, period: p }); setESubject(cell?.subject_id ?? '') }; setETeacher(e.target.value ? Number(e.target.value) : '') }}
+                              disabled={saving || otherEdit || !(editing ? eSubject : cell?.subject_id)}>
                               <option value="">بدون مدرس</option>
                               {teachers.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                             </select>
-                            <div className="tt-inline-actions">
+                            {editing && <div className="tt-inline-actions">
                               <button type="submit" className="tt-inline-save" disabled={saving} title="حفظ الحصة"><CheckIcon size={16} /> <span>{saving ? '…' : 'حفظ'}</span></button>
                               <button type="button" className="tt-inline-cancel" disabled={saving} onClick={() => setEditCell(null)} title="إلغاء التعديل"><CloseIcon size={16} /><span>إلغاء</span></button>
-                            </div>
+                            </div>}
                           </form>
-                        ) : canEdit ? (
-                          <button type="button" className="tt-cell-button" onClick={() => openEdit(w.day, p)} aria-label={`تعديل ${w.label} الحصة ${p}: ${cell?.subject_name || 'فارغة'}`}>
-                            {cell?.subject_name ? <><strong className="tt-subj">{cell.subject_name}</strong>{cell.teacher_name && <span className="tt-teach">{cell.teacher_name}</span>}</> : <span className="tt-empty">إضافة مادة</span>}
-                          </button>
                         ) : cell?.subject_name ? (
-                          <>
-                            <strong className="tt-subj">{cell.subject_name}</strong>
-                            {cell.teacher_name && <span className="tt-teach">{cell.teacher_name}</span>}
-                          </>
+                          <div className="tt-inline-edit">
+                            <strong className="tt-readonly-field tt-subject-field">{cell.subject_name}</strong>
+                            <span className="tt-readonly-field tt-teacher-field">{cell.teacher_name || 'بدون مدرس'}</span>
+                          </div>
                         ) : (
                           <span className="tt-empty">—</span>
                         )}

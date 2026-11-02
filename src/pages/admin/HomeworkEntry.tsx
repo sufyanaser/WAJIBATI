@@ -163,7 +163,6 @@ export default function HomeworkEntry() {
   const [assignments, setAssignments] = useState<TeachingAssignOpt[]>([])
   const [secId, setSecId] = useState<number | null>(null)
   const [date, setDate] = useState<Date>(() => firstWorkday(new Date()))
-  const [selectedPeriod, setSelectedPeriod] = useState(1)
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishingPeriod, setPublishingPeriod] = useState<number | null>(null)
@@ -220,12 +219,10 @@ export default function HomeworkEntry() {
     const subId = Number(nextSubjectIdStr)
     const sub = subjects.find(s => s.id === subId)
     // Auto-assign teacher from teaching_assignments for (secId, subId), or fallback to teachers.subject_id
-    const assigned = secId
-      ? assignments.find(a => a.section_id === secId && a.subject_id === subId)
+    const assigned = assignments.filter(a => a.section_id === secId && a.subject_id === subId)
+    const teacherObj = assigned.length === 1
+      ? teachers.find(t => t.id === assigned[0].teacher_id)
       : undefined
-    const teacherObj = assigned
-      ? teachers.find(t => t.id === assigned.teacher_id)
-      : teachers.find(t => t.subject_id === subId)
     setPeriodSubject(
       period,
       subId,
@@ -403,23 +400,6 @@ export default function HomeworkEntry() {
         </div>
       </section>
 
-      <div className="he-period-picker">
-        <label htmlFor="homework-period">الحصة</label>
-        <select
-          id="homework-period"
-          className="admin-select"
-          value={selectedPeriod}
-          onChange={e => setSelectedPeriod(Number(e.target.value))}
-          disabled={loading || periods.length === 0}
-        >
-          {periods.map(slot => (
-            <option key={slot.period} value={slot.period}>
-              {`الحصة ${slot.period} — ${slot.subject || 'لم تُحدد المادة'}${slot.teacher ? ` — ${slot.teacher}` : ''}`}
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* ── Sticky Batch Action Bar ───────────────────────────── */}
       <div className="he-action-bar">
         <button
@@ -452,35 +432,29 @@ export default function HomeworkEntry() {
           <span>{exporting ? '…' : 'تصدير A4 للطباعة'}</span>
         </button>
       </div>
-      <p className="he-batch-note">حفظ مسودة ونشر الكل يشملان جميع حصص اليوم.</p>
 
       {/* ── Timetable Grid ────────────────────────────────────── */}
       {loading ? (
         <p className="muted">جارٍ التحميل…</p>
       ) : (
         <div className="he-timetable">
-          {periods.filter(slot => slot.period === selectedPeriod).map(slot => (
+          {periods.map(slot => (
             <div key={slot.period} className="he-period-row">
 
               {/* RIGHT cell — period meta */}
               <div className="he-period-meta">
                 <span className="he-period-num">حصة {slot.period}</span>
-                {slot.subject ? (
-                  <span className="he-subject-name">{slot.subject}</span>
-                ) : (
-                  <select
-                    className="admin-select"
-                    style={{ fontSize: '.76rem', padding: '4px 8px', minHeight: 32 }}
-                    aria-label={`اختر مادة الحصة ${slot.period}`}
-                    value={slot.subject_id ?? ''}
-                    onChange={e => handleManualSubjectSelect(slot.period, e.target.value)}
-                  >
-                    <option value="">+ اختر مادة</option>
-                    {subjects.map(sub => (
-                      <option key={sub.id} value={sub.id}>{sub.name}</option>
-                    ))}
-                  </select>
-                )}
+                <select
+                  className="admin-select he-subject-select"
+                  aria-label={`مادة الحصة ${slot.period}`}
+                  value={slot.subject_id ?? ''}
+                  onChange={e => handleManualSubjectSelect(slot.period, e.target.value)}
+                >
+                  <option value="">اختر المادة</option>
+                  {subjects.map(sub => (
+                    <option key={sub.id} value={sub.id}>{sub.name}</option>
+                  ))}
+                </select>
                 <span className="he-teacher-name">{slot.teacher || 'لم يُحدد المدرس في الجدول'}</span>
                 <StatusDot status={slot.status} />
                 {slot.status === 'draft' && slot.hw_id && (

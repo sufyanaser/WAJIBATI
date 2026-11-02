@@ -1815,24 +1815,6 @@ button:disabled {
   gap: 8px;
 }
 
-.he-period-picker {
-  display: grid;
-  gap: 6px;
-  max-width: 560px;
-  font-weight: 700;
-  color: var(--fg);
-}
-
-.he-period-picker .admin-select {
-  width: 100%;
-}
-
-.he-batch-note {
-  margin: -4px 0 0;
-  color: var(--fg-secondary);
-  font-size: 0.82rem;
-}
-
 /* Sticky Batch Action Bar */
 .he-action-bar {
   position: sticky;
@@ -1917,7 +1899,7 @@ button:disabled {
 
 @media (min-width: 900px) {
   .he-timetable {
-    grid-template-columns: minmax(0, 720px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }
 }
@@ -1963,6 +1945,14 @@ button:disabled {
   font-weight: 800;
   color: var(--fg);
   line-height: 1.35;
+}
+
+.he-subject-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 0.88rem;
 }
 
 .he-teacher-name {

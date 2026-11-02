@@ -142,6 +142,27 @@ describe('useAdminSection — load', () => {
     expect(result.current.periods[2].teacher_id).toBe(44)
     expect(result.current.periods[2].teacher).toBe('أنس طلال')
   })
+
+  it('restores the saved daily subject and teacher instead of the weekly timetable', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      let calls = 0
+      chain.eq = vi.fn().mockImplementation(() => {
+        calls++
+        if (calls < 2) return chain
+        return { ...chain, error: null, data: table === 'timetable' ? timetableRows : [{
+          id: 'hw-1', period: 1, body: 'واجب سابق', status: 'draft',
+          subject_id: 12, teacher_id: 44,
+          subject: { id: 12, name: 'الكيمياء', color: null },
+          teacher: { id: 44, full_name: 'أنس طلال' }, attachments: [],
+        }] }
+      })
+      return chain
+    })
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.periods).toHaveLength(6))
+    expect(result.current.periods[0]).toMatchObject({ subject_id: 12, subject: 'الكيمياء', teacher_id: 44, teacher: 'أنس طلال' })
+  })
 })
 
 describe('useAdminSection — save', () => {

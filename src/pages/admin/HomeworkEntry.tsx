@@ -125,7 +125,7 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showTo
         {busy === 'upload' ? '…' : (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             <PaperclipIcon size={13} />
-            <span>مرفق</span>
+          <span>إضافة مرفق</span>
           </span>
         )}
       </button>
@@ -147,9 +147,10 @@ function firstWorkday(d: Date): Date {
 // ── status badge ───────────────────────────────────────────────────────────────
 
 function StatusDot({ status }: { status: 'draft' | 'published' | 'archived' | null }) {
-  if (status === 'published') return <span className="he-status he-status--published">منشور</span>
-  if (status === 'draft') return <span className="he-status he-status--draft">مسودة</span>
-  return <span className="he-status he-status--empty">فارغ</span>
+  if (status === 'published') return <span className="he-status he-status--published" title="الواجب منشور">الواجب منشور</span>
+  if (status === 'draft') return <span className="he-status he-status--draft" title="الواجب محفوظ كمسودة">مسودة</span>
+  if (status === 'archived') return <span className="he-status he-status--empty">مؤرشف</span>
+  return <span className="he-status he-status--empty">لا يوجد واجب</span>
 }
 
 // ── component ──────────────────────────────────────────────────────────────────
@@ -443,7 +444,10 @@ export default function HomeworkEntry() {
 
               {/* RIGHT cell — period meta */}
               <div className="he-period-meta">
-                <span className="he-period-num">حصة {slot.period}</span>
+                <div className="he-period-heading">
+                  <span className="he-period-num">حصة {slot.period}</span>
+                  <StatusDot status={slot.status} />
+                </div>
                 <select
                   className="admin-select he-subject-select"
                   aria-label={`مادة الحصة ${slot.period}`}
@@ -456,30 +460,6 @@ export default function HomeworkEntry() {
                   ))}
                 </select>
                 <span className="he-teacher-name">{slot.teacher || 'لم يُحدد المدرس في الجدول'}</span>
-                <StatusDot status={slot.status} />
-                {slot.status === 'draft' && slot.hw_id && (
-                  <button
-                    type="button"
-                    className="btn btn-success btn-sm he-btn-publish--sm"
-                    disabled={publishingPeriod === slot.period || saving || publishing}
-                    onClick={() => void handlePublishPeriod(slot.period)}
-                  >
-                    <SendIcon size={13} />
-                    <span>{publishingPeriod === slot.period ? '…' : 'نشر'}</span>
-                  </button>
-                )}
-                {slot.hw_id && (
-                  <button
-                    type="button"
-                    className="btn-del"
-                    style={{ alignSelf: 'flex-start', marginTop: 2 }}
-                    title="حذف واجب هذه الحصة"
-                    onClick={() => void handleDeletePeriod(slot.period)}
-                  >
-                    <TrashIcon size={13} />
-                    <span>حذف</span>
-                  </button>
-                )}
               </div>
 
               {/* LEFT cell — textarea + attachments */}
@@ -488,18 +468,38 @@ export default function HomeworkEntry() {
                   className="hw-textarea he-hw-textarea"
                   rows={2}
                   placeholder="نص الواجب…"
+                  aria-label={`واجب الحصة ${slot.period}`}
                   value={slot.body}
                   onChange={e => setBodies({ [slot.period]: e.target.value })}
                   dir="rtl"
                 />
-                <AttachmentChips
-                  hwId={slot.hw_id}
-                  attachments={slot.attachments}
-                  period={slot.period}
-                  onUpload={uploadAttachment}
-                  onDelete={deleteAttachment}
-                  showToast={showToast}
-                />
+                <div className="he-period-actions">
+                  <AttachmentChips
+                    hwId={slot.hw_id}
+                    attachments={slot.attachments}
+                    period={slot.period}
+                    onUpload={uploadAttachment}
+                    onDelete={deleteAttachment}
+                    showToast={showToast}
+                  />
+                  <div className="he-period-actions-end">
+                    {slot.status === 'draft' && slot.hw_id && (
+                      <button type="button" className="btn btn-success btn-sm he-btn-publish--sm"
+                        disabled={publishingPeriod === slot.period || saving || publishing}
+                        onClick={() => void handlePublishPeriod(slot.period)}>
+                        <SendIcon size={13} /><span>{publishingPeriod === slot.period ? '…' : 'نشر الواجب'}</span>
+                      </button>
+                    )}
+                    {slot.hw_id && (
+                      <button type="button" className="btn-del he-delete-btn"
+                        aria-label={`حذف واجب الحصة ${slot.period}`}
+                        title="حذف واجب هذه الحصة"
+                        onClick={() => void handleDeletePeriod(slot.period)}>
+                        <TrashIcon size={13} /><span>حذف الواجب</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
             </div>

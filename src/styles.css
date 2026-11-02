@@ -1929,6 +1929,23 @@ button:disabled {
   min-width: 0;
 }
 
+.he-period-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.he-period-heading .he-status {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.he-period-heading .he-status--published { color: #08764f; }
+.he-period-heading .he-status--draft { color: #905600; }
+
 .he-period-num {
   font-size: 0.8rem;
   font-weight: 800;
@@ -1966,7 +1983,20 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
+
+.he-period-actions,
+.he-period-actions-end {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.he-period-actions { justify-content: space-between; }
+.he-period-actions-end { margin-inline-start: auto; }
+.he-delete-btn { min-height: 40px; }
 
 .he-hw-textarea {
   flex: 0 0 auto;
@@ -2039,10 +2069,10 @@ button:disabled {
   align-items: center;
   gap: 4px;
   background: rgba(0, 123, 254, 0.06);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-full);
-  padding: 5px 12px;
-  min-height: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 7px 12px;
+  min-height: 40px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--fg-secondary);
@@ -3727,9 +3757,8 @@ button:disabled {
     border-inline-end: none;
     border-bottom: 1px solid var(--border);
     max-width: none;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     padding: 10px 12px;
     gap: 6px;
   }

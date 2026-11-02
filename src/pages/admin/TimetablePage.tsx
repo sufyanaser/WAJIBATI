@@ -219,6 +219,7 @@ export default function TimetablePage() {
       </div>
 
       {/* Timetable Grid */}
+      <p className="tt-scroll-hint">اسحب الجدول أفقياً لعرض بقية الحصص.</p>
       {loading ? <Spinner /> : (
         <div className="tt-grid-wrap">
           <table className="tt-grid">

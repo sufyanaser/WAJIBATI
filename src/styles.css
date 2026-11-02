@@ -3429,13 +3429,34 @@ button:disabled {
 
 .tt-day-label {
   font-weight: 800;
-  color: var(--accent);
-  background: rgba(15, 30, 51, 0.5);
+  color: #194c78;
+  background: #edf4fb;
   white-space: nowrap;
 }
 
+.tt-grid {
+  width: max(100%, 1260px);
+  table-layout: fixed;
+}
+
+.tt-grid .tt-corner { width: 120px; }
+
+.tt-scroll-hint {
+  margin: -8px 0 -10px;
+  color: var(--fg-secondary);
+  font-size: 0.85rem;
+}
+
+@media (min-width: 1600px) { .tt-scroll-hint { display: none; } }
+
+.tt-grid th {
+  background: #253b56;
+  color: #fff;
+  font-size: 0.94rem;
+}
+
 .tt-cell {
-  min-width: 115px;
+  min-width: 180px;
   border-left: 1px solid var(--border);
   transition: background-color var(--transition-fast);
 }
@@ -3462,11 +3483,16 @@ button:disabled {
   cursor: pointer;
 }
 
-.tt-cell-button:hover .tt-subj { color: var(--accent); }
+.tt-cell-button:hover:not(:disabled) {
+  background: #edf5ff;
+  color: var(--fg);
+}
+.tt-cell-button:hover .tt-subj { color: #005bbd; }
+.tt-cell-button:active:not(:disabled) { transform: none; }
 
 .tt-inline-edit {
   display: grid;
-  min-width: 145px;
+  min-width: 0;
   gap: 6px;
 }
 
@@ -3476,7 +3502,7 @@ button:disabled {
   min-height: 40px;
   padding: 6px 8px;
   padding-inline-end: 32px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .tt-inline-actions { display: flex; gap: 5px; }
@@ -3501,15 +3527,18 @@ button:disabled {
 
 .tt-subj {
   display: block;
-  font-size: 0.86rem;
+  font-size: 0.96rem;
+  line-height: 1.5;
   color: var(--fg);
 }
 
 .tt-teach {
   display: block;
-  font-size: 0.75rem;
-  color: var(--muted);
-  margin-top: 2px;
+  font-size: 0.86rem;
+  color: var(--fg-secondary);
+  line-height: 1.55;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
 }
 
 .tt-empty {

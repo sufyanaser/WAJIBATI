@@ -78,6 +78,7 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showTo
               disabled={busy === a.id}
               onClick={() => handleDelete(a.id, a.storage_path)}
               aria-label="حذف المرفق"
+              title="حذف المرفق"
             >
               {busy === a.id ? '…' : <CloseIcon size={12} />}
             </button>
@@ -119,14 +120,12 @@ function AttachmentChips({ hwId, attachments, period, onUpload, onDelete, showTo
       <button
         className="he-upload-btn"
         disabled={!hwId || busy === 'upload'}
-        title={!hwId ? 'احفظ الواجب أولاً لإضافة مرفقات' : undefined}
+        aria-label={`إضافة مرفق لواجب الدرس ${period}`}
+        title={!hwId ? 'احفظ الواجب أولاً لإضافة مرفقات' : 'إضافة مرفق'}
         onClick={() => inputRef.current?.click()}
       >
         {busy === 'upload' ? '…' : (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-            <PaperclipIcon size={13} />
-          <span>إضافة مرفق</span>
-          </span>
+          <PaperclipIcon size={18} />
         )}
       </button>
     </div>
@@ -147,7 +146,7 @@ function firstWorkday(d: Date): Date {
 // ── status badge ───────────────────────────────────────────────────────────────
 
 function StatusDot({ status }: { status: 'draft' | 'published' | 'archived' | null }) {
-  if (status === 'published') return <span className="he-status he-status--published" title="حالة الواجب: منشور" aria-label="حالة الواجب: منشور">منشور</span>
+  if (status === 'published') return null
   if (status === 'draft') return <span className="he-status he-status--draft" title="الواجب محفوظ كمسودة">مسودة</span>
   if (status === 'archived') return <span className="he-status he-status--empty">مؤرشف</span>
   return <span className="he-status he-status--empty">لا يوجد واجب</span>
@@ -406,20 +405,22 @@ export default function HomeworkEntry() {
         <button
           type="button"
           className="btn btn-secondary he-btn-draft"
+          aria-label="حفظ مسودة"
+          title="حفظ مسودة"
           disabled={saving || publishing || loading || exporting}
           onClick={handleSaveDraft}
         >
-          <CheckIcon size={16} />
-          <span>{saving ? '…' : 'حفظ مسودة'}</span>
+          {saving ? '…' : <CheckIcon size={19} />}
         </button>
         <button
           type="button"
           className="btn btn-primary he-btn-publish"
+          title="نشر واجبات اليوم لجميع الدروس"
           disabled={saving || publishing || loading || exporting}
           onClick={handlePublish}
         >
           <SendIcon size={16} />
-          <span>{publishing ? '…' : 'نشر الكل'}</span>
+          <span>{publishing ? '…' : 'نشر'}</span>
         </button>
         <button
           type="button"
@@ -429,8 +430,7 @@ export default function HomeworkEntry() {
           aria-label="تصدير A4 للطباعة"
           title="تصدير جدول واجبات اليوم كملف PDF للطباعة"
         >
-          <DownloadIcon size={16} />
-          <span>{exporting ? '…' : 'تصدير A4 للطباعة'}</span>
+          {exporting ? '…' : <DownloadIcon size={19} />}
         </button>
       </div>
 
@@ -445,7 +445,7 @@ export default function HomeworkEntry() {
               {/* RIGHT cell — period meta */}
               <div className="he-period-meta">
                 <div className="he-period-heading">
-                  <span className="he-period-num">حصة {slot.period}</span>
+                  <span className="he-period-num">درس {slot.period}</span>
                   <StatusDot status={slot.status} />
                 </div>
                 <select
@@ -492,10 +492,10 @@ export default function HomeworkEntry() {
                     )}
                     {slot.hw_id && (
                       <button type="button" className="btn-del he-delete-btn"
-                        aria-label={`حذف واجب الحصة ${slot.period}`}
-                        title="حذف واجب هذه الحصة"
+                        aria-label={`حذف واجب الدرس ${slot.period}`}
+                        title="حذف الواجب"
                         onClick={() => void handleDeletePeriod(slot.period)}>
-                        <TrashIcon size={13} /><span>حذف الواجب</span>
+                        <TrashIcon size={18} />
                       </button>
                     )}
                   </div>

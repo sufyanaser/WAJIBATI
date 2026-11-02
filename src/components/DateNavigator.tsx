@@ -44,6 +44,7 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
         type="button"
         className="date-nav-btn"
         aria-label="يوم سابق"
+        title="اليوم الدراسي السابق"
         onClick={() => onChange(stepDay(date, -1))}
       >
         <ChevronRightIcon size={18} />
@@ -67,6 +68,7 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
         type="button"
         className="date-nav-btn"
         aria-label="يوم تالي"
+        title="اليوم الدراسي التالي"
         onClick={() => onChange(stepDay(date, 1))}
       >
         <ChevronLeftIcon size={18} />

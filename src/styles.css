@@ -1821,7 +1821,7 @@ button:disabled {
   top: 64px;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
   gap: 10px;
   background: var(--card);
   padding: 10px;
@@ -1889,6 +1889,16 @@ button:disabled {
   padding: 12px 16px !important;
   min-height: 46px !important;
   font-size: 0.94rem !important;
+  justify-self: center;
+  min-width: 110px;
+}
+
+.he-btn-draft,
+.he-btn-export {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0 !important;
 }
 
 /* Timetable Grid */
@@ -2007,7 +2017,12 @@ button:disabled {
 
 .he-period-actions { justify-content: space-between; }
 .he-period-actions-end { margin-inline-start: auto; }
-.he-delete-btn { min-height: 40px; }
+.he-delete-btn {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
 
 .he-hw-textarea {
   flex: 0 0 auto;
@@ -2082,8 +2097,11 @@ button:disabled {
   background: rgba(0, 123, 254, 0.06);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  padding: 7px 12px;
-  min-height: 40px;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  min-height: 44px;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--fg-secondary);

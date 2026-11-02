@@ -376,6 +376,7 @@ export default function AdminShell() {
                 className="admin-mobile-menu-btn"
                 onClick={() => setMobileOpen(prev => !prev)}
                 aria-label="فتح القائمة الرئيسية"
+                title="فتح القائمة الرئيسية"
                 aria-expanded={mobileOpen}
               >
                 <MenuIcon size={20} />

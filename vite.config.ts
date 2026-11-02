@@ -29,8 +29,8 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       manifest: {
-        name: 'واجباتي',
-        short_name: 'واجباتي',
+        name: 'واجباتي | Wajebati',
+        short_name: 'Wajebati',
         description: 'واجباتي — متابعة الواجبات اليومية لطلاب اعدادية الرميلة للبنين',
         lang: 'ar', dir: 'rtl',
         start_url: '/', display: 'standalone',

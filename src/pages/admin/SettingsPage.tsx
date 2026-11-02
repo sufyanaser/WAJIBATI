@@ -13,6 +13,20 @@ import {
   TableIcon,
 } from '../../components/Icons'
 
+const GOVERNORATES = [
+  'الأنبار', 'بابل', 'بغداد', 'البصرة', 'دهوك', 'ديالى', 'ذي قار', 'أربيل',
+  'حلبجة', 'كربلاء', 'كركوك', 'ميسان', 'المثنى', 'النجف', 'نينوى', 'القادسية',
+  'صلاح الدين', 'السليمانية', 'واسط',
+] as const
+
+const BAGHDAD_DIRECTORATES = [
+  'المديرية العامة لتربية بغداد الكرخ الأولى', 'المديرية العامة لتربية بغداد الكرخ الثانية',
+  'المديرية العامة لتربية بغداد الكرخ الثالثة', 'المديرية العامة لتربية بغداد الرصافة الأولى',
+  'المديرية العامة لتربية بغداد الرصافة الثانية', 'المديرية العامة لتربية بغداد الرصافة الثالثة',
+] as const
+
+const ministryName = 'وزارة التربية'
+
 const ROLE_LABELS: Record<'owner' | 'editor' | 'viewer', { title: string; desc: string; badgeClass: string }> = {
   owner: {
     title: 'مالك النظام (Owner)',
@@ -51,7 +65,7 @@ export default function SettingsPage() {
     e.preventDefault()
     setSavingSchool(true)
     setSchoolMsg(null)
-    const res = await saveSettings(schoolForm)
+    const res = await saveSettings({ ...schoolForm, ministry: ministryName })
     setSavingSchool(false)
     if (res.success) {
       setSchoolMsg({ text: 'تم حفظ وتحديث بيانات المدرسة والتقارير بنجاح.', isError: false })
@@ -155,63 +169,71 @@ export default function SettingsPage() {
           <form onSubmit={handleSaveSchool} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
-                  اسم المدرسة الرسمي
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={schoolForm.name}
-                  onChange={e => setSchoolForm(f => ({ ...f, name: e.target.value }))}
-                  required
-                  placeholder="مثال: إعدادية الرميلة للبنين"
-                  disabled={savingSchool || role === 'viewer'}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
+                <label htmlFor="school-ministry" style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   الوزارة التابعة
                 </label>
                 <input
+                  id="school-ministry"
                   type="text"
                   className="input"
-                  value={schoolForm.ministry}
-                  onChange={e => setSchoolForm(f => ({ ...f, ministry: e.target.value }))}
-                  required
-                  placeholder="مثال: وزارة التربية"
-                  disabled={savingSchool || role === 'viewer'}
+                  value={ministryName}
+                  readOnly
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
+                <label htmlFor="school-governorate" style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
+                  المحافظة
+                </label>
+                <select
+                  id="school-governorate"
+                  className="admin-select"
+                  style={{ width: '100%' }}
+                  value={schoolForm.governorate}
+                  onChange={e => {
+                    const governorate = e.target.value
+                    setSchoolForm(f => ({ ...f, governorate, directorate: !governorate || governorate === 'بغداد' ? '' : `المديرية العامة لتربية ${governorate}` }))
+                  }}
+                  required
+                  disabled={savingSchool || role === 'viewer'}
+                >
+                  <option value="">اختر المحافظة</option>
+                  {!GOVERNORATES.some(g => g === schoolForm.governorate) && schoolForm.governorate && <option value={schoolForm.governorate}>{schoolForm.governorate}</option>}
+                  {GOVERNORATES.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="school-directorate" style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   المديرية العامة للتربية
                 </label>
+                {schoolForm.governorate === 'بغداد' ? (
+                  <select id="school-directorate" className="admin-select" style={{ width: '100%' }} value={schoolForm.directorate}
+                    onChange={e => setSchoolForm(f => ({ ...f, directorate: e.target.value }))}
+                    required disabled={savingSchool || role === 'viewer'}>
+                    <option value="">اختر مديرية بغداد</option>
+                    {schoolForm.directorate && !BAGHDAD_DIRECTORATES.some(d => d === schoolForm.directorate) && <option value={schoolForm.directorate}>{schoolForm.directorate}</option>}
+                    {BAGHDAD_DIRECTORATES.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                ) : (
                 <input
+                  id="school-directorate"
                   type="text"
                   className="input"
                   value={schoolForm.directorate}
-                  onChange={e => setSchoolForm(f => ({ ...f, directorate: e.target.value }))}
+                  readOnly
                   required
-                  placeholder="مثال: المديرية العامة لتربية الأنبار"
-                  disabled={savingSchool || role === 'viewer'}
                 />
+                )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
-                  المحافظة
+                <label htmlFor="school-name" style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
+                  اسم المدرسة الرسمي
                 </label>
-                <input
-                  type="text"
-                  className="input"
-                  value={schoolForm.governorate}
-                  onChange={e => setSchoolForm(f => ({ ...f, governorate: e.target.value }))}
-                  required
-                  placeholder="مثال: الأنبار"
-                  disabled={savingSchool || role === 'viewer'}
-                />
+                <input id="school-name" type="text" className="input" value={schoolForm.name}
+                  onChange={e => setSchoolForm(f => ({ ...f, name: e.target.value }))}
+                  required placeholder="مثال: إعدادية الرميلة للبنين" disabled={savingSchool || role === 'viewer'} />
               </div>
 
               <div>
@@ -244,6 +266,10 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+
+            <p style={{ margin: 0, color: 'var(--fg-secondary)', fontSize: '.82rem' }}>
+              تُشتق تسمية المديرية من المحافظة؛ يرجى مراجعة الاسم الرسمي قبل اعتماد التقارير. في بغداد تُختار المديرية المختصة.
+            </p>
 
             <div>
               <label style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>

@@ -1815,6 +1815,24 @@ button:disabled {
   gap: 8px;
 }
 
+.he-period-picker {
+  display: grid;
+  gap: 6px;
+  max-width: 560px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.he-period-picker .admin-select {
+  width: 100%;
+}
+
+.he-batch-note {
+  margin: -4px 0 0;
+  color: var(--fg-secondary);
+  font-size: 0.82rem;
+}
+
 /* Sticky Batch Action Bar */
 .he-action-bar {
   position: sticky;
@@ -1899,14 +1917,14 @@ button:disabled {
 
 @media (min-width: 900px) {
   .he-timetable {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 720px);
     gap: 14px;
   }
 }
 
 .he-period-row {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(165px, 35%) minmax(0, 1fr);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -1926,8 +1944,7 @@ button:disabled {
   padding: 14px;
   background: var(--surface2);
   border-inline-end: 1px solid var(--border);
-  min-width: 104px;
-  max-width: 132px;
+  min-width: 0;
 }
 
 .he-period-num {
@@ -1962,11 +1979,12 @@ button:disabled {
 }
 
 .he-hw-textarea {
-  flex: 1;
+  flex: 0 0 auto;
   border: 1px solid var(--border-strong) !important;
   border-radius: var(--radius-md) !important;
   background: var(--card) !important;
   min-height: 68px;
+  height: 80px;
   resize: vertical;
   padding: 10px 12px !important;
 }

@@ -163,6 +163,7 @@ export default function HomeworkEntry() {
   const [assignments, setAssignments] = useState<TeachingAssignOpt[]>([])
   const [secId, setSecId] = useState<number | null>(null)
   const [date, setDate] = useState<Date>(() => firstWorkday(new Date()))
+  const [selectedPeriod, setSelectedPeriod] = useState(1)
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishingPeriod, setPublishingPeriod] = useState<number | null>(null)
@@ -402,6 +403,23 @@ export default function HomeworkEntry() {
         </div>
       </section>
 
+      <div className="he-period-picker">
+        <label htmlFor="homework-period">الحصة</label>
+        <select
+          id="homework-period"
+          className="admin-select"
+          value={selectedPeriod}
+          onChange={e => setSelectedPeriod(Number(e.target.value))}
+          disabled={loading || periods.length === 0}
+        >
+          {periods.map(slot => (
+            <option key={slot.period} value={slot.period}>
+              {`الحصة ${slot.period} — ${slot.subject || 'لم تُحدد المادة'}${slot.teacher ? ` — ${slot.teacher}` : ''}`}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* ── Sticky Batch Action Bar ───────────────────────────── */}
       <div className="he-action-bar">
         <button
@@ -434,13 +452,14 @@ export default function HomeworkEntry() {
           <span>{exporting ? '…' : 'تصدير A4 للطباعة'}</span>
         </button>
       </div>
+      <p className="he-batch-note">حفظ مسودة ونشر الكل يشملان جميع حصص اليوم.</p>
 
       {/* ── Timetable Grid ────────────────────────────────────── */}
       {loading ? (
         <p className="muted">جارٍ التحميل…</p>
       ) : (
         <div className="he-timetable">
-          {periods.map(slot => (
+          {periods.filter(slot => slot.period === selectedPeriod).map(slot => (
             <div key={slot.period} className="he-period-row">
 
               {/* RIGHT cell — period meta */}
@@ -462,9 +481,7 @@ export default function HomeworkEntry() {
                     ))}
                   </select>
                 )}
-                {slot.teacher && (
-                  <span className="he-teacher-name">{slot.teacher}</span>
-                )}
+                <span className="he-teacher-name">{slot.teacher || 'لم يُحدد المدرس في الجدول'}</span>
                 <StatusDot status={slot.status} />
                 {slot.status === 'draft' && slot.hw_id && (
                   <button

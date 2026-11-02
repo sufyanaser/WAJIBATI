@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { PageHeader } from '../../components/PageHeader'
 import { BottomNavBar } from '../../components/BottomNavBar'
 import { useWeeklyTimetable } from '../../hooks/useWeeklyTimetable'
-import { CalendarDaysIcon, ChevronRightIcon, ChevronLeftIcon } from '../../components/Icons'
+import { CalendarDaysIcon } from '../../components/Icons'
 
 interface ChildInfo {
   student_id: number
@@ -114,58 +115,20 @@ export default function TimetablePage() {
         paddingRight: 12,
       }}
     >
-      {/* ? Header */}
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 4px 8px 4px',
-          borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
-          marginBottom: 10,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              backgroundColor: 'rgba(0, 123, 254, 0.1)', color: 'var(--accent, #007BFE)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <CalendarDaysIcon size={20} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.18rem', fontWeight: 800, margin: 0, color: '#0F172A', lineHeight: 1.2 }}>
-              الجدول الأسبوعي
-            </h1>
-            <p style={{ fontSize: '0.78rem', margin: 0, color: 'var(--fg-secondary, #64748B)' }}>
-              جدول الحصص المعتمد للصف والشعبة
-            </p>
-          </div>
-        </div>
+      {/* ── Unified Header ── */}
+      <PageHeader
+        title="الجدول الأسبوعي"
+        subtitle={currentChild?.section_label || 'جدول الحصص المعتمد للصف والشعبة'}
+        onBack={() => nav('/')}
+        backLabel="العودة للرئيسية"
+      />
 
-        <button
-          type="button"
-          onClick={() => nav('/')}
-          className="icon-btn"
-          aria-label="العودة للرئيسية"
-          style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <ChevronLeftIcon size={20} />
-        </button>
-      </header>
-
-      {/* ? Multi-Child Selector */}
+      {/* ── Multi-Child Selector ── */}
       {children.length > 1 && (
         <nav
           className="child-tabs"
           aria-label="اختيار الطالب"
-          style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4 }}
+          style={{ marginBottom: 12, paddingBottom: 4 }}
         >
           {children.map((c, i) => (
             <button
@@ -173,18 +136,6 @@ export default function TimetablePage() {
               type="button"
               className={`tab ${i === childIdx ? 'active' : ''}`}
               onClick={() => setChildIdx(i)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 8,
-                border: '1px solid',
-                borderColor: i === childIdx ? 'var(--accent, #007BFE)' : 'rgba(203, 213, 225, 0.75)',
-                backgroundColor: i === childIdx ? 'rgba(0, 123, 254, 0.1)' : 'rgba(255, 255, 255, 0.85)',
-                color: i === childIdx ? 'var(--accent, #007BFE)' : '#64748B',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
             >
               {c.full_name}
             </button>
@@ -192,48 +143,21 @@ export default function TimetablePage() {
         </nav>
       )}
 
-      {/* ? Student & Section Bar */}
+      {/* ── Student & Section Bar ── */}
       {currentChild && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 12px',
-            backgroundColor: 'rgba(255, 255, 255, 0.85)',
-            border: '1px solid rgba(203, 213, 225, 0.85)',
-            borderRadius: 10,
-            marginBottom: 12,
-            fontSize: '0.86rem',
-          }}
-        >
-          <span style={{ fontWeight: 700, color: '#0F172A' }}>{currentChild.full_name}</span>
-          <span
-            style={{
-              padding: '2px 8px',
-              borderRadius: 6,
-              backgroundColor: 'rgba(0, 123, 254, 0.08)',
-              border: '1px solid rgba(0, 123, 254, 0.25)',
-              color: '#007BFE',
-              fontWeight: 600,
-              fontSize: '0.78rem',
-            }}
-          >
-            {currentChild.section_label}
-          </span>
+        <div className="student-bar" style={{ marginTop: 0, marginBottom: 12 }}>
+          <div className="student-bar-info">
+            <span className="student-bar-name">{currentChild.full_name}</span>
+            <span className="student-bar-badge">{currentChild.section_label}</span>
+          </div>
         </div>
       )}
 
-      {/* ? 5-Day Selector Bar (Sun - Thu) */}
+      {/* ── 5-Day Selector Bar (Sun - Thu) ── */}
       <div
         role="tablist"
         aria-label="أيام الأسبوع الدراسي"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 6,
-          marginBottom: 14,
-        }}
+        className="timetable-day-grid"
       >
         {WEEKDAYS.map(w => {
           const isSelected = selectedDay === w.index
@@ -246,32 +170,11 @@ export default function TimetablePage() {
               type="button"
               aria-selected={isSelected}
               onClick={() => selectDay(w.index)}
-              style={{
-                padding: '8px 4px',
-                borderRadius: 10,
-                border: '1px solid',
-                borderColor: isSelected ? 'var(--accent, #007BFE)' : isSmart ? 'rgba(0, 123, 254, 0.4)' : 'rgba(203, 213, 225, 0.8)',
-                background: isSelected ? 'linear-gradient(135deg, #007BFE 0%, #00B4D8 100%)' : isSmart ? 'rgba(0, 123, 254, 0.06)' : 'rgba(255, 255, 255, 0.85)',
-                color: isSelected ? '#FFFFFF' : isSmart ? '#007BFE' : '#64748B',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                fontFamily: 'inherit',
-                minHeight: 44,
-                position: 'relative',
-              }}
+              className={`timetable-day-btn ${isSelected ? 'active' : ''} ${isSmart ? 'is-smart' : ''}`}
             >
-              <span style={{ fontSize: '0.85rem', fontWeight: isSelected ? 800 : 600 }}>{w.label}</span>
+              <span className="timetable-day-label">{w.label}</span>
               {isSmart && (
-                <span
-                  style={{
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    color: isSelected ? 'var(--accent, #38bdf8)' : 'rgba(56, 189, 248, 0.8)',
-                  }}
-                >
+                <span className="timetable-day-smart-tag">
                   الدوام
                 </span>
               )}

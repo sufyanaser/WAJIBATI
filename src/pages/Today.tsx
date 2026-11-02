@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { PageHeader } from '../components/PageHeader'
 import { ExportModal } from '../components/ExportModal'
 import { BottomNavBar } from '../components/BottomNavBar'
 import { DateNavigator } from '../components/DateNavigator'
@@ -14,6 +15,8 @@ import {
   CloseIcon,
   DownloadIcon,
   FamilyIcon,
+  SearchIcon,
+  UserIcon,
 } from '../components/Icons'
 
 // ── types ────────────────────────────────────────────────────────────────────
@@ -337,15 +340,7 @@ export default function Today() {
   if (childrenLoaded && !children.length) {
     return (
       <main className="screen" dir="rtl" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
-        <header className="today-header today-header-compact">
-          <div className="brand-identity">
-            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={40} height={40} />
-            <div className="today-header-titles">
-              <h1 className="app-title" style={{ fontSize: '1.25rem', margin: 0 }}>واجباتي</h1>
-              <p className="school-subtitle" style={{ fontSize: '.82rem', margin: 0 }}>{settings.name}</p>
-            </div>
-          </div>
-        </header>
+        <PageHeader title="واجباتي" subtitle={settings.name} variant="brand" showLogo />
         <div className="empty-state">
           <span className="empty-icon" aria-hidden="true">
             <FamilyIcon size={44} />
@@ -368,18 +363,8 @@ export default function Today() {
       dir="rtl"
       style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
     >
-      {/* ── compact header ── */}
-      <header className="today-header today-header-compact" style={{ padding: '10px 14px', marginBottom: 6 }}>
-        <div className="today-header-top" style={{ justifyContent: 'center' }}>
-          <div className="brand-identity" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={38} height={38} style={{ borderRadius: 10 }} />
-            <div className="today-header-titles" style={{ textAlign: 'right' }}>
-              <h1 className="app-title" style={{ fontSize: '1.25rem', margin: 0, lineHeight: 1.2 }}>واجباتي</h1>
-              <p className="school-subtitle" style={{ fontSize: '.8rem', margin: 0, color: 'rgba(255, 255, 255, 0.9)' }}>{settings.name}</p>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* ── compact unified header ── */}
+      <PageHeader title="واجباتي" subtitle={settings.name} variant="brand" showLogo />
 
       {/* ── push opt-in banner ─────────────────────────────────────────── */}
       {pushOpt === 'pending' && (
@@ -389,8 +374,11 @@ export default function Today() {
         </div>
       )}
 
-      {/* ── search bar ─────────────────────────────────────────────────── */}
+      {/* ── search bar (pill capsule matching master reference) ── */}
       <div className="search-row">
+        <span className="search-leading-icon" aria-hidden="true">
+          <SearchIcon size={20} />
+        </span>
         <input
           className="search-input"
           placeholder="بحث في الواجبات…"
@@ -399,7 +387,7 @@ export default function Today() {
           inputMode="search"
         />
         {search && (
-          <button className="icon-btn" onClick={() => setSearch('')} aria-label="مسح البحث">
+          <button className="icon-btn search-clear-btn" onClick={() => setSearch('')} aria-label="مسح البحث">
             <CloseIcon size={14} />
           </button>
         )}
@@ -513,63 +501,21 @@ export default function Today() {
             </div>
           )}
 
-          {/* ── student & section info bar + unified export ──────────── */}
+          {/* ── student & section info bar ──────────── */}
           {child && (
-            <div
-              className="student-bar"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                background: 'rgba(255, 255, 255, 0.88)',
-                border: '1px solid var(--border)',
-                borderRadius: 16, boxShadow: '0 4px 18px rgba(0, 102, 255, 0.05)',
-                gap: 10,
-                flexWrap: 'wrap',
-                margin: '8px 0 12px 0',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '.92rem', fontWeight: 800, color: 'var(--fg)' }}>
-                  الطالب: {child.full_name}
+            <div className="student-bar">
+              <div className="student-bar-info">
+                <span className="student-bar-avatar" aria-hidden="true">
+                  <UserIcon size={18} />
                 </span>
-                <span
-                  className="badge"
-                  style={{
-                    fontSize: '.82rem',
-                    fontWeight: 700,
-                    background: 'rgba(0, 123, 254, 0.08)',
-                    color: '#007BFE',
-                    border: '1px solid rgba(0, 123, 254, 0.25)',
-                    padding: '3px 10px',
-                    borderRadius: 6,
-                  }}
-                >
-                  {child.section_label}
+                <span className="student-bar-name">
+                  الطالب: {child.full_name}
                 </span>
               </div>
 
-              {!loading && hasExportableItems && (
-                <button
-                  type="button"
-                  onClick={() => setExportModalOpen(true)}
-                  className="icon-btn"
-                  aria-label="تصدير جدول الواجبات"
-                  style={{
-                    borderColor: 'var(--border)',
-                    color: 'var(--accent)',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    padding: '6px 12px',
-                    fontSize: '.85rem',
-                    fontWeight: 700,
-                  }}
-                >
-                  <DownloadIcon size={16} />
-                  <span>تصدير</span>
-                </button>
-              )}
+              <span className="student-bar-badge">
+                {child.section_label}
+              </span>
             </div>
           )}
 
@@ -589,7 +535,7 @@ export default function Today() {
           <SubjectGrid
             periods={schedulePeriods}
             unmatchedHomework={unmatchedHomework}
-            loading={loading}
+            loading={!childrenLoaded || loading}
             error={scheduleError}
             isWeekend={isWeekend}
             isTimetableAvailable={isTimetableAvailable}

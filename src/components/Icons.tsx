@@ -380,3 +380,70 @@ export function DatabaseIcon({ size = 18, className, ...props }: IconProps) {
     </svg>
   )
 }
+
+export function UserIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  )
+}
+
+export function DnaIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <path d="M2 15c6.667-6 13.333 0 20-6" />
+      <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" />
+      <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993" />
+      <path d="M17 6l-2.5-2.5" />
+      <path d="M14 8l-1-1" />
+      <path d="M7 18l2.5 2.5" />
+      <path d="M3.5 14.5l.5.5" />
+      <path d="M20 9l.5.5" />
+      <path d="M6.5 12.5l1 1" />
+      <path d="M16.5 10.5l1 1" />
+      <path d="M10 16l1 1" />
+    </svg>
+  )
+}
+
+export function CalculatorIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <rect x="4" y="2" width="16" height="20" rx="2" />
+      <line x1="8" y1="6" x2="16" y2="6" />
+      <line x1="16" y1="14" x2="16" y2="18" />
+      <path d="M16 10h.01" />
+      <path d="M12 10h.01" />
+      <path d="M8 10h.01" />
+      <path d="M12 14h.01" />
+      <path d="M8 14h.01" />
+      <path d="M12 18h.01" />
+      <path d="M8 18h.01" />
+    </svg>
+  )
+}
+
+export function ActivityIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  )
+}
+
+export function MosqueIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <path d="M12 3c-1.5 1.5-3 3.5-3 6h6c0-2.5-1.5-4.5-3-6z" />
+      <path d="M5 11h14v10H5z" />
+      <path d="M10 21v-4a2 2 0 0 1 4 0v4" />
+      <line x1="12" y1="2" x2="12" y2="3" />
+      <path d="M3 14h2v7H3z" />
+      <path d="M19 14h2v7h-2z" />
+      <path d="M4 14l-1-2h4l-1 2" />
+      <path d="M20 14l-1-2h4l-1 2" />
+    </svg>
+  )
+}

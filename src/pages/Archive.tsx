@@ -3,9 +3,11 @@ import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { HomeworkSearch } from '../components/HomeworkSearch'
+import { PageHeader } from '../components/PageHeader'
+import { BottomNavBar } from '../components/BottomNavBar'
 import { Spinner } from '../components/Spinner'
 import { EmptyState } from '../components/EmptyState'
-import { CalendarIcon, HomeIcon, BookIcon } from '../components/Icons'
+import { CalendarIcon, BookIcon } from '../components/Icons'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section {
@@ -196,27 +198,18 @@ export default function Archive() {
   const currentSectionLabel = sections.find(s => s.id === selectedSection)?.label ?? 'إعدادية الرميلة للبنين'
 
   return (
-    <main dir="rtl" className="archive-wrap screen today">
-      {/* header */}
-      <header className="archive-sticky-head today-header">
-        <div className="today-header-top" style={{ width: '100%' }}>
-          <div className="brand-identity">
-            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
-            <div className="today-header-titles">
-              <h1 className="archive-title app-title">أرشيف الواجبات</h1>
-              <p className="archive-section-label school-subtitle">{currentSectionLabel}</p>
-            </div>
-          </div>
-          <div className="archive-head-actions">
-            <button type="button" className="icon-btn" onClick={() => nav('/')}>
-              اليوم
-            </button>
-            <button type="button" className="icon-btn" onClick={signOut}>
-              خروج
-            </button>
-          </div>
-        </div>
-      </header>
+    <main
+      dir="rtl"
+      className="archive-wrap screen today"
+      style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
+    >
+      {/* ── Unified Header ── */}
+      <PageHeader
+        title="أرشيف الواجبات"
+        subtitle={currentSectionLabel}
+        onBack={() => nav('/')}
+        backLabel="العودة للرئيسية"
+      />
 
       <div className="archive-body">
         {/* search bar */}
@@ -305,15 +298,8 @@ export default function Archive() {
         )}
       </div>
 
-      {/* bottom bar */}
-      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
-        <div className="bottom-bar-inner">
-          <button type="button" className="archive-link" onClick={() => nav('/')}>
-            <HomeIcon size={16} />
-            <span>العودة إلى واجبات اليوم</span>
-          </button>
-        </div>
-      </nav>
+      {/* ── Unified 5-Item Bottom Navigation Bar ── */}
+      <BottomNavBar onLogout={signOut} />
     </main>
   )
 }

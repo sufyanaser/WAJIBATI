@@ -1,3 +1,4 @@
+import { AuthScenery } from '../components/AuthScenery'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, usernameToAdminEmail } from '../lib/supabase'
@@ -42,7 +43,8 @@ export default function AdminLogin() {
   }
 
   return (
-    <main className="auth-page" dir="rtl">
+    <main className="auth-page auth-page--admin" dir="rtl">
+      <AuthScenery />
       <div className="auth-card">
         <div className="auth-brand">
           <img
@@ -52,9 +54,9 @@ export default function AdminLogin() {
             height={76}
             className="auth-logo"
           />
-          <span className="auth-role-badge">الإدارة والمدرسون</span>
+          <span className="auth-role-badge">واجباتي · بوابة المدرسة</span>
           <div>
-            <h1 className="login-title">لوحة الإدارة</h1>
+            <h1 className="login-title">دخول الإدارة</h1>
             <p className="school-subtitle" style={{ marginTop: 4 }}>
               إعدادية الرميلة للبنين
             </p>

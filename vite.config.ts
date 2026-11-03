@@ -28,6 +28,7 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
+      includeAssets: ['intro-logo.png', 'intro-symbol.png'],
       manifest: {
         name: 'واجباتي',
         short_name: 'واجباتي',

@@ -80,7 +80,7 @@ export function ConfirmDialog({
                 margin: 0,
                 fontSize: '1rem',
                 fontWeight: 700,
-                color: isDestructive ? '#FCA5A5' : '#FFFFFF',
+                color: isDestructive ? '#EF4444' : 'var(--fg)',
               }}
             >
               {title}

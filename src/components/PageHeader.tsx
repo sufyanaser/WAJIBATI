@@ -1,25 +1,63 @@
 import { ReactNode } from 'react'
+import { ChevronRightIcon } from './Icons'
 
-interface Props {
+export interface PageHeaderProps {
   title: string
   subtitle?: string
   actions?: ReactNode
+  badge?: ReactNode
   showLogo?: boolean
+  onBack?: () => void
+  backLabel?: string
+  className?: string
+  variant?: 'glass' | 'brand'
 }
 
-export function PageHeader({ title, subtitle, actions, showLogo = false }: Props) {
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+  badge,
+  showLogo = true,
+  onBack,
+  backLabel = 'العودة',
+  className = '',
+  variant = 'glass',
+}: PageHeaderProps) {
   return (
-    <header className="top-bar" style={{ position: 'sticky', top: 0, zIndex: 20 }}>
-      <div className="brand-identity">
-        {showLogo && (
-          <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={42} height={42} />
+    <header className={`guardian-header ${variant === 'brand' ? 'guardian-header--brand' : ''} ${className}`}>
+      <div className="guardian-header-start">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="guardian-header-back-btn"
+            aria-label={backLabel}
+            title={backLabel}
+          >
+            <ChevronRightIcon size={20} />
+          </button>
         )}
-        <div className="today-header-titles">
-          <h1 className="app-title">{title}</h1>
-          {subtitle && <p className="school-subtitle">{subtitle}</p>}
+        {showLogo && (
+          <div className="guardian-header-logo-wrap">
+            <img
+              src="/icon-192.png"
+              alt="واجباتي"
+              className="brand-logo guardian-header-logo"
+              width={54}
+              height={54}
+            />
+          </div>
+        )}
+        <div className="guardian-header-titles">
+          <div className="guardian-header-title-row">
+            <h1 className="guardian-header-title">{title}</h1>
+            {badge && <div className="guardian-header-badge">{badge}</div>}
+          </div>
+          {subtitle && <p className="guardian-header-subtitle">{subtitle}</p>}
         </div>
       </div>
-      {actions && <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>{actions}</div>}
+      {actions && <div className="guardian-header-actions">{actions}</div>}
     </header>
   )
 }

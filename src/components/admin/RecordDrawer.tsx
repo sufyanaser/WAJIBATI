@@ -110,7 +110,7 @@ export function RecordDrawer({
                 margin: 0,
                 fontSize: '1.05rem',
                 fontWeight: 700,
-                color: '#FFFFFF',
+                color: 'var(--fg)',
                 fontFamily: 'var(--font-family-heading)',
               }}
             >

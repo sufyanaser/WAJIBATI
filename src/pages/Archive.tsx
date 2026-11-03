@@ -3,9 +3,11 @@ import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { HomeworkSearch } from '../components/HomeworkSearch'
+import { PageHeader } from '../components/PageHeader'
+import { BottomNavBar } from '../components/BottomNavBar'
 import { Spinner } from '../components/Spinner'
 import { EmptyState } from '../components/EmptyState'
-import { CalendarIcon, HomeIcon, BookIcon } from '../components/Icons'
+import { CalendarIcon, BookIcon } from '../components/Icons'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section {
@@ -64,6 +66,7 @@ export default function Archive() {
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [openDay, setOpenDay] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   // ── load sections ─────────────────────────────────────────────────────────
@@ -174,6 +177,15 @@ export default function Archive() {
   }, [search, selectedSection, fetchItems])
 
   // ── load more ─────────────────────────────────────────────────────────────
+  // group loaded homework by due date (newest day first)
+  const dayGroups = Object.entries(
+    items.reduce<Record<string, HwItem[]>>((acc, it) => {
+      (acc[it.due_date] ??= []).push(it)
+      return acc
+    }, {}),
+  ).sort(([x], [y]) => (x < y ? 1 : -1))
+  const dayItems = openDay ? items.filter(i => i.due_date === openDay) : []
+
   const loadMore = useCallback(() => {
     const nextPage = page + 1
     setPage(nextPage)
@@ -196,27 +208,18 @@ export default function Archive() {
   const currentSectionLabel = sections.find(s => s.id === selectedSection)?.label ?? 'إعدادية الرميلة للبنين'
 
   return (
-    <main dir="rtl" className="archive-wrap screen today">
-      {/* header */}
-      <header className="archive-sticky-head today-header">
-        <div className="today-header-top" style={{ width: '100%' }}>
-          <div className="brand-identity">
-            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
-            <div className="today-header-titles">
-              <h1 className="archive-title app-title">أرشيف الواجبات</h1>
-              <p className="archive-section-label school-subtitle">{currentSectionLabel}</p>
-            </div>
-          </div>
-          <div className="archive-head-actions">
-            <button type="button" className="icon-btn" onClick={() => nav('/')}>
-              اليوم
-            </button>
-            <button type="button" className="icon-btn" onClick={signOut}>
-              خروج
-            </button>
-          </div>
-        </div>
-      </header>
+    <main
+      dir="rtl"
+      className="archive-wrap screen today"
+      style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
+    >
+      {/* ── Unified Header ── */}
+      <PageHeader
+        title="أرشيف الواجبات"
+        subtitle={currentSectionLabel}
+        onBack={() => nav('/')}
+        backLabel="العودة للرئيسية"
+      />
 
       <div className="archive-body">
         {/* search bar */}
@@ -261,12 +264,32 @@ export default function Archive() {
         ) : (
           <>
             <div className="archive-list hw-list">
-              {items.map(item => (
+              {!openDay && dayGroups.map(([day, list]) => (
+                <button
+                  key={day}
+                  type="button"
+                  className="archive-day-card"
+                  onClick={() => setOpenDay(day)}
+                  aria-label={`عرض واجبات ${arDate(day)}`}
+                >
+                  <span className="archive-day-card__date">{arDate(day)}</span>
+                  <span className="archive-day-card__count">{list.length} واجب</span>
+                </button>
+              ))}
+              {openDay && (
+                <>
+                  <button type="button" className="archive-day-back" onClick={() => setOpenDay(null)}>
+                    ← كل الأيام
+                  </button>
+                  <p className="archive-day-title">{arDate(openDay)}</p>
+                </>
+              )}
+              {dayItems.map(item => (
                 <article key={item.id} className="archive-entry hw-card">
-                  <p className="archive-entry__date" style={{ margin: 0, fontSize: '.82rem', color: 'var(--accent)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  {!openDay && (<p className="archive-entry__date" style={{ margin: 0, fontSize: '.82rem', color: 'var(--accent)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                     <CalendarIcon size={14} />
                     <span>{arDate(item.due_date)}</span>
-                  </p>
+                  </p>)}
                   <div className="archive-chips hw-header">
                     {item.period != null && (
                       <span className="archive-chip archive-chip--muted hw-period-circle" aria-label={`حصة ${item.period}`}>
@@ -305,15 +328,8 @@ export default function Archive() {
         )}
       </div>
 
-      {/* bottom bar */}
-      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
-        <div className="bottom-bar-inner">
-          <button type="button" className="archive-link" onClick={() => nav('/')}>
-            <HomeIcon size={16} />
-            <span>العودة إلى واجبات اليوم</span>
-          </button>
-        </div>
-      </nav>
+      {/* ── Unified 5-Item Bottom Navigation Bar ── */}
+      <BottomNavBar onLogout={signOut} />
     </main>
   )
 }

@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, phoneToEmail } from '../lib/supabase'
 import { Spinner } from '../components/Spinner'
+import { useSchoolSettings } from '../services/schoolSettings'
 
 export default function Login() {
+  const { settings } = useSchoolSettings()
   const [phone, setPhone] = useState('')
   const [pin, setPin] = useState('')
   const [err, setErr] = useState('')
@@ -46,7 +48,7 @@ export default function Login() {
           <div>
             <h1 className="login-title">دخول أولياء الأمور</h1>
             <p className="school-subtitle" style={{ marginTop: 4 }}>
-              إعدادية الرميلة للبنين
+              {settings.name}
             </p>
           </div>
         </div>

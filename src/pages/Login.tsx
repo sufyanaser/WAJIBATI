@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AuthScenery } from '../components/AuthScenery'
+import '../components/AuthScenery.css'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, phoneToEmail } from '../lib/supabase'
 import { Spinner } from '../components/Spinner'
@@ -31,7 +33,8 @@ export default function Login() {
   }
 
   return (
-    <main className="auth-page" dir="rtl">
+    <main className="auth-page auth-page--guardian" dir="rtl">
+      <AuthScenery />
       <div className="auth-card">
         {/* Brand identity */}
         <div className="auth-brand">
@@ -44,7 +47,7 @@ export default function Login() {
           />
           <span className="auth-role-badge">بوابة أولياء الأمور</span>
           <div>
-            <h1 className="login-title">واجباتي</h1>
+            <h1 className="login-title">دخول أولياء الأمور</h1>
             <p className="school-subtitle" style={{ marginTop: 4 }}>
               {settings.name}
             </p>

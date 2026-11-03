@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AuthScenery } from '../components/AuthScenery'
+import '../components/AuthScenery.css'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, usernameToAdminEmail } from '../lib/supabase'
 import { EyeIcon, EyeOffIcon, ShieldIcon } from '../components/Icons'
@@ -44,7 +46,8 @@ export default function AdminLogin() {
   }
 
   return (
-    <main className="auth-page" dir="rtl">
+    <main className="auth-page auth-page--admin" dir="rtl">
+      <AuthScenery />
       <div className="auth-card auth-card-admin">
         <div className="auth-brand">
           <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -81,10 +84,10 @@ export default function AdminLogin() {
           </span>
 
           <div>
-            <h1 className="login-title" style={{ color: 'var(--fg)', fontSize: '1.45rem' }}>
-              لوحة التحكم والإشراف
+            <h1 className="login-title">
+              دخول الإدارة
             </h1>
-            <p className="school-subtitle" style={{ marginTop: 4, color: 'var(--accent)', fontWeight: 600 }}>
+            <p className="school-subtitle" style={{ marginTop: 4, fontWeight: 600 }}>
               {settings.name}
             </p>
           </div>

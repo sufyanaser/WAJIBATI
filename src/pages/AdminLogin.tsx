@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, usernameToAdminEmail } from '../lib/supabase'
-import { EyeIcon, EyeOffIcon } from '../components/Icons'
+import { EyeIcon, EyeOffIcon, ShieldIcon } from '../components/Icons'
+import { useSchoolSettings } from '../services/schoolSettings'
 
 export default function AdminLogin() {
   const nav = useNavigate()
+  const { settings } = useSchoolSettings()
   const [username, setUsername] = useState('')
   const [pass, setPass] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -43,25 +45,52 @@ export default function AdminLogin() {
 
   return (
     <main className="auth-page" dir="rtl">
-      <div className="auth-card">
+      <div className="auth-card auth-card-admin">
         <div className="auth-brand">
-          <img
-            src="/icon-192.png"
-            alt="شعار واجباتي"
-            width={76}
-            height={76}
-            className="auth-logo"
-          />
-          <span className="auth-role-badge">الإدارة والمدرسون</span>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <img
+              src="/icon-192.png"
+              alt="شعار واجباتي"
+              width={76}
+              height={76}
+              className="auth-logo"
+            />
+            <span
+              style={{
+                position: 'absolute',
+                bottom: -4,
+                right: -4,
+                background: 'var(--surface2)',
+                borderRadius: '50%',
+                padding: '4px',
+                border: '1.5px solid var(--accent)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--accent)',
+              }}
+              title="لوحة الإدارة المؤمنة"
+            >
+              <ShieldIcon size={16} />
+            </span>
+          </div>
+
+          <span className="auth-role-badge auth-role-badge-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <ShieldIcon size={14} />
+            <span>بوابة الإدارة المدرسية</span>
+          </span>
+
           <div>
-            <h1 className="login-title">لوحة الإدارة</h1>
-            <p className="school-subtitle" style={{ marginTop: 4 }}>
-              إعدادية الرميلة للبنين
+            <h1 className="login-title" style={{ color: 'var(--fg)', fontSize: '1.45rem' }}>
+              لوحة التحكم والإشراف
+            </h1>
+            <p className="school-subtitle" style={{ marginTop: 4, color: 'var(--accent)', fontWeight: 600 }}>
+              {settings.name}
             </p>
           </div>
         </div>
 
-        <div className="divider" style={{ margin: 0 }} />
+        <div className="divider" style={{ margin: 0, borderColor: 'var(--border)' }} />
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="auth-field">

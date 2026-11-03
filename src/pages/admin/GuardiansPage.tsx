@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, isValidPhone } from '../../lib/supabase'
+import { supabase, isValidPhone, normalizePhone } from '../../lib/supabase'
 import { useAdmin } from './AdminShell'
 import { Spinner } from '../../components/Spinner'
 import { Toast, useToast } from '../../components/Toast'
@@ -39,6 +39,7 @@ export default function GuardiansPage() {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [altPhone, setAltPhone] = useState('')
+  const [pin, setPin] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState<number | ''>('')
   const [relation, setRelation] = useState('أب')
   const [saving, setSaving] = useState(false)
@@ -107,8 +108,9 @@ export default function GuardiansPage() {
   function startAdd() {
     setEditing(null)
     setFullName('')
-    setPhone('+9647')
+    setPhone('07')
     setAltPhone('')
+    setPin('')
     setSelectedStudentId('')
     setRelation('أب')
     setShowForm(true)
@@ -125,17 +127,18 @@ export default function GuardiansPage() {
   }
 
   function formatIraqiPhone(raw: string): string {
-    let p = raw.trim().replace(/\s+/g, '')
-    if (p.startsWith('07')) p = '+964' + p.slice(1)
-    else if (p.startsWith('7') && p.length === 10) p = '+964' + p
-    return p
+    try {
+      return normalizePhone(raw)
+    } catch {
+      return raw.trim()
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
 const cleanPhone = formatIraqiPhone(phone)
-    if (!/^\+9647[0-9]{9}$/.test(cleanPhone)) {
-      showToast('يرجى إدخال رقم هاتف عراقي صالح (07XXXXXXXXX أو +9647XXXXXXXXX)', 'error')
+    if (!/^07[0-9]{9}$/.test(cleanPhone)) {
+      showToast('يرجى إدخال رقم هاتف عراقي صالح مكون من 11 رقماً يبدأ بـ 07 (مثال: 07XXXXXXXXX)', 'error')
       return
     }
 
@@ -168,34 +171,28 @@ const cleanPhone = formatIraqiPhone(phone)
 
       showToast('تم تحديث بيانات ولي الأمر ✓', 'success')
     } else {
-      const extKey = `GUA-${Date.now().toString(36).toUpperCase()}`
-      const { data: newG, error } = await supabase
-        .from('guardians')
-        .insert({
-          external_key: extKey,
-          full_name: fullName.trim() || null,
-          phone: cleanPhone,
-          alt_phone: altPhone.trim() || null,
-          active: true,
-        })
-        .select('id')
-        .single()
-
-      if (error) {
-        showToast(`خطأ: ${error.message}`, 'error')
+      if (!/^[0-9]{6}$/.test(pin)) {
+        showToast('رمز PIN يجب أن يكون 6 أرقام', 'error')
         setSaving(false)
         return
       }
-
-      if (newG?.id && selectedStudentId) {
-        await supabase.from('guardian_students').insert({
-          guardian_id: newG.id,
-          student_id: Number(selectedStudentId),
+      // Creates the login and the guardian row together on the server.
+      const { data, error } = await supabase.functions.invoke('create-guardian', {
+        body: {
+          phone: cleanPhone,
+          pin,
+          full_name: fullName.trim() || null,
+          alt_phone: altPhone.trim() || null,
+          student_id: selectedStudentId === '' ? null : Number(selectedStudentId),
           relation: relation.trim() || null,
-        })
+        },
+      })
+      if (error || !data?.ok) {
+        showToast(`خطأ: ${error?.message ?? 'تعذر إنشاء الحساب'}`, 'error')
+        setSaving(false)
+        return
       }
-
-      showToast('تمت إضافة ولي الأمر بنجاح ✓', 'success')
+      showToast('تم إنشاء حساب ولي الأمر ✓', 'success')
     }
 
     setShowForm(false)
@@ -272,19 +269,32 @@ const cleanPhone = formatIraqiPhone(phone)
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 dir="ltr"
-                placeholder="07XXXXXXXXX أو +9647XXXXXXXXX"
-                pattern="^(\+9647[0-9]{9}|07[0-9]{9})$"
-                title="07 متبوعاً بـ 9 أرقام أو +9647 متبوعاً بـ 9 أرقام"
+                placeholder="07XXXXXXXXX"
+                pattern="^07[0-9]{9}$"
+                title="رقم هاتف عراقي مكون من 11 رقماً يبدأ بـ 07"
                 required
               />
             </label>
+            {!editing && (
+              <label>
+                <span>رمز PIN للدخول (6 أرقام) *</span>
+                <input
+                  value={pin}
+                  onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  dir="ltr"
+                  inputMode="numeric"
+                  placeholder="000000"
+                  required
+                />
+              </label>
+            )}
             <label>
               <span>رقم هاتف بديل (اختياري)</span>
               <input
                 value={altPhone}
                 onChange={e => setAltPhone(e.target.value)}
                 dir="ltr"
-                placeholder="+9647XXXXXXXXX"
+                placeholder="07XXXXXXXXX"
               />
             </label>
             <label>

@@ -9,7 +9,7 @@
  *           and subject selection without timetable data.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import React from 'react'
@@ -285,12 +285,7 @@ async function renderAdmin() {
 }
 
 describe('Admin component — integration', () => {
-  afterEach(() => vi.useRealTimers())
   beforeEach(() => {
-    // Freeze only Date; leave timers used by Testing Library functional.
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-10-26T09:00:00+03:00'))
-
     vi.clearAllMocks()
 
     mockGetSession.mockResolvedValue({
@@ -605,11 +600,7 @@ describe('Regression — publish guard and flush ordering', () => {
 // ── Attachment hardening scenarios ─────────────────────────────────────────────
 
 describe('Attachment hardening — 10 scenarios', () => {
-  afterEach(() => vi.useRealTimers())
   beforeEach(() => {
-    // Use a school day for admin UI tests; preserve real async timers.
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-10-26T09:00:00+03:00'))
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'admin-uid' } } } })
     mockDbFrom.mockImplementation((table: string) => {
@@ -775,11 +766,7 @@ describe('Attachment hardening — 10 scenarios', () => {
 // ── PART D: Redesigned UI & Workflow Coverage ─────────────────────────────────
 
 describe('Redesigned UI & Workflows — HomeworkCard, NoticesPage, Auto Teacher Assignment', () => {
-  afterEach(() => vi.useRealTimers())
   beforeEach(() => {
-    // Use a school day for admin UI tests; preserve real async timers.
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-10-26T09:00:00+03:00'))
     vi.clearAllMocks()
     mockGetSession.mockResolvedValue({ data: { session: { user: { id: 'admin-uid' } } } })
   })

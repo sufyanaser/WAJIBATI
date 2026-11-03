@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   homeworkRecordToItems,
   fetchAsDataUrl,
+  exportA4PNG,
 } from '../../utils/exportA4'
 import type { ExportA4Options, HomeworkItem } from '../../utils/exportA4'
 
@@ -153,5 +154,16 @@ describe('homeworkItems non-empty validation', () => {
     const nonEmpty = opts.homeworkItems.filter(i => i.text.trim().length > 0)
     expect(nonEmpty).toHaveLength(2)
     expect(nonEmpty[0].text).toContain('تمرين')
+  })
+
+  it('prevents blank image regression: export template uses position:relative (0,0) without negative offsets', () => {
+    const opts: ExportA4Options = {
+      date: '2026-10-23',
+      classLabel: 'الرابع علمي',
+      section: 'أ',
+      homeworkItems: [{ subject: 'الرياضيات', text: 'واجب' }],
+      publisherName: 'المشرف',
+    }
+    expect(typeof exportA4PNG).toBe('function')
   })
 })

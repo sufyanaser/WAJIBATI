@@ -1,20 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ExportButton } from '../components/ExportButton'
+import { PageHeader } from '../components/PageHeader'
+import { ExportModal } from '../components/ExportModal'
+import { BottomNavBar } from '../components/BottomNavBar'
 import { DateNavigator } from '../components/DateNavigator'
 import { Toast, useToast } from '../components/Toast'
-import { useHomework } from '../hooks/useHomework'
-import type { HwItem } from '../hooks/useHomework'
+import { useSchoolSettings } from '../services/schoolSettings'
+import { useGuardianSchedule, clearSessionScheduleCache } from '../hooks/useGuardianSchedule'
+import type { GuardianPeriodSlot, UnmatchedHomeworkItem } from '../hooks/useGuardianSchedule'
+import { SubjectGrid } from '../components/guardian/SubjectGrid'
+import { PeriodDetailDrawer } from '../components/guardian/PeriodDetailDrawer'
 import {
-  LogOutIcon,
-  BookIcon,
-  CalendarIcon,
   CloseIcon,
-  RefreshIcon,
-  ImageIcon,
-  FileTextIcon,
+  DownloadIcon,
   FamilyIcon,
+  SearchIcon,
+  UserIcon,
 } from '../components/Icons'
 
 // ── types ────────────────────────────────────────────────────────────────────
@@ -26,9 +28,15 @@ interface Child {
   section_letter: string
 }
 
-interface SRow extends HwItem {
+interface SRow {
+  id: string
+  period: number | null
+  body: string
   due_date: string
   section_id: number
+  subject: { name: string; color: string | null } | null
+  teacher: { full_name: string } | null
+  attachments: Array<{ id: string; storage_path: string; mime: string }>
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -49,13 +57,14 @@ function vapidKey(b64: string): ArrayBuffer {
 // ── component ─────────────────────────────────────────────────────────────────
 export default function Today() {
   const nav = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  // ── auth / children state ─────────────────────────────────────────────────
+  // ── auth / children / settings state ───────────────────────────────────────
+  const { settings } = useSchoolSettings()
   const [children, setChildren] = useState<Child[]>([])
   const [childrenLoaded, setChildrenLoaded] = useState(false)
   const [idx, setIdx] = useState(0)
   const [gid, setGid] = useState<string | null>(null)
-  const [schoolName, setSchoolName] = useState('اعدادية الرميلة للبنين')
 
   // ── date state ────────────────────────────────────────────────────────────
   const [date, setDate] = useState<Date>(() => {
@@ -77,8 +86,8 @@ export default function Today() {
   // ── push state ────────────────────────────────────────────────────────────
   const [pushOpt, setPushOpt] = useState<'pending' | 'granted' | 'off'>('off')
 
-  // ── A4 PDF export state ───────────────────────────────────────────────────
-  const [exporting, setExporting] = useState(false)
+  // ── export modal state ────────────────────────────────────────────────────
+  const [exportModalOpen, setExportModalOpen] = useState(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
   // ── signed URLs for attachments ───────────────────────────────────────────
@@ -87,26 +96,75 @@ export default function Today() {
   // ── current child ─────────────────────────────────────────────────────────
   const child = children[idx] ?? null
 
-  // ── homework hook ─────────────────────────────────────────────────────────
-  const { items: hw, notices, loading, offline } = useHomework(
-    child?.section_id ?? null,
-    toISO(date),
-  )
+  // ── schedule & homework hook (Task 13) ────────────────────────────────────
+  const {
+    periods: schedulePeriods,
+    unmatchedHomework,
+    notices,
+    loading,
+    error: scheduleError,
+    isWeekend,
+    isTimetableAvailable,
+    refetch: refetchSchedule,
+  } = useGuardianSchedule(child?.section_id ?? null, toISO(date), gid)
+
+  // ── Drawer navigation state via URL search param ?lesson=<period> ─────────
+  const lessonParam = searchParams.get('lesson')
+  const activePeriodNumber = lessonParam ? Number(lessonParam) : null
+  const [selectedUnmatched, setSelectedUnmatched] = useState<UnmatchedHomeworkItem | null>(null)
+
+  const activeSlot = activePeriodNumber != null
+    ? schedulePeriods.find(s => s.period === activePeriodNumber) ?? null
+    : null
+
+  const isDrawerOpen = activeSlot != null || selectedUnmatched != null
+
+  function handleSelectPeriod(slot: GuardianPeriodSlot) {
+    setSelectedUnmatched(null)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('lesson', String(slot.period))
+      return next
+    }, { replace: activePeriodNumber != null })
+  }
+
+  function handleSelectUnmatched(item: UnmatchedHomeworkItem) {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.delete('lesson')
+      return next
+    }, { replace: true })
+    setSelectedUnmatched(item)
+  }
+
+  function handleCloseDrawer() {
+    setSelectedUnmatched(null)
+    if (activePeriodNumber != null) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('lesson')
+        return next
+      })
+    }
+  }
+
+  // Clear drawer when active student or date changes
+  useEffect(() => {
+    setSelectedUnmatched(null)
+    if (searchParams.has('lesson')) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('lesson')
+        return next
+      }, { replace: true })
+    }
+  }, [idx, date])
 
   // ── boot ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) { nav('/login'); return }
       bootstrap()
-      supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'school')
-        .maybeSingle()
-        .then(({ data: s }) => {
-          if (s?.value && typeof s.value === 'object' && 'name' in s.value)
-            setSchoolName(String((s.value as { name: string }).name))
-        })
       if ('Notification' in window) {
         if (Notification.permission === 'default') setPushOpt('pending')
         else if (Notification.permission === 'granted') setPushOpt('granted')
@@ -149,7 +207,11 @@ export default function Today() {
 
   // ── signed URLs for attachments ───────────────────────────────────────────
   useEffect(() => {
-    const paths = hw.flatMap(h => h.attachments.map(a => a.storage_path))
+    const allAttachments = [
+      ...schedulePeriods.flatMap(s => s.homework?.attachments ?? []),
+      ...unmatchedHomework.flatMap(u => u.homework.attachments ?? []),
+    ]
+    const paths = allAttachments.map(a => a.storage_path)
     if (!paths.length) { setSignedUrls({}); return }
     supabase.storage.from('attachments').createSignedUrls(paths, 3600).then(({ data }) => {
       const map: Record<string, string> = {}
@@ -160,9 +222,9 @@ export default function Today() {
       setSignedUrls(map)
     }).catch(e => {
       console.error('signed URL generation failed', e)
-      showToast('فشل تحميل المرفقات — حاول مجدداً', 'error')
+      showToast('فشل تحميل المرفقات، حاول مجدداً', 'error')
     })
-  }, [hw])
+  }, [schedulePeriods, unmatchedHomework])
 
   // ── calendar homework dots ────────────────────────────────────────────────
   useEffect(() => {
@@ -207,6 +269,7 @@ export default function Today() {
 
   // ── logout ────────────────────────────────────────────────────────────────
   async function handleLogout() {
+    clearSessionScheduleCache()
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_AUTH_CACHES' })
     }
@@ -239,62 +302,28 @@ export default function Today() {
     } catch { /* user denied */ }
   }
 
-  // ── A4 PDF export ─────────────────────────────────────────────────────────
-  async function handleExportA4PDF() {
-    if (!child) return
-    setExporting(true)
-    try {
-      // Build ordered homework items (hw is already sorted by period from useHomework)
-      const subjectMap = new Map<string, string>()
-      for (const h of hw) {
-        const name = h.subject?.name ?? ''
-        if (!name) continue
-        const entry = h.period ? `(ح${h.period}) ${h.body}` : h.body
-        subjectMap.set(name, subjectMap.has(name) ? subjectMap.get(name)! + '\n' + entry : entry)
-      }
-      const homeworkItems = Array.from(subjectMap.entries()).map(([subject, text]) => ({ subject, text }))
+  // ── export data payload ───────────────────────────────────────────────────
+  const allHomeworkForExport = [
+    ...schedulePeriods.filter(s => s.has_homework && s.homework).map(s => s.homework!),
+    ...unmatchedHomework.map(u => u.homework),
+  ]
 
-      // Fetch publisher name from current admin session
-      let publisherName = 'مسؤول المدرسة'
-      try {
-        const { data: sess } = await supabase.auth.getSession()
-        if (sess.session?.user.id) {
-          const { data: adm } = await supabase
-            .from('admins')
-            .select('full_name')
-            .eq('user_id', sess.session.user.id)
-            .maybeSingle()
-          if (adm && (adm as { full_name?: string | null }).full_name) {
-            publisherName = (adm as { full_name: string }).full_name
-          }
-        }
-      } catch { /* keep default */ }
-
-      // Fetch app icon as base64 for embedding in the export
-      const { exportA4PNG, fetchAsDataUrl } = await import('../utils/exportA4')
-      const logoDataUrl = await fetchAsDataUrl('/icon-192.png')
-
-      const blob = await exportA4PNG({
-        date: toISO(date),
-        classLabel: child.section_label,
-        section: child.section_letter,
-        homeworkItems,
-        publisherName,
-        logoDataUrl,
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'واجباتي-' + toISO(date) + '.png'
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch (e) {
-      console.error('A4 export failed', e)
-      showToast('فشل التصدير — حاول مجدداً', 'error')
-    } finally {
-      setExporting(false)
-    }
+  const exportData = {
+    schoolName: settings.name,
+    sectionName: child?.section_label ?? '',
+    date: toISO(date),
+    notices: notices.filter(n => n.priority <= 1).map(n => n.title + (n.body ? ': ' + n.body : '')).join('\n'),
+    warnings: notices.filter(n => n.priority > 1).map(n => n.title + (n.body ? ': ' + n.body : '')).join('\n'),
+    items: allHomeworkForExport.map(h => ({
+      period: h.period ?? 0,
+      subject: h.subject_name ?? 'غير محدد',
+      teacher: h.teacher_name ?? 'غير محدد',
+      body: h.body,
+    })),
+    settings,
   }
+
+  const hasExportableItems = allHomeworkForExport.length > 0
 
   // ── calendar cells ────────────────────────────────────────────────────────
   function calCells(): (Date | null)[] {
@@ -307,72 +336,35 @@ export default function Today() {
   const todISO = toISO(new Date())
   const selISO = toISO(date)
 
-  // ── Arabic-formatted today's date ────────────────────────────────────────
-  const todayArabic = new Date().toLocaleDateString('ar-IQ', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-
   // ── no children state ─────────────────────────────────────────────────────
   if (childrenLoaded && !children.length) {
     return (
-      <main className="screen" dir="rtl">
-        <header className="today-header">
-          <div className="today-header-top">
-            <div className="brand-identity">
-              <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
-              <div className="today-header-titles">
-                <h1 className="app-title">واجباتي</h1>
-                <p className="school-subtitle">{schoolName}</p>
-              </div>
-            </div>
-            <button className="icon-btn" onClick={handleLogout}>
-              <LogOutIcon size={16} />
-              <span>خروج</span>
-            </button>
-          </div>
-        </header>
+      <main className="screen" dir="rtl" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+        <PageHeader title="واجباتي" subtitle={settings.name} variant="brand" showLogo />
         <div className="empty-state">
           <span className="empty-icon" aria-hidden="true">
             <FamilyIcon size={44} />
           </span>
           <p className="empty-msg">لا أبناء مرتبطون بهذا الحساب</p>
         </div>
+        <BottomNavBar
+          onOpenExport={() => {}}
+          onLogout={handleLogout}
+          canExport={false}
+        />
       </main>
     )
   }
 
   // ── main render ───────────────────────────────────────────────────────────
   return (
-    <main className="screen today" dir="rtl">
-
-      {/* ── header ─────────────────────────────────────────────────────── */}
-      <header className="today-header">
-        <div className="today-header-top">
-          <div className="brand-identity">
-            <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={44} height={44} />
-            <div className="today-header-titles">
-              <h1 className="app-title">واجباتي</h1>
-              <p className="school-subtitle">{schoolName}</p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link to="/archive" className="icon-btn">
-              <BookIcon size={16} />
-              <span>الأرشيف</span>
-            </Link>
-            <button className="icon-btn" onClick={handleLogout}>
-              <LogOutIcon size={16} />
-              <span>خروج</span>
-            </button>
-          </div>
-        </div>
-        <p className="today-date-display" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <CalendarIcon size={15} />
-          <span>{todayArabic}</span>
-        </p>
-      </header>
+    <main
+      className="screen today"
+      dir="rtl"
+      style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
+    >
+      {/* ── compact unified header ── */}
+      <PageHeader title="واجباتي" subtitle={settings.name} variant="brand" showLogo className="today-sticky-header" />
 
       {/* ── push opt-in banner ─────────────────────────────────────────── */}
       {pushOpt === 'pending' && (
@@ -382,8 +374,11 @@ export default function Today() {
         </div>
       )}
 
-      {/* ── search bar ─────────────────────────────────────────────────── */}
+      {/* ── search bar (pill capsule matching master reference) ── */}
       <div className="search-row">
+        <span className="search-leading-icon" aria-hidden="true">
+          <SearchIcon size={20} />
+        </span>
         <input
           className="search-input"
           placeholder="بحث في الواجبات…"
@@ -392,7 +387,7 @@ export default function Today() {
           inputMode="search"
         />
         {search && (
-          <button className="icon-btn" onClick={() => setSearch('')} aria-label="مسح البحث">
+          <button className="icon-btn search-clear-btn" onClick={() => setSearch('')} aria-label="مسح البحث">
             <CloseIcon size={14} />
           </button>
         )}
@@ -416,7 +411,7 @@ export default function Today() {
                     ? { background: r.subject.color + '33', borderColor: r.subject.color }
                     : undefined}
                 >
-                  {r.subject?.name ?? '—'}
+                  {r.subject?.name ?? 'غير محدد'}
                 </span>
                 <span className="hw-date-label">
                   {new Date(r.due_date + 'T00:00:00').toLocaleDateString('ar-IQ', {
@@ -431,22 +426,7 @@ export default function Today() {
         </section>
       ) : (
         <>
-          {/* ── child selector tabs ────────────────────────────────────── */}
-          {children.length > 1 && (
-            <nav className="child-tabs">
-              {children.map((c, i) => (
-                <button
-                  key={c.student_id}
-                  className={'tab' + (i === idx ? ' active' : '')}
-                  onClick={() => setIdx(i)}
-                >
-                  {c.full_name}
-                </button>
-              ))}
-            </nav>
-          )}
-
-          {/* ── date navigation ─────────────────────────────────────────── */}
+                    {/* ── date navigation ─────────────────────────────────────────── */}
           <DateNavigator
             date={date}
             onChange={setDate}
@@ -506,48 +486,28 @@ export default function Today() {
             </div>
           )}
 
-          {/* ── section badge + export ──────────────────────────────────── */}
+          {/* ── student & section info bar ──────────── */}
           {child && (
-            <div className="section-bar section-bar-between">
-              <span className="badge">{child.section_label}</span>
-              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                {!loading && hw.length > 0 && (
-                  <ExportButton
-                    data={{
-                      schoolName,
-                      sectionName: child.section_label,
-                      date: toISO(date),
-                      items: hw.map(h => ({
-                        period: h.period ?? 0,
-                        subject: h.subject?.name ?? '—',
-                        teacher: h.teacher?.full_name ?? '—',
-                        body: h.body,
-                      })),
-                    }}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={handleExportA4PDF}
-                  disabled={exporting || loading}
-                  className="icon-btn"
-                  style={{
-                    borderColor: 'var(--accent)',
-                    color: 'var(--accent)',
-                    cursor: (exporting || loading) ? 'wait' : 'pointer',
-                    opacity: (exporting || loading) ? 0.6 : 1,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {exporting ? <RefreshIcon size={16} /> : <ImageIcon size={16} />}
-                  <span>{exporting ? 'جارٍ التصدير…' : 'تصدير صورة A4'}</span>
-                </button>
+            <div
+                className="student-bar"
+                role={children.length > 1 ? 'button' : undefined}
+                tabIndex={children.length > 1 ? 0 : undefined}
+                aria-label={children.length > 1 ? 'تبديل الطالب' : undefined}
+                onClick={children.length > 1 ? () => setIdx(i => (i + 1) % children.length) : undefined}
+              >
+              <div className="student-bar-info">
+                <span className="student-bar-avatar" aria-hidden="true">
+                  <UserIcon size={18} />
+                </span>
+                <span className="student-bar-name">
+                  الطالب: {child.full_name}
+                </span>
               </div>
-            </div>
-          )}
 
-          {offline && (
-            <p className="offline-note">عرض مؤقت بدون اتصال</p>
+              <span className="student-bar-badge">
+                {child.section_label}
+              </span>
+            </div>
           )}
 
           {/* ── notices — latest 3 ─────────────────────────────────────── */}
@@ -562,91 +522,48 @@ export default function Today() {
             </section>
           )}
 
-          {/* ── homework list ──────────────────────────────────────────── */}
-          {loading ? (
-            /* skeleton loading */
-            <section className="hw-list" aria-busy="true" aria-label="جارٍ التحميل">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="hw-skeleton">
-                  <div className="skel-line skel-short" />
-                  <div className="skel-line skel-long" />
-                  <div className="skel-line skel-medium" />
-                </div>
-              ))}
-            </section>
-          ) : hw.length === 0 ? (
-            /* empty state */
-            <div className="empty-state">
-              <span className="empty-icon" aria-hidden="true">
-                <BookIcon size={44} />
-              </span>
-              <p className="empty-msg">لا توجد واجبات لهذا اليوم</p>
-            </div>
-          ) : (
-            /* subject cards */
-            <section className="hw-list">
-              {hw.map(h => (
-                <article key={h.id} className="hw-card" dir="rtl">
-                  <div className="hw-card-top">
-                    {h.period != null && (
-                      <span
-                        className="hw-period-circle"
-                        aria-label={`الحصة ${h.period}`}
-                      >
-                        {h.period}
-                      </span>
-                    )}
-                    <span
-                      className="hw-subject-name"
-                      style={h.subject?.color
-                        ? { background: h.subject.color + '33', borderColor: h.subject.color }
-                        : undefined}
-                    >
-                      {h.subject?.name ?? '—'}
-                    </span>
-                    <span className="hw-read-check" aria-label="تمت القراءة">✓</span>
-                  </div>
-                  {h.teacher && (
-                    <p className="hw-teacher-row">{h.teacher.full_name}</p>
-                  )}
-                  <p className="hw-body">{h.body}</p>
-                  {h.attachments.length > 0 && (
-                    <div className="attachments">
-                      {h.attachments.map(a => (
-                        <a
-                          key={a.id}
-                          href={signedUrls[a.storage_path] ?? '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="attach-badge"
-                        >
-                          <span aria-hidden="true">
-                            {a.mime.startsWith('image/') ? <ImageIcon size={14} /> : <FileTextIcon size={14} />}
-                          </span>
-                          <span>مرفق</span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </section>
-          )}
+          {/* ── Guardian Subject Grid (Task 13) ─────────────────────────── */}
+          <SubjectGrid
+            periods={schedulePeriods}
+            unmatchedHomework={unmatchedHomework}
+            loading={!childrenLoaded || loading}
+            error={scheduleError}
+            isWeekend={isWeekend}
+            isTimetableAvailable={isTimetableAvailable}
+            onSelectPeriod={handleSelectPeriod}
+            onSelectUnmatched={handleSelectUnmatched}
+            onRetry={refetchSchedule}
+            activePeriodNumber={activePeriodNumber}
+          />
         </>
       )}
+
       {toast && (
         <Toast message={toast.message} type={toast.type} onDone={clearToast} />
       )}
 
-      {/* ── bottom sticky archive bar ───────────────────────────────────── */}
-      <nav className="bottom-bar" aria-label="التنقل الرئيسي">
-        <div className="bottom-bar-inner">
-          <Link to="/archive" className="archive-link">
-            <BookIcon size={18} />
-            <span>تصفح أرشيف الواجبات</span>
-          </Link>
-        </div>
-      </nav>
+      {/* ── fixed bottom navigation dock ───────────────────────────────── */}
+      <BottomNavBar
+        onOpenExport={() => setExportModalOpen(true)}
+        onLogout={handleLogout}
+        canExport={!loading && hasExportableItems}
+      />
+
+      {/* ── unified export modal ────────────────────────────────────────── */}
+      <ExportModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        data={exportData}
+      />
+
+      {/* ── Period Detail Drawer (Task 13) ─────────────────────────────── */}
+      <PeriodDetailDrawer
+        isOpen={isDrawerOpen}
+        onClose={handleCloseDrawer}
+        slot={activeSlot}
+        unmatchedItem={selectedUnmatched}
+        signedUrls={signedUrls}
+      />
     </main>
   )
 }

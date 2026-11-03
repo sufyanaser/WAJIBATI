@@ -2,13 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import {
-  GraduationCapIcon,
   UsersIcon,
   BookIcon,
   CalendarIcon,
   ShieldIcon,
   BellIcon,
-  FamilyIcon,
   DatabaseIcon,
 } from '../../components/Icons'
 
@@ -30,15 +28,15 @@ interface AssignmentRow {
   section_label: string
 }
 
-// ── nav cards ──────────────────────────────────────────────────────────────────
+// ── quick actions (phone list) ─────────────────────────────────────────────────
 
-const navCards = [
-  { label: 'الواجبات اليومية',        icon: BookIcon,           route: '/admin/homework',   statKey: 'homeworkToday' as const },
-  { label: 'الجدول الدراسي',          icon: CalendarIcon,       route: '/admin/timetable',  statKey: 'sections' as const },
-  { label: 'الإعلانات والتنبيهات',    icon: BellIcon,           route: '/admin/notices',    statKey: 'noticesActive' as const },
-  { label: 'قاعدة البيانات المدرسية', icon: DatabaseIcon,       route: '/admin/master-data', statKey: 'students' as const },
-  { label: 'الهيئة التدريسية',        icon: UsersIcon,          route: '/admin/teachers',   statKey: 'teachers' as const },
-  { label: 'الإعدادات والصلاحيات',    icon: ShieldIcon,         route: '/admin/settings',   statKey: 'guardians' as const },
+const quickActions = [
+  { label: 'الواجبات اليومية', hint: 'إدخال ونشر واجبات اليوم لكل شعبة', icon: BookIcon, route: '/admin/homework' },
+  { label: 'الجدول الدراسي', hint: 'الحصص والمدرسون حسب الشعبة', icon: CalendarIcon, route: '/admin/timetable' },
+  { label: 'الإعلانات والتنبيهات', hint: 'تعميمات تظهر لأولياء الأمور', icon: BellIcon, route: '/admin/notices' },
+  { label: 'قاعدة البيانات المدرسية', hint: 'الطلاب والشعب والمواد والاستيراد', icon: DatabaseIcon, route: '/admin/master-data' },
+  { label: 'الهيئة التدريسية', hint: 'المعلمون وتوزيع المواد', icon: UsersIcon, route: '/admin/teachers' },
+  { label: 'الإعدادات والصلاحيات', hint: 'الحسابات وبيئة التشغيل', icon: ShieldIcon, route: '/admin/settings' },
 ]
 
 const statLabels: Record<keyof Stats, string> = {
@@ -134,6 +132,15 @@ export default function DashboardHome() {
     void load()
   }, [])
 
+  const kpis: Array<{ key: keyof Stats; label: string; featured?: boolean }> = [
+    { key: 'homeworkToday', label: 'واجب اليوم', featured: true },
+    { key: 'students', label: 'طالب مسجل' },
+    { key: 'guardians', label: 'ولي أمر مرتبط' },
+    { key: 'teachers', label: 'مدرس نشط' },
+    { key: 'sections', label: 'شعبة دراسية' },
+    { key: 'noticesActive', label: 'إعلان فعال' },
+  ]
+
   return (
     <div dir="rtl" className="dash-page">
       {/* ── school header ──────────────────────────────────────────────── */}
@@ -145,39 +152,39 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* ── nav card grid ──────────────────────────────────────────────── */}
-      <div className="dash-grid">
-        {navCards.map(card => {
-          const Icon = card.icon
-          return (
-            <button
-              key={card.route}
-              type="button"
-              className="dash-card"
-              onClick={() => nav(card.route)}
-            >
-              <span className="dash-card__icon">
-                <Icon size={24} />
-              </span>
-              <span className="dash-card__label">{card.label}</span>
-              {stats && (
-                <span className="dash-card__stat">
-                  {stats[card.statKey]} {statLabels[card.statKey]}
-                </span>
-              )}
-              {loading && !stats && (
-                <span className="dash-card__stat">…</span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      {/* ── KPI tiles (phone-first) ────────────────────────────────────── */}
+      <section className="dash-kpis" aria-label="مؤشرات سريعة">
+        {kpis.map(k => (
+          <div key={k.key} className={`dash-kpi ${k.featured ? 'dash-kpi--featured' : ''}`}>
+            <span className="dash-kpi__value">{stats ? stats[k.key] : '…'}</span>
+            <span className="dash-kpi__label">{k.label}</span>
+          </div>
+        ))}
+      </section>
 
-      {/* ── teacher assignments preview ────────────────────────────────── */}
-      <div className="dash-table-card">
-        <div className="dash-table-card__head">
-          <h2 className="dash-table-card__title">إسناد المدرسين الحالي</h2>
+      {/* ── quick actions as an app list ───────────────────────────────── */}
+      <section className="dash-section" aria-label="إجراءات سريعة">
+        <h2 className="dash-section__title">إجراءات سريعة</h2>
+        <div className="dash-list">
+          {quickActions.map(a => {
+            const Icon = a.icon
+            return (
+              <button key={a.route} type="button" className="dash-list__row" onClick={() => nav(a.route)}>
+                <span className="dash-list__icon"><Icon size={20} /></span>
+                <span className="dash-list__text">
+                  <span className="dash-list__title">{a.label}</span>
+                  <span className="dash-list__hint">{a.hint}</span>
+                </span>
+                <span className="dash-list__chev" aria-hidden="true">‹</span>
+              </button>
+            )
+          })}
         </div>
+      </section>
+
+      {/* ── teacher assignments ────────────────────────────────────────── */}
+      <section className="dash-section">
+        <h2 className="dash-section__title">إسناد المدرسين الحالي</h2>
 
         {loading ? (
           <p className="muted dash-table-card__empty">جارٍ التحميل…</p>
@@ -186,31 +193,43 @@ export default function DashboardHome() {
             لا توجد بيانات جدول — أضف مواد ومدرسين ثم ابنِ الجدول الدراسي
           </p>
         ) : (
-          <div className="dash-table-scroll">
-            <table className="dash-table">
-              <thead>
-                <tr>
-                  {['المدرس', 'المادة', 'الصف والشعبة'].map(h => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((a, i) => (
-                  <tr key={i}>
-                    <td className="dash-table__name">{a.teacher_name}</td>
-                    <td className="dash-table__muted">{a.subject_name}</td>
-                    <td className="dash-table__muted">{a.section_label}</td>
+          <>
+            <div className="dash-list dash-list--assignments">
+              {assignments.map((a, i) => (
+                <div key={i} className="dash-list__row dash-list__row--static">
+                  <span className="dash-list__text">
+                    <span className="dash-list__title">{a.teacher_name}</span>
+                    <span className="dash-list__hint">{a.subject_name} · {a.section_label}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="dash-table-scroll dash-table-scroll--desktop">
+              <table className="dash-table">
+                <thead>
+                  <tr>
+                    {['المدرس', 'المادة', 'الصف والشعبة'].map(h => (
+                      <th key={h}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="dash-table__note">
-              بيانات حقيقية من جدول الحصص وإسناد المدرسين — لإدارة التفاصيل انتقل إلى الجدول الدراسي
-            </p>
-          </div>
+                </thead>
+                <tbody>
+                  {assignments.map((a, i) => (
+                    <tr key={i}>
+                      <td className="dash-table__name">{a.teacher_name}</td>
+                      <td className="dash-table__muted">{a.subject_name}</td>
+                      <td className="dash-table__muted">{a.section_label}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="dash-table__note">
+                بيانات حقيقية من جدول الحصص وإسناد المدرسين — لإدارة التفاصيل انتقل إلى الجدول الدراسي
+              </p>
+            </div>
+          </>
         )}
-      </div>
+      </section>
     </div>
   )
 }

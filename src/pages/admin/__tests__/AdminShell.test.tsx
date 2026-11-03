@@ -200,28 +200,28 @@ describe('SettingsPage — Administration & Permissions', () => {
       expect(screen.getByText('إدارة الحسابات وبيئة التشغيل')).toBeInTheDocument()
     })
 
-    const phoneInput = screen.getByPlaceholderText('+9647XXXXXXXXX')
+    const phoneInput = screen.getByPlaceholderText('07XXXXXXXXX')
     const pinInput = screen.getByPlaceholderText('مثال: 123456')
     const submitBtn = screen.getByText('حفظ وتحديث رمز الدخول')
 
     // Try with invalid phone
-    fireEvent.change(phoneInput, { target: { value: '07701234567' } })
+    fireEvent.change(phoneInput, { target: { value: '05701234567' } })
     fireEvent.change(pinInput, { target: { value: '123456' } })
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(screen.getByText(/يرجى كتابة رقم هاتف صالح بالصيغة العراقية الدولية/)).toBeInTheDocument()
+      expect(screen.getByText(/يرجى كتابة رقم هاتف عراقي صالح مكون من 11 رقماً يبدأ بـ 07/)).toBeInTheDocument()
     })
     expect(mockInvoke).not.toHaveBeenCalled()
 
     // Now valid phone and pin
     mockInvoke.mockResolvedValueOnce({ data: { success: true }, error: null })
-    fireEvent.change(phoneInput, { target: { value: '+9647701234567' } })
+    fireEvent.change(phoneInput, { target: { value: '07801234567' } })
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith('reset-pin', {
-        body: { phone: '+9647701234567', new_pin: '123456' },
+        body: { phone: '07801234567', new_pin: '123456' },
       })
       expect(screen.getByText(/تم تحديث رمز الدخول بنجاح/)).toBeInTheDocument()
     })

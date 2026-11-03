@@ -23,68 +23,20 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '14px',
-        marginBottom: '20px',
-        paddingBottom: '16px',
-        borderBottom: '1px solid var(--border)',
-      }}
-      className="admin-page-header"
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: '1.25rem',
-              fontWeight: 800,
-              color: '#FFFFFF',
-              fontFamily: 'var(--font-family-heading)',
-            }}
-          >
-            {title}
-          </h1>
+    <header className="admin-page-header">
+      <div className="admin-page-header-titles">
+        <div className="admin-page-header-title-row">
+          <h1 className="admin-page-header-title">{title}</h1>
           {badgeText && (
-            <span
-              className={`badge ${BADGE_CLASSES[badgeVariant]}`}
-              style={{ fontSize: '0.75rem', padding: '2px 8px' }}
-            >
+            <span className={`badge ${BADGE_CLASSES[badgeVariant]} admin-page-header-badge`}>
               {badgeText}
             </span>
           )}
         </div>
-        {subtitle && (
-          <p
-            style={{
-              margin: 0,
-              fontSize: '0.82rem',
-              color: 'var(--muted)',
-              lineHeight: 1.4,
-            }}
-          >
-            {subtitle}
-          </p>
-        )}
+        {subtitle && <p className="admin-page-header-subtitle">{subtitle}</p>}
       </div>
 
-      {actions && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            flexWrap: 'wrap',
-          }}
-          className="admin-page-actions"
-        >
-          {actions}
-        </div>
-      )}
-    </div>
+      {actions && <div className="admin-page-header-actions">{actions}</div>}
+    </header>
   )
 }

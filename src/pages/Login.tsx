@@ -1,3 +1,4 @@
+import { AuthScenery } from '../components/AuthScenery'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, phoneToEmail } from '../lib/supabase'
@@ -31,7 +32,8 @@ export default function Login() {
   }
 
   return (
-    <main className="auth-page" dir="rtl">
+    <main className="auth-page auth-page--guardian" dir="rtl">
+      <AuthScenery />
       <div className="auth-card">
         {/* Brand identity */}
         <div className="auth-brand">
@@ -42,9 +44,9 @@ export default function Login() {
             height={76}
             className="auth-logo"
           />
-          <span className="auth-role-badge">بوابة أولياء الأمور</span>
+          <span className="auth-role-badge">واجباتي · بوابة المدرسة</span>
           <div>
-            <h1 className="login-title">واجباتي</h1>
+            <h1 className="login-title">دخول أولياء الأمور</h1>
             <p className="school-subtitle" style={{ marginTop: 4 }}>
               {settings.name}
             </p>

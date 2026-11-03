@@ -5,34 +5,36 @@
 
 BEGIN;
 
--- ── 1. Update phone column in guardians ──────────────────────────────────────
--- Convert +9647XXXXXXXXX → 07XXXXXXXXX  (only rows not already local)
-UPDATE guardians
-SET phone = '0' || substring(phone FROM 4)   -- '+9647...' → '07...'
-WHERE phone ~ '^\+9647[0-9]{9}$';
-
--- ── 2. Replace check constraint ──────────────────────────────────────────────
+-- ── 1. Drop existing check constraint first ──────────────────────────────────
+-- Must drop constraint before updating rows; otherwise updating to '07...' triggers check violation.
 ALTER TABLE guardians
   DROP CONSTRAINT IF EXISTS guardians_phone_check;
 
+-- ── 2. Update phone column in guardians ──────────────────────────────────────
+-- Convert +9647XXXXXXXXX → 07XXXXXXXXX  (only rows not already local)
+UPDATE guardians
+SET phone = regexp_replace(phone, '^\+964', '0')
+WHERE phone ~ '^\+9647[0-9]{9}$';
+
+-- ── 3. Add new check constraint for local format (07XXXXXXXXX - 11 digits) ───
 ALTER TABLE guardians
   ADD CONSTRAINT guardians_phone_check
     CHECK (phone ~ '^07[0-9]{9}$');
 
--- ── 3. Migrate auth.users emails ─────────────────────────────────────────────
+-- ── 4. Migrate auth.users emails ─────────────────────────────────────────────
 -- 9647XXXXXXXXX@guardian.rumaila.local → 07XXXXXXXXX@guardian.rumaila.local
 UPDATE auth.users
-SET email = '0' || substring(email FROM 5)    -- '9647..@..' → '07..@..'
+SET email = regexp_replace(email, '^964', '0')
 WHERE email ~ '^9647[0-9]{9}@guardian\.rumaila\.local$';
 
--- ── 4. Migrate auth.identities ───────────────────────────────────────────────
+-- ── 5. Migrate auth.identities ───────────────────────────────────────────────
 UPDATE auth.identities
 SET
-  provider_id    = '0' || substring(provider_id FROM 5),
+  provider_id    = regexp_replace(provider_id, '^964', '0'),
   identity_data  = jsonb_set(
     identity_data,
     '{email}',
-    to_jsonb('0' || substring(identity_data->>'email' FROM 5))
+    to_jsonb(regexp_replace(identity_data->>'email', '^964', '0'))
   )
 WHERE provider_id ~ '^9647[0-9]{9}@guardian\.rumaila\.local$';
 

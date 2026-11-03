@@ -200,7 +200,12 @@ export default function DashboardHome() {
                   <tr key={i}>
                     <td className="dash-table__name">{a.teacher_name}</td>
                     <td className="dash-table__muted">{a.subject_name}</td>
-                    <td className="dash-table__muted">{a.section_label}</td>
+                    <td className="dash-table__muted">
+                      <details className="dash-assignment-sections">
+                        <summary>{a.section_label.split(' ، ').length} شعب دراسية</summary>
+                        <span>{a.section_label}</span>
+                      </details>
+                    </td>
                   </tr>
                 ))}
               </tbody>

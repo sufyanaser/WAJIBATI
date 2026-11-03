@@ -167,7 +167,7 @@ export default function SettingsPage() {
           </div>
 
           <form onSubmit={handleSaveSchool} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
+            <div className="admin-settings-fields">
               <div>
                 <label htmlFor="school-ministry" style={{ display: 'block', fontSize: '.85rem', marginBottom: 6, color: 'var(--fg-secondary)', fontWeight: 600 }}>
                   الوزارة التابعة

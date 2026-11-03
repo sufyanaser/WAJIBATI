@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import React from 'react'
 import AdminShell from '../AdminShell'
@@ -58,6 +58,29 @@ describe('AdminShell — Reengineered Dashboard Layout', () => {
         maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       }
     })
+  })
+
+  it('keeps the sidebar and header mounted while a new section is loading', async () => {
+    let resolvePage!: (value: { default: React.ComponentType }) => void
+    const PendingPage = React.lazy(() => new Promise<{ default: React.ComponentType }>(resolve => { resolvePage = resolve }))
+    const { container } = render(
+      <MemoryRouter initialEntries={['/admin/dashboard']}>
+        <Routes><Route path="/admin" element={<AdminShell />}>
+          <Route path="dashboard" element={<div>المحتوى السابق</div>} />
+          <Route path="homework" element={<PendingPage />} />
+        </Route></Routes>
+      </MemoryRouter>
+    )
+    await screen.findByText('المحتوى السابق')
+    const sidebar = container.querySelector('.admin-sidebar')
+    const header = container.querySelector('.admin-top-bar')
+    fireEvent.click(screen.getByRole('link', { name: 'الواجبات اليومية' }))
+    await screen.findByRole('status', { name: 'جارٍ تحميل القسم' })
+    expect(container.querySelector('.admin-sidebar')).toBe(sidebar)
+    expect(container.querySelector('.admin-top-bar')).toBe(header)
+    await act(async () => { resolvePage({ default: () => <div>القسم الجديد</div> }) })
+    expect(await screen.findByText('القسم الجديد')).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'جارٍ تحميل القسم' })).not.toBeInTheDocument()
   })
 
   it('renders all 6 canonical school workflow sections in the sidebar', async () => {

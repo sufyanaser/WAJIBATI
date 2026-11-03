@@ -1,4 +1,5 @@
-import React, { useEffect, useState, createContext, useContext, useMemo } from 'react'
+import React, { Suspense, useEffect, useState, createContext, useContext, useMemo } from 'react'
+import { Spinner } from '../../components/Spinner'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { User } from '@supabase/supabase-js'
@@ -433,7 +434,9 @@ export default function AdminShell() {
               </nav>
             )}
 
-            <Outlet />
+            <Suspense fallback={<div className="admin-route-loading" role="status" aria-label="جارٍ تحميل القسم"><Spinner size={24} /><span>جارٍ تحميل القسم…</span></div>}>
+              <Outlet />
+            </Suspense>
           </main>
         </div>
       </div>

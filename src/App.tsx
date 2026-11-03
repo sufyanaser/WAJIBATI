@@ -27,7 +27,7 @@ const Router = isLocalFile ? HashRouter : BrowserRouter
 
 export default function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true }}>
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/login" element={<Login />} />

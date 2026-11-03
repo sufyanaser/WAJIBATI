@@ -1,4 +1,9 @@
-.admin-shell-layout .admin-content-area { padding: 18px 22px 28px; }
+.admin-shell-layout .admin-content-area { padding: 18px 22px 28px; min-height: calc(100dvh - 64px); }
+.admin-route-loading { min-height: 320px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: .88rem; }
+@media (min-width: 1024px) {
+  html { scrollbar-gutter: stable; }
+  @supports not (scrollbar-gutter: stable) { html { overflow-y: scroll; } }
+}
 .admin-content-area :is(.dash-page, .admin-page-container) { display: grid; gap: 14px; min-width: 0; }
 .admin-content-area :is(.admin-page-header, .dash-header) { margin: 0; }
 .admin-content-area .dash-header { padding: 16px 18px; gap: 12px; }

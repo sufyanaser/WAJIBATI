@@ -1,8 +1,9 @@
 import { StrictMode } from 'react'
 import { act, render, screen } from '@testing-library/react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AppIntro } from '../AppIntro'
 
+beforeEach(() => sessionStorage.clear())
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
 
 function motionPreference(matches: boolean) {
@@ -27,6 +28,7 @@ it('shortens the intro for people who request reduced motion', () => {
   vi.useFakeTimers()
   motionPreference(true)
   render(<AppIntro><span>المحتوى</span></AppIntro>)
+  expect(screen.getByRole('status')).toBeInTheDocument()
   act(() => vi.advanceTimersByTime(200))
   expect(screen.queryByRole('status')).not.toBeInTheDocument()
 })

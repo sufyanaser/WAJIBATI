@@ -10,18 +10,18 @@
 }
 .app-intro::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 65% 45%, #1b9bd526, transparent 60%); animation: intro-ambient 6.5s ease both; }
 .app-intro::after { content: ''; position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; animation: intro-white-veil 6.5s linear both; }
-.app-intro-content { position: relative; text-align: center; padding: 24px; transform: translateY(-18px); }
+.app-intro-content { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 24px; transform: translate3d(0, -18px, 0); }
 .app-intro-mark { position: relative; width: clamp(180px, 43vw, 220px); aspect-ratio: 1324 / 1188; margin: 0 auto 22px; perspective: 700px; }
-.app-intro-symbol { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 3px #001e5530); }
-.intro-book-page { transform-box: view-box; transform-origin: 50% 96%; }
-.intro-book-page--left { animation: intro-page-left 1200ms cubic-bezier(.22,.7,.25,1) both; }
-.intro-book-page--right { animation: intro-page-right 1200ms cubic-bezier(.22,.7,.25,1) both; }
-.intro-student { animation: intro-student-in 750ms 2100ms cubic-bezier(.22,.7,.25,1) both; }
-.intro-house { animation: intro-house-in 800ms 1250ms cubic-bezier(.22,.7,.25,1) both; }
-.app-intro-logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; animation: intro-symbol-complete 400ms 2900ms ease-out both; }
-.app-intro-name { margin: 0; color: #fff; font: 800 clamp(30px, 4vw, 36px)/1.5 'Cairo', sans-serif; animation: intro-text-in 450ms 3350ms ease-out both; }
-.app-intro-slogan { margin: 4px 0 0; color: #edf5ff; font: 500 18px/1.8 'Cairo', sans-serif; animation: intro-text-in 450ms 3900ms ease-out both; }
-.intro-app--waiting { animation: intro-interface-in 6.5s linear both; }
+.app-intro-symbol { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.intro-book-page { transform-box: view-box; transform-origin: 50% 96%; will-change: transform, opacity; }
+.intro-book-page--left { animation: intro-page-left 950ms cubic-bezier(.25,.55,.3,1) both; }
+.intro-book-page--right { animation: intro-page-right 950ms cubic-bezier(.25,.55,.3,1) both; }
+.intro-student { will-change: transform, opacity; animation: intro-student-in 750ms 1750ms cubic-bezier(.25,.55,.3,1) both; }
+.intro-house { will-change: transform, opacity; animation: intro-house-in 800ms 950ms cubic-bezier(.25,.55,.3,1) both; }
+.app-intro-logo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; animation: intro-symbol-complete 250ms 2500ms ease-out both; }
+.app-intro .app-intro-name, .app-intro .app-intro-slogan { display: block; width: max-content; max-width: 100%; align-self: center; text-align: center; margin-inline: auto; padding: 0; }
+.app-intro-name { margin: 0; color: #fff; font: 800 clamp(30px, 4vw, 36px)/1.5 'Cairo', sans-serif; animation: intro-text-in 450ms 2800ms ease-out both; }
+.app-intro-slogan { margin: 4px 0 0; color: #edf5ff; font: 500 18px/1.8 'Cairo', sans-serif; animation: intro-text-in 450ms 3300ms ease-out both; }
 @keyframes intro-page-left {
   from { opacity: 0; transform: scaleX(.12) rotate(24deg); }
   18% { opacity: 1; }
@@ -55,10 +55,6 @@
 @keyframes intro-dip-white {
   0%, 86% { opacity: 1; filter: blur(0); }
   94%, 100% { opacity: 0; filter: blur(7px); }
-}
-@keyframes intro-interface-in {
-  0%, 93% { filter: blur(5px); }
-  100% { filter: blur(0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .app-intro, .app-intro-content, .app-intro-name, .app-intro-slogan,

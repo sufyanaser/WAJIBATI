@@ -111,7 +111,7 @@ export default function AdminLogin() {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'var(--muted)',
+                  color: '#526680',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',

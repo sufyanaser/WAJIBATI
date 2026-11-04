@@ -5808,3 +5808,65 @@ button:disabled {
 .btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .auth-page .auth-card { box-shadow: var(--shadow-float); }
 @media (prefers-reduced-motion: reduce) { .hw-card, .btn { transition: none; } }
+
+/* ── Today ─────────────────────────────────────────────────────────── */
+.today-sticky-header.guardian-header--brand {
+  background: var(--card-glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--fg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+.today-sticky-header.guardian-header--brand .guardian-header-title {
+  color: var(--fg);
+}
+.today-sticky-header.guardian-header--brand .guardian-header-subtitle {
+  color: var(--muted);
+}
+.search-input {
+  min-height: 44px;
+  border-radius: var(--radius-md);
+}
+.search-input:focus {
+  box-shadow: var(--focus-ring);
+}
+.subject-chip {
+  background: var(--accent-soft);
+  color: var(--accent-dim);
+  border-color: transparent;
+}
+.empty-state {
+  gap: var(--space-2);
+}
+.empty-icon {
+  color: var(--muted);
+  opacity: 0.8;
+}
+.push-banner {
+  background: var(--info-bg);
+  border: none;
+  color: var(--fg);
+  font-size: var(--font-size-base);
+  box-shadow: var(--elev-1);
+}
+.bottom-nav-bar {
+  box-shadow: var(--elev-2);
+}
+.bottom-nav-item.active {
+  color: var(--accent);
+  background: none;
+  box-shadow: none;
+}
+.bottom-nav-item.active::after {
+  display: block;
+  width: 4px;
+  height: 4px;
+  bottom: 2px;
+  background: var(--accent);
+}
+.bottom-nav-label {
+  font-size: 0.75rem;
+}

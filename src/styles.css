@@ -5987,3 +5987,6 @@ button:disabled {
 .dash-kpi__label {
   color: var(--muted);
 }
+.archive-wrap > .guardian-header {
+  margin-inline: calc(-1 * var(--space-2));
+}

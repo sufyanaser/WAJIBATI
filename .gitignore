@@ -14,3 +14,7 @@ test-results/
 e2e-report/
 e2e/screenshots/
 releases/v*/*.zip
+*.apk
+*.aab
+*.pdf
+.vercel/

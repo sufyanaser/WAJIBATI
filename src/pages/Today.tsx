@@ -364,7 +364,7 @@ export default function Today() {
       style={{ paddingBottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
     >
       {/* ── compact unified header ── */}
-      <PageHeader title="واجباتي" subtitle={settings.name} variant="brand" showLogo className="today-sticky-header" />
+      <PageHeader title="واجباتي" subtitle={settings.name} variant="brand" showLogo />
 
       {/* ── push opt-in banner ─────────────────────────────────────────── */}
       {pushOpt === 'pending' && (
@@ -426,7 +426,22 @@ export default function Today() {
         </section>
       ) : (
         <>
-                    {/* ── date navigation ─────────────────────────────────────────── */}
+          {/* ── child selector tabs ────────────────────────────────────── */}
+          {children.length > 1 && (
+            <nav className="child-tabs">
+              {children.map((c, i) => (
+                <button
+                  key={c.student_id}
+                  className={'tab' + (i === idx ? ' active' : '')}
+                  onClick={() => setIdx(i)}
+                >
+                  {c.full_name}
+                </button>
+              ))}
+            </nav>
+          )}
+
+          {/* ── date navigation ─────────────────────────────────────────── */}
           <DateNavigator
             date={date}
             onChange={setDate}
@@ -488,13 +503,7 @@ export default function Today() {
 
           {/* ── student & section info bar ──────────── */}
           {child && (
-            <div
-                className="student-bar"
-                role={children.length > 1 ? 'button' : undefined}
-                tabIndex={children.length > 1 ? 0 : undefined}
-                aria-label={children.length > 1 ? 'تبديل الطالب' : undefined}
-                onClick={children.length > 1 ? () => setIdx(i => (i + 1) % children.length) : undefined}
-              >
+            <div className="student-bar">
               <div className="student-bar-info">
                 <span className="student-bar-avatar" aria-hidden="true">
                   <UserIcon size={18} />

@@ -32,32 +32,32 @@ export default function App() {
     <Router>
       <NativeLinkBridge />
       <IosUpdateGate>
-        <Suspense fallback={<Spinner />}>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/archive" element={<Archive />} />
-            <Route path="/inquiries" element={<Inquiries />} />
-            <Route path="/timetable" element={<GuardianTimetablePage />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminShell />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardHome />} />
-              <Route path="homework" element={<HomeworkEntry />} />
-              <Route path="notices" element={<NoticesPage />} />
-              <Route path="import" element={<ImportPage />} />
-              <Route path="master-data" element={<MasterDataPage />} />
-              <Route path="database" element={<MasterDataPage />} />
-              <Route path="subjects" element={<SubjectsPage />} />
-              <Route path="teachers" element={<TeachersPage />} />
-              <Route path="sections" element={<SectionsPage />} />
-              <Route path="timetable" element={<TimetablePage />} />
-              <Route path="students" element={<StudentsPage />} />
-              <Route path="guardians" element={<GuardiansPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-            <Route path="/*" element={<Today />} />
-          </Routes>
-        </Suspense>
+      <Suspense fallback={<Spinner />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/archive" element={<Archive />} />
+          <Route path="/inquiries" element={<Inquiries />} />
+          <Route path="/timetable" element={<GuardianTimetablePage />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminShell />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardHome />} />
+            <Route path="homework" element={<HomeworkEntry />} />
+            <Route path="notices" element={<NoticesPage />} />
+            <Route path="import" element={<ImportPage />} />
+            <Route path="master-data" element={<MasterDataPage />} />
+            <Route path="database" element={<MasterDataPage />} />
+            <Route path="subjects" element={<SubjectsPage />} />
+            <Route path="teachers" element={<TeachersPage />} />
+            <Route path="sections" element={<SectionsPage />} />
+            <Route path="timetable" element={<TimetablePage />} />
+            <Route path="students" element={<StudentsPage />} />
+            <Route path="guardians" element={<GuardiansPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="/*" element={<Today />} />
+        </Routes>
+      </Suspense>
       </IosUpdateGate>
     </Router>
   )

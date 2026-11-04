@@ -115,7 +115,19 @@ export default function Inquiries() {
         backLabel="العودة للرئيسية"
       />
 
-      
+      {/* ── Notice Banner: Coming Soon ── */}
+      <div role="status" className="info-banner">
+        <div className="info-banner-icon">
+          <FileTextIcon size={22} />
+        </div>
+        <div className="info-banner-content">
+          <strong className="info-banner-title">
+            تنويه تنظيمي لخدمة المراسلة
+          </strong>
+          خدمة إرسال واستقبال الاستفسارات المباشرة قيد التجهيز الفني والربط المباشر مع قسم شؤون الطلاب، وستُفعّل قريباً لتسهيل التواصل الفوري مع كادر المدرسة.
+        </div>
+      </div>
+
       {/* Inquiries Form Container */}
       <form
         onSubmit={e => e.preventDefault()}

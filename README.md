@@ -1,4 +1,4 @@
-# واجباتي · Wajibati — إعدادية الرميلة للبنين
+# واجباتي · Wajibati — 
 
 Repository: https://github.com/sufyanaser/WAJIBATI · Technical slug: `wajibati`
 

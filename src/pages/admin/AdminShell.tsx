@@ -138,10 +138,10 @@ function getPageMeta(pathname: string): { section: string; title: string } {
   return { section: 'لوحة الإدارة', title: 'إدارة النظام' }
 }
 
-const ROLE_BADGES: Record<'owner' | 'editor' | 'viewer', { label: string; cls: string }> = {
-  owner: { label: 'مالك النظام', cls: 'role-pill--owner' },
-  editor: { label: 'محرر', cls: 'role-pill--editor' },
-  viewer: { label: 'مشاهد', cls: 'role-pill--viewer' },
+const ROLE_BADGES: Record<'owner' | 'editor' | 'viewer', { label: string; bg: string; color: string }> = {
+  owner: { label: 'مالك النظام', bg: 'rgba(232, 176, 74, 0.15)', color: '#E8B04A' },
+  editor: { label: 'محرر', bg: 'rgba(61, 132, 200, 0.15)', color: '#5B9DD9' },
+  viewer: { label: 'مشاهد', bg: 'rgba(124, 153, 184, 0.15)', color: '#7C99B8' },
 }
 
 // ── component ──────────────────────────────────────────────────────────────────
@@ -358,7 +358,17 @@ export default function AdminShell() {
                 >
                   {displayName}
                 </span>
-                <span className={`role-pill ${roleBadge.cls}`}>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    color: roleBadge.color,
+                    background: roleBadge.bg,
+                    padding: '1px 6px',
+                    borderRadius: 4,
+                    width: 'fit-content',
+                    fontWeight: 600,
+                  }}
+                >
                   {roleBadge.label}
                 </span>
               </div>
@@ -408,7 +418,17 @@ export default function AdminShell() {
               >
                 {displayName}
               </span>
-              <span className={`role-pill role-pill--lg ${roleBadge.cls}`}>
+              <span
+                style={{
+                  fontSize: '.75rem',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  background: roleBadge.bg,
+                  color: roleBadge.color,
+                  border: `1px solid ${roleBadge.color}40`,
+                }}
+              >
                 {roleBadge.label}
               </span>
             </div>
@@ -482,7 +502,10 @@ export default function AdminShell() {
           <div className="admin-more-sheet__handle" aria-hidden="true" />
           <div className="admin-more-sheet__user">
             <span className="admin-more-sheet__name">{displayName}</span>
-            <span className={`admin-more-sheet__role role-pill ${roleBadge.cls}`}>
+            <span
+              className="admin-more-sheet__role"
+              style={{ color: roleBadge.color, background: roleBadge.bg }}
+            >
               {roleBadge.label}
             </span>
           </div>

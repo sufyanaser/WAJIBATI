@@ -5452,9 +5452,9 @@ button:disabled {
   margin-top: 12px;
   border-radius: 999px !important;
   border: 1px solid #25c8ff;
-  background: linear-gradient(180deg, #009cff, #0044c5);
+  background: var(--brand-gradient);
   color: white;
-  box-shadow: 0 10px 24px #0058bb26;
+  box-shadow: var(--shadow-cta);
   font-weight: 800;
 }
 .auth-page .btn-primary:disabled { opacity: .65; }
@@ -5490,4 +5490,206 @@ button:disabled {
 @media (max-width: 360px) {
   .auth-page .auth-card { padding-inline: 4px; }
   .auth-page .auth-label { font-size: .85rem; }
+}
+
+/* ============================================================
+   Premium visual polish — visual only (no layout or logic changes)
+   ============================================================ */
+:root {
+  --shadow-card: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(0,90,220,.07);
+  --shadow-card-hover: 0 2px 4px rgba(15,23,42,.05), 0 14px 32px rgba(0,90,220,.12);
+  --shadow-cta: inset 0 1px 0 rgba(255,255,255,.28), 0 6px 16px rgba(0,123,254,.28);
+  --shadow-cta-hover: inset 0 1px 0 rgba(255,255,255,.28), 0 10px 24px rgba(0,123,254,.34);
+}
+.hw-card { background: var(--card); padding: 20px; gap: 12px; box-shadow: var(--shadow-card); }
+.hw-card.clickable:hover { box-shadow: var(--shadow-card-hover); }
+.hw-body { font-size: 1rem; line-height: 1.75; }
+.hw-period-circle { box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 10px rgba(0,123,254,.25); }
+.student-bar { box-shadow: var(--shadow-card) !important; }
+.btn-primary { background: var(--brand-gradient); color: #FFFFFF; border-color: transparent; box-shadow: var(--shadow-cta); }
+.btn-primary:hover:not(:disabled) { background: var(--brand-gradient); filter: brightness(1.05); box-shadow: var(--shadow-cta-hover); }
+.btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.auth-page .auth-card { box-shadow: var(--shadow-float); }
+@media (prefers-reduced-motion: reduce) { .hw-card, .btn { transition: none; } }
+
+/* ── Today ─────────────────────────────────────────────────────────── */
+.today-sticky-header.guardian-header--brand {
+  background: var(--card-glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--fg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+.today-sticky-header.guardian-header--brand .guardian-header-title {
+  color: var(--fg);
+}
+.today-sticky-header.guardian-header--brand .guardian-header-subtitle {
+  color: var(--muted);
+}
+.search-input {
+  min-height: 44px;
+  border-radius: var(--radius-md);
+}
+.search-input:focus {
+  box-shadow: var(--focus-ring);
+}
+.subject-chip {
+  background: var(--accent-soft);
+  color: var(--accent-dim);
+  border-color: transparent;
+}
+.empty-state {
+  gap: var(--space-2);
+}
+.empty-icon {
+  color: var(--muted);
+  opacity: 0.8;
+}
+.push-banner {
+  background: var(--info-bg);
+  border: none;
+  color: var(--fg);
+  font-size: var(--font-size-base);
+  box-shadow: var(--elev-1);
+}
+.bottom-nav-bar {
+  box-shadow: var(--elev-2);
+}
+.bottom-nav-item.active {
+  color: var(--accent);
+  background: none;
+  box-shadow: none;
+}
+.bottom-nav-item.active::after {
+  display: block;
+  width: 4px;
+  height: 4px;
+  bottom: 2px;
+  background: var(--accent);
+}
+.bottom-nav-label {
+  font-size: 0.75rem;
+}
+
+/* ── Archive ───────────────────────────────────────────────────────── */
+.archive-entry {
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+.archive-chip {
+  background: var(--accent-soft);
+  color: var(--accent-dim);
+  border-color: transparent;
+}
+.archive-chip--muted {
+  color: var(--muted);
+}
+.archive-day-card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-fast);
+}
+.archive-day-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+.archive-day-card__date {
+  color: var(--fg);
+}
+.archive-day-card__count {
+  color: var(--accent-dim);
+  background: var(--accent-soft);
+}
+.archive-day-back {
+  color: var(--accent-dim);
+}
+
+/* ── Admin shell, tables, badges ─────────────────────────────────── */
+:root {
+  --success-strong: #0B7A4E;
+  --warn-strong: #8A5A00;
+  --error-strong: #B42318;
+  --info-strong: #0B6E85;
+}
+@media (min-width: 1024px) {
+  .admin-sidebar {
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .admin-sidebar-title {
+    color: var(--fg);
+  }
+  .admin-sidebar-footer {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+  }
+  .admin-shell-layout .admin-top-bar {
+    background: var(--card);
+  }
+}
+.admin-content-area table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.admin-content-area table tbody tr {
+  height: 48px;
+}
+.admin-content-area table tbody tr:nth-child(even):not([style*="232, 176, 74"]) {
+  background: color-mix(in srgb, var(--surface2) 60%, transparent);
+}
+.status-badge {
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+}
+.status-badge.status-badge-published,
+.status-badge.status-badge-active,
+.status-badge.status-badge-green {
+  background: var(--success-bg) !important;
+  color: var(--success-strong) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-draft,
+.status-badge.status-badge-gold {
+  background: var(--warn-bg) !important;
+  color: var(--warn-strong) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-suspended,
+.status-badge.status-badge-urgent,
+.status-badge.status-badge-red {
+  background: var(--error-bg) !important;
+  color: var(--error-strong) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-archived {
+  background: var(--surface2) !important;
+  color: var(--muted) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-info,
+.status-badge.status-badge-blue {
+  background: var(--info-bg) !important;
+  color: var(--info-strong) !important;
+  border: 1px solid transparent !important;
+}
+
+/* ── Admin dashboard stat tiles ──────────────────────────────────── */
+.dash-kpi {
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+.dash-kpi__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+}
+.dash-kpi__label {
+  color: var(--muted);
+}
+.archive-wrap > .guardian-header {
+  margin-inline: calc(-1 * var(--space-2));
 }

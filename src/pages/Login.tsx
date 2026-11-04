@@ -47,16 +47,16 @@ export default function Login() {
           <span className="auth-role-badge">واجباتي · بوابة المدرسة</span>
           <div>
             <h1 className="login-title">دخول أولياء الأمور</h1>
-            <p className="school-subtitle" style={{ marginTop: 4 }}>
+            <p className="school-subtitle school-subtitle--tight">
               {settings.name}
             </p>
           </div>
         </div>
 
-        <div className="divider" style={{ margin: 0 }} />
+        <div className="divider divider--flush" />
 
         {/* Form */}
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={submit} className="auth-form">
           <div className="auth-field">
             <label htmlFor="guardian-phone" className="auth-label">
               رقم الهاتف
@@ -94,16 +94,15 @@ export default function Login() {
           </div>
 
           {err && (
-            <p className="err" role="alert" style={{ textAlign: 'center' }}>
+            <p className="err err--center" role="alert">
               {err}
             </p>
           )}
 
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-block auth-submit"
             disabled={loading || !phone || !pin}
-            style={{ width: '100%', justifyContent: 'center', padding: '.85rem', fontSize: '1rem', borderRadius: 'var(--radius-lg)' }}
           >
             {loading ? <Spinner size={20} /> : 'دخول'}
           </button>

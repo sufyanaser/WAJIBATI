@@ -93,20 +93,7 @@ export default function Inquiries() {
   }, [nav])
 
   return (
-    <main
-      className="screen"
-      dir="rtl"
-      style={{
-        maxWidth: 720,
-        margin: '0 auto',
-        padding: 'max(14px, env(safe-area-inset-top, 0px)) 16px calc(84px + env(safe-area-inset-bottom, 0px)) 16px',
-        minHeight: '100dvh',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-      }}
-    >
+    <main className="screen inq-page" dir="rtl">
       {/* ── Unified Header ── */}
       <PageHeader
         title="الاستفسارات والتواصل"
@@ -129,45 +116,23 @@ export default function Inquiries() {
       </div>
 
       {/* Inquiries Form Container */}
-      <form
-        onSubmit={e => e.preventDefault()}
-        style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 16,
-          padding: '20px 18px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-          boxShadow: '0 8px 24px var(--shadow)',
-        }}
-      >
+      <form onSubmit={e => e.preventDefault()} className="inq-form">
         {/* Guardian and Account Info (Read-only Auto-filled) */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: 12,
-            background: 'var(--card2)',
-            padding: 14,
-            borderRadius: 10,
-            border: '1px solid var(--border)',
-          }}
-        >
+        <div className="inq-info">
           <div>
-            <label style={{ display: 'block', fontSize: '.8rem', color: 'var(--fg-muted)', marginBottom: 4 }}>
+            <label className="inq-info-label">
               اسم ولي الأمر
             </label>
-            <div style={{ fontWeight: 700, fontSize: '.95rem', color: 'var(--fg)' }}>
+            <div className="inq-info-value">
               {loading ? 'جارٍ التحميل…' : (guardianName || 'ولي الأمر')}
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '.8rem', color: 'var(--fg-muted)', marginBottom: 4 }}>
+            <label className="inq-info-label">
               رقم الهاتف المعتمد
             </label>
-            <div dir="ltr" style={{ fontWeight: 700, fontSize: '.95rem', color: 'var(--fg)', textAlign: 'right' }}>
+            <div dir="ltr" className="inq-info-value inq-info-value--ltr">
               {loading ? 'جارٍ التحميل...' : (guardianPhone || 'غير مسجل')}
             </div>
           </div>
@@ -177,7 +142,7 @@ export default function Inquiries() {
         <div>
           <label
             htmlFor="inquiry-student"
-            style={{ display: 'block', fontSize: '.85rem', fontWeight: 700, marginBottom: 6, color: 'var(--fg-secondary)' }}
+            className="field-label"
           >
             الطالب المرتبط بالاستفسار
           </label>
@@ -187,7 +152,6 @@ export default function Inquiries() {
               value={selectedChildId ?? ''}
               onChange={e => setSelectedChildId(Number(e.target.value))}
               className="input"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8 }}
             >
               {children.map(c => (
                 <option key={c.student_id} value={c.student_id}>
@@ -196,21 +160,11 @@ export default function Inquiries() {
               ))}
             </select>
           ) : children.length === 1 ? (
-            <div
-              style={{
-                padding: '10px 14px',
-                background: 'var(--card2)',
-                borderRadius: 8,
-                border: '1px solid var(--border)',
-                fontWeight: 600,
-                color: 'var(--fg)',
-                fontSize: '.95rem',
-              }}
-            >
-              {children[0].full_name} <span style={{ color: 'var(--fg-muted)', fontSize: '.85rem' }}>({children[0].section_label})</span>
+            <div className="inq-readonly">
+              {children[0].full_name} <span className="inq-muted">({children[0].section_label})</span>
             </div>
           ) : (
-            <div style={{ padding: '10px 14px', background: 'var(--card2)', borderRadius: 8, color: 'var(--fg-muted)' }}>
+            <div className="inq-readonly inq-readonly--empty">
               لا يوجد طالب مسجل حالياً
             </div>
           )}
@@ -220,7 +174,7 @@ export default function Inquiries() {
         <div>
           <label
             htmlFor="inquiry-type"
-            style={{ display: 'block', fontSize: '.85rem', fontWeight: 700, marginBottom: 6, color: 'var(--fg-secondary)' }}
+            className="field-label"
           >
             نوع الاستفسار
           </label>
@@ -229,7 +183,6 @@ export default function Inquiries() {
             value={inquiryType}
             onChange={e => setInquiryType(e.target.value)}
             className="input"
-            style={{ width: '100%', padding: '10px 14px', borderRadius: 8 }}
           >
             <option value="واجب مدرسي">استفسار عن واجب مدرسي</option>
             <option value="استفسار إداري">استفسار إداري أو شؤون مدرسية</option>
@@ -243,7 +196,7 @@ export default function Inquiries() {
         <div>
           <label
             htmlFor="inquiry-subject"
-            style={{ display: 'block', fontSize: '.85rem', fontWeight: 700, marginBottom: 6, color: 'var(--fg-secondary)' }}
+            className="field-label"
           >
             عنوان الرسالة
           </label>
@@ -254,7 +207,6 @@ export default function Inquiries() {
             placeholder="مثال: استفسار حول مسألة الرياضيات ليوم الخميس"
             value={subject}
             onChange={e => setSubject(e.target.value)}
-            style={{ width: '100%', padding: '10px 14px', borderRadius: 8 }}
           />
         </div>
 
@@ -262,7 +214,7 @@ export default function Inquiries() {
         <div>
           <label
             htmlFor="inquiry-body"
-            style={{ display: 'block', fontSize: '.85rem', fontWeight: 700, marginBottom: 6, color: 'var(--fg-secondary)' }}
+            className="field-label"
           >
             نص الرسالة أو الاستفسار
           </label>
@@ -273,36 +225,16 @@ export default function Inquiries() {
             placeholder="اكتب تفاصيل الاستفسار هنا بوضوح…"
             value={message}
             onChange={e => setMessage(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px 14px',
-              borderRadius: 8,
-              lineHeight: 1.6,
-              resize: 'vertical',
-            }}
           />
         </div>
 
         {/* Submit Action: Disabled with Clear Notice */}
-        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button
-            type="button"
-            disabled
-            className="btn btn-primary"
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              fontSize: '1rem',
-              fontWeight: 700,
-              justifyContent: 'center',
-              opacity: 0.55,
-              cursor: 'not-allowed',
-            }}
-          >
+        <div className="inq-submit">
+          <button type="button" disabled className="btn btn-primary btn-block">
             <SendIcon size={18} />
             <span>إرسال الاستفسار (سيُفعّل قريباً)</span>
           </button>
-          <span style={{ fontSize: '.78rem', color: 'var(--fg-muted)', textAlign: 'center' }}>
+          <span className="inq-hint">
             الزر معطل مؤقتاً لحين استكمال ربط الخادم السحابي للاستفسارات.
           </span>
         </div>

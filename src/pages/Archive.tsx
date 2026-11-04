@@ -258,7 +258,7 @@ export default function Archive() {
             <div className="archive-list hw-list">
               {items.map(item => (
                 <article key={item.id} className="archive-entry hw-card">
-                  <p className="archive-entry__date" style={{ margin: 0, fontSize: '.82rem', color: 'var(--accent)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <p className="archive-entry__date archive-entry__date--accent">
                     <CalendarIcon size={14} />
                     <span>{arDate(item.due_date)}</span>
                   </p>

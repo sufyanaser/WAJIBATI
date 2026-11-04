@@ -104,17 +104,7 @@ export default function TimetablePage() {
   } = useWeeklyTimetable(currentSectionId)
 
   return (
-    <main
-      className="screen timetable-page"
-      dir="rtl"
-      style={{
-        paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))',
-        maxWidth: 600,
-        margin: '0 auto',
-        paddingLeft: 12,
-        paddingRight: 12,
-      }}
-    >
+    <main className="screen timetable-page gtt-page" dir="rtl">
       {/* ── Unified Header ── */}
       <PageHeader
         title="الجدول الأسبوعي"
@@ -125,11 +115,7 @@ export default function TimetablePage() {
 
       {/* ── Multi-Child Selector ── */}
       {children.length > 1 && (
-        <nav
-          className="child-tabs"
-          aria-label="اختيار الطالب"
-          style={{ marginBottom: 12, paddingBottom: 4 }}
-        >
+        <nav className="child-tabs gtt-child-tabs" aria-label="اختيار الطالب">
           {children.map((c, i) => (
             <button
               key={c.student_id}
@@ -145,7 +131,7 @@ export default function TimetablePage() {
 
       {/* ── Student & Section Bar ── */}
       {currentChild && (
-        <div className="student-bar" style={{ marginTop: 0, marginBottom: 12 }}>
+        <div className="student-bar gtt-student-bar">
           <div className="student-bar-info">
             <span className="student-bar-name">{currentChild.full_name}</span>
             <span className="student-bar-badge">{currentChild.section_label}</span>
@@ -154,11 +140,7 @@ export default function TimetablePage() {
       )}
 
       {/* ── 5-Day Selector Bar (Sun - Thu) ── */}
-      <div
-        role="tablist"
-        aria-label="أيام الأسبوع الدراسي"
-        className="timetable-day-grid"
-      >
+      <div role="tablist" aria-label="أيام الأسبوع الدراسي" className="timetable-day-grid">
         {WEEKDAYS.map(w => {
           const isSelected = selectedDay === w.index
           const isSmart = smartDay === w.index
@@ -173,153 +155,56 @@ export default function TimetablePage() {
               className={`timetable-day-btn ${isSelected ? 'active' : ''} ${isSmart ? 'is-smart' : ''}`}
             >
               <span className="timetable-day-label">{w.label}</span>
-              {isSmart && (
-                <span className="timetable-day-smart-tag">
-                  الدوام
-                </span>
-              )}
+              {isSmart && <span className="timetable-day-smart-tag">الدوام</span>}
             </button>
           )
         })}
       </div>
 
-      {/* ? Day Title & Relative Badge & Return Button */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-          padding: '0 4px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
-            جدول يوم {daySchedule.academicDayName}
-          </h2>
-          {daySchedule.relativeBadge && (
-            <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '2px 8px',
-                borderRadius: 6,
-                backgroundColor: 'rgba(0, 123, 254, 0.1)',
-                color: 'var(--accent, #007BFE)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-              }}
-            >
-              {daySchedule.relativeBadge}
-            </span>
-          )}
+      {/* ── Day title, relative badge and return button ── */}
+      <div className="gtt-section-head">
+        <div className="gtt-section-title-row">
+          <h2 className="gtt-section-title">جدول يوم {daySchedule.academicDayName}</h2>
+          {daySchedule.relativeBadge && <span className="gtt-badge">{daySchedule.relativeBadge}</span>}
         </div>
 
         {daySchedule.isManualSelection && (
-          <button
-            type="button"
-            onClick={returnToSmartDay}
-            style={{
-              background: 'none',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              backgroundColor: 'rgba(56, 189, 248, 0.08)',
-              color: '#38bdf8',
-              borderRadius: 6,
-              padding: '4px 8px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
+          <button type="button" onClick={returnToSmartDay} className="gtt-return-btn">
             العودة لليوم الدراسي ↺
           </button>
         )}
       </div>
 
-      {/* ? Period Cards List (6 Canonical Periods) */}
+      {/* ── Period list (6 canonical periods) ── */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="gtt-list">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div
-              key={i}
-              style={{
-                height: 58,
-                borderRadius: 10,
-                backgroundColor: 'rgba(24, 42, 69, 0.5)',
-                border: '1px solid rgba(38, 59, 92, 0.4)',
-                animation: 'pulse 1.5s infinite',
-              }}
-            />
+            <div key={i} className="gtt-skeleton" />
           ))}
         </div>
       ) : daySchedule.isUnpublished ? (
         /* State 3: لا توجد حصص مسجلة لهذه الشعبة */
-        <div
-          style={{
-            backgroundColor: 'rgba(10, 15, 29, 0.6)',
-            border: '1px dashed rgba(255, 255, 255, 0.15)',
-            borderRadius: 12,
-            padding: '28px 16px',
-            textAlign: 'center',
-            color: 'var(--fg-secondary, #64748B)',
-            margin: '20px 0',
-          }}
-        >
-          <CalendarDaysIcon size={36} style={{ color: 'var(--muted, #64748b)', margin: '0 auto 10px auto' }} />
-          <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A', margin: '0 0 6px 0' }}>
-            لا توجد حصص مسجلة لهذه الشعبة
-          </p>
-          <p style={{ fontSize: '0.8rem', margin: 0, color: 'var(--muted, #64748b)' }}>
-            سيظهر الجدول الأسبوعي هنا فور اعتماده من إدارة المدرسة.
-          </p>
+        <div className="gtt-empty">
+          <span className="gtt-empty-icon" aria-hidden="true">
+            <CalendarDaysIcon size={36} />
+          </span>
+          <p className="gtt-empty-title">لا توجد حصص مسجلة لهذه الشعبة</p>
+          <p className="gtt-empty-text">سيظهر الجدول الأسبوعي هنا فور اعتماده من إدارة المدرسة.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {daySchedule.slots.map((item, idx) => {
+        <div className="gtt-list">
+          {daySchedule.slots.map(item => {
             if (item.type === 'ASSIGNED') {
               const s = item.slot
-              const subColor = s.subject?.color || '#38bdf8'
+              const subColor = s.subject?.color || 'var(--accent)'
 
               return (
-                <div
-                  key={s.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    backgroundColor: 'rgba(255, 255, 255, 0.88)',
-                    border: '1px solid rgba(226, 232, 240, 0.9)',
-                    borderInlineStartWidth: 4,
-                    borderInlineStartColor: subColor,
-                    borderInlineStartStyle: 'solid',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                        color: 'var(--fg-secondary, #64748B)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      {s.period}
-                    </span>
+                <div key={s.id} className="gtt-row" style={{ '--tt-accent': subColor } as React.CSSProperties}>
+                  <div className="gtt-row-start">
+                    <span className="gtt-period">{s.period}</span>
                     <div>
-                      <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>
-                        {s.subject?.name ?? 'مادة مسجلة'}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--fg-secondary, #64748B)', marginTop: 2 }}>
-                        {s.teacher?.full_name ?? 'المدرس: لم يُحدد'}
-                      </div>
+                      <div className="gtt-subject">{s.subject?.name ?? 'مادة مسجلة'}</div>
+                      <div className="gtt-teacher">{s.teacher?.full_name ?? 'المدرس: لم يُحدد'}</div>
                     </div>
                   </div>
                 </div>
@@ -328,99 +213,28 @@ export default function TimetablePage() {
 
             if (item.type === 'UNASSIGNED_TEACHER') {
               const s = item.slot
-              const subColor = s.subject?.color || '#38bdf8'
+              const subColor = s.subject?.color || 'var(--accent)'
 
               return (
-                <div
-                  key={s.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    backgroundColor: 'rgba(255, 255, 255, 0.88)',
-                    border: '1px solid rgba(226, 232, 240, 0.9)',
-                    borderInlineStartWidth: 4,
-                    borderInlineStartColor: subColor,
-                    borderInlineStartStyle: 'solid',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                        color: 'var(--fg-secondary, #64748B)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                      }}
-                    >
-                      {s.period}
-                    </span>
+                <div key={s.id} className="gtt-row" style={{ '--tt-accent': subColor } as React.CSSProperties}>
+                  <div className="gtt-row-start">
+                    <span className="gtt-period">{s.period}</span>
                     <div>
-                      <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>
-                        {s.subject?.name ?? 'مادة مسجلة'}
-                      </div>
-                      <div style={{ fontSize: '0.76rem', color: 'var(--muted, #64748b)', marginTop: 2 }}>
-                        المدرس: لم يُحدد
-                      </div>
+                      <div className="gtt-subject">{s.subject?.name ?? 'مادة مسجلة'}</div>
+                      <div className="gtt-teacher">المدرس: لم يُحدد</div>
                     </div>
                   </div>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                      color: 'var(--muted, #64748b)',
-                    }}
-                  >
-                    شاغر
-                  </span>
+                  <span className="gtt-vacant">شاغر</span>
                 </div>
               )
             }
 
             // State 2: NO_RECORD - حصة غير مسجلة
             return (
-              <div
-                key={`empty-${item.period}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(10, 15, 29, 0.4)',
-                  border: '1px dashed rgba(255, 255, 255, 0.08)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
-                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                      color: 'var(--muted, #64748b)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                    }}
-                  >
-                    {item.period}
-                  </span>
-                  <span style={{ fontSize: '0.86rem', color: 'var(--muted, #64748b)', fontStyle: 'italic' }}>
-                    حصة غير مسجلة
-                  </span>
+              <div key={`empty-${item.period}`} className="gtt-row gtt-row--empty">
+                <div className="gtt-row-start">
+                  <span className="gtt-period gtt-period--empty">{item.period}</span>
+                  <span className="gtt-empty-slot-text">حصة غير مسجلة</span>
                 </div>
               </div>
             )
@@ -428,7 +242,7 @@ export default function TimetablePage() {
         </div>
       )}
 
-      {/* ? Unified Bottom Nav */}
+      {/* ── Unified Bottom Nav ── */}
       <BottomNavBar />
     </main>
   )

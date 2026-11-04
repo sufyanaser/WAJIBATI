@@ -47,7 +47,7 @@ export default function AdminLogin() {
     <main className="auth-page" dir="rtl">
       <div className="auth-card auth-card-admin">
         <div className="auth-brand">
-          <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div className="auth-logo-wrap">
             <img
               src="/icon-192.png"
               alt="شعار واجباتي"
@@ -56,43 +56,31 @@ export default function AdminLogin() {
               className="auth-logo"
             />
             <span
-              style={{
-                position: 'absolute',
-                bottom: -4,
-                right: -4,
-                background: 'var(--surface2)',
-                borderRadius: '50%',
-                padding: '4px',
-                border: '1.5px solid var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent)',
-              }}
+              className="admin-shield-badge"
               title="لوحة الإدارة المؤمنة"
             >
               <ShieldIcon size={16} />
             </span>
           </div>
 
-          <span className="auth-role-badge auth-role-badge-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span className="auth-role-badge auth-role-badge-admin auth-role-badge--inline">
             <ShieldIcon size={14} />
             <span>بوابة الإدارة المدرسية</span>
           </span>
 
           <div>
-            <h1 className="login-title" style={{ color: 'var(--fg)', fontSize: '1.45rem' }}>
+            <h1 className="login-title login-title--admin">
               لوحة التحكم والإشراف
             </h1>
-            <p className="school-subtitle" style={{ marginTop: 4, color: 'var(--accent)', fontWeight: 600 }}>
+            <p className="school-subtitle school-subtitle--admin">
               {settings.name}
             </p>
           </div>
         </div>
 
-        <div className="divider" style={{ margin: 0, borderColor: 'var(--border)' }} />
+        <div className="divider divider--flush" />
 
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={submit} className="auth-form">
           <div className="auth-field">
             <label htmlFor="admin-username" className="auth-label">
               اسم المستخدم أو البريد الإلكتروني
@@ -116,10 +104,9 @@ export default function AdminLogin() {
             <label htmlFor="admin-password" className="auth-label">
               كلمة المرور
             </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div className="pass-wrap">
               <input
                 id="admin-password"
-                className="input"
                 type={showPass ? 'text' : 'password'}
                 dir="ltr"
                 placeholder="كلمة المرور"
@@ -127,26 +114,13 @@ export default function AdminLogin() {
                 onChange={e => setPass(e.target.value)}
                 autoComplete="current-password"
                 required
-                style={{ width: '100%', paddingLeft: 44 }}
+                className="input pass-input"
               />
               <button
                 type="button"
                 onClick={() => setShowPass(v => !v)}
                 aria-label={showPass ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
-                style={{
-                  position: 'absolute',
-                  left: 8,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--muted)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '4px 8px',
-                  minHeight: 34,
-                  minWidth: 34,
-                }}
+                className="pass-toggle"
               >
                 {showPass ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
               </button>
@@ -154,16 +128,15 @@ export default function AdminLogin() {
           </div>
 
           {err && (
-            <p className="err" role="alert" style={{ textAlign: 'center' }}>
+            <p className="err err--center" role="alert">
               {err}
             </p>
           )}
 
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-block auth-submit"
             disabled={busy}
-            style={{ width: '100%', justifyContent: 'center', padding: '.85rem', fontSize: '1rem', borderRadius: 'var(--radius-lg)' }}
           >
             {busy ? 'جارٍ الدخول…' : 'دخول'}
           </button>

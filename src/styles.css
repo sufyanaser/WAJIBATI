@@ -5749,9 +5749,9 @@ button:disabled {
   margin-top: 12px;
   border-radius: 999px !important;
   border: 1px solid #25c8ff;
-  background: linear-gradient(180deg, #009cff, #0044c5);
+  background: var(--brand-gradient);
   color: white;
-  box-shadow: 0 10px 24px #0058bb26;
+  box-shadow: var(--shadow-cta);
   font-weight: 800;
 }
 .auth-page .btn-primary:disabled { opacity: .65; }
@@ -5788,3 +5788,23 @@ button:disabled {
   .auth-page .auth-card { padding-inline: 4px; }
   .auth-page .auth-label { font-size: .85rem; }
 }
+
+/* ============================================================
+   Premium visual polish — visual only (no layout or logic changes)
+   ============================================================ */
+:root {
+  --shadow-card: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(0,90,220,.07);
+  --shadow-card-hover: 0 2px 4px rgba(15,23,42,.05), 0 14px 32px rgba(0,90,220,.12);
+  --shadow-cta: inset 0 1px 0 rgba(255,255,255,.28), 0 6px 16px rgba(0,123,254,.28);
+  --shadow-cta-hover: inset 0 1px 0 rgba(255,255,255,.28), 0 10px 24px rgba(0,123,254,.34);
+}
+.hw-card { background: var(--card); padding: 20px; gap: 12px; box-shadow: var(--shadow-card); }
+.hw-card.clickable:hover { box-shadow: var(--shadow-card-hover); }
+.hw-body { font-size: 1rem; line-height: 1.75; }
+.hw-period-circle { box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 10px rgba(0,123,254,.25); }
+.student-bar { box-shadow: var(--shadow-card) !important; }
+.btn-primary { background: var(--brand-gradient); color: #FFFFFF; border-color: transparent; box-shadow: var(--shadow-cta); }
+.btn-primary:hover:not(:disabled) { background: var(--brand-gradient); filter: brightness(1.05); box-shadow: var(--shadow-cta-hover); }
+.btn-primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.auth-page .auth-card { box-shadow: var(--shadow-float); }
+@media (prefers-reduced-motion: reduce) { .hw-card, .btn { transition: none; } }

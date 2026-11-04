@@ -6125,3 +6125,11 @@ button:disabled {
   cursor: pointer;
 }
 .pass-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Login screens: match the school portal reference. */
+.auth-page--admin .auth-card { box-shadow: none; }
+.auth-page--admin .input { background: #e8f1ff; color: #142d55; border-color: #80d9f4; }
+.auth-page--admin .input::placeholder { color: #60718b; }
+.auth-page--admin .auth-footer { color: #fff; }
+.auth-page--admin .login-title { color: #fff; }
+.auth-page--guardian .auth-card { background: #fff; }

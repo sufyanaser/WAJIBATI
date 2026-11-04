@@ -5974,3 +5974,16 @@ button:disabled {
   color: var(--info-strong) !important;
   border: 1px solid transparent !important;
 }
+
+/* ── Admin dashboard stat tiles ──────────────────────────────────── */
+.dash-kpi {
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+.dash-kpi__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+}
+.dash-kpi__label {
+  color: var(--muted);
+}

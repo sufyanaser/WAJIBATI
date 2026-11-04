@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useSchoolSettings } from '../../services/schoolSettings'
 import {
   UsersIcon,
   BookIcon,
@@ -52,6 +53,7 @@ const statLabels: Record<keyof Stats, string> = {
 // ── component ──────────────────────────────────────────────────────────────────
 
 export default function DashboardHome() {
+  const { settings } = useSchoolSettings()
   const nav = useNavigate()
   const [stats, setStats] = useState<Stats | null>(null)
   const [assignments, setAssignments] = useState<AssignmentRow[]>([])
@@ -147,8 +149,8 @@ export default function DashboardHome() {
       <div className="dash-header">
         <img src="/icon-192.png" alt="شعار المدرسة" className="dash-logo" width={54} height={54} />
         <div>
-          <h1 className="dash-header__title">واجباتي | لوحة الإدارة — إعدادية الرميلة للبنين</h1>
-          <p className="dash-header__sub">مركز إدارة المدرسة · مديرية تربية الأنبار · الرمادي</p>
+          <h1 className="dash-header__title">واجباتي | لوحة الإدارة</h1>
+          <p className="dash-header__sub">{settings.name || 'مركز إدارة المدرسة'}</p>
         </div>
       </div>
 

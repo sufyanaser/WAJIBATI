@@ -8,6 +8,7 @@ import { BottomNavBar } from '../components/BottomNavBar'
 import { Spinner } from '../components/Spinner'
 import { EmptyState } from '../components/EmptyState'
 import { CalendarIcon, BookIcon } from '../components/Icons'
+import { useSchoolSettings } from '../services/schoolSettings'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section {
@@ -57,6 +58,7 @@ function SkeletonCard() {
 // ── component ─────────────────────────────────────────────────────────────────
 export default function Archive() {
   const nav = useNavigate()
+  const { settings } = useSchoolSettings()
   const [sections, setSections] = useState<Section[]>([])
   const [selectedSection, setSelectedSection] = useState<number | null>(null)
   const [search, setSearch] = useState('')
@@ -195,7 +197,7 @@ export default function Archive() {
     [nav]
   )
 
-  const currentSectionLabel = sections.find(s => s.id === selectedSection)?.label ?? 'إعدادية الرميلة للبنين'
+  const currentSectionLabel = sections.find(s => s.id === selectedSection)?.label ?? settings.name
 
   return (
     <main

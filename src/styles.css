@@ -5902,3 +5902,75 @@ button:disabled {
 .archive-day-back {
   color: var(--accent-dim);
 }
+
+/* ── Admin shell, tables, badges ─────────────────────────────────── */
+:root {
+  --success-strong: #0B7A4E;
+  --warn-strong: #8A5A00;
+  --error-strong: #B42318;
+  --info-strong: #0B6E85;
+}
+@media (min-width: 1024px) {
+  .admin-sidebar {
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    box-shadow: none;
+  }
+  .admin-sidebar-title {
+    color: var(--fg);
+  }
+  .admin-sidebar-footer {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+  }
+  .admin-shell-layout .admin-top-bar {
+    background: var(--card);
+  }
+}
+.admin-content-area table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.admin-content-area table tbody tr {
+  height: 48px;
+}
+.admin-content-area table tbody tr:nth-child(even):not([style*="232, 176, 74"]) {
+  background: color-mix(in srgb, var(--surface2) 60%, transparent);
+}
+.status-badge {
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+}
+.status-badge.status-badge-published,
+.status-badge.status-badge-active,
+.status-badge.status-badge-green {
+  background: var(--success-bg) !important;
+  color: var(--success-strong) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-draft,
+.status-badge.status-badge-gold {
+  background: var(--warn-bg) !important;
+  color: var(--warn-strong) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-suspended,
+.status-badge.status-badge-urgent,
+.status-badge.status-badge-red {
+  background: var(--error-bg) !important;
+  color: var(--error-strong) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-archived {
+  background: var(--surface2) !important;
+  color: var(--muted) !important;
+  border: 1px solid transparent !important;
+}
+.status-badge.status-badge-info,
+.status-badge.status-badge-blue {
+  background: var(--info-bg) !important;
+  color: var(--info-strong) !important;
+  border: 1px solid transparent !important;
+}

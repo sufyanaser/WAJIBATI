@@ -240,7 +240,7 @@ export default function Archive() {
 
         {/* content */}
         {(loading || searching) && items.length === 0 ? (
-          <div className="archive-list hw-list" aria-busy="true" aria-label="جارٍ التحميل">
+          <div className="archive-list hw-list" role="status" aria-busy="true" aria-label="جارٍ التحميل">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}

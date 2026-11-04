@@ -4,6 +4,7 @@ import { supabase, normalizePhone } from '../lib/supabase'
 import { fetchSubjects } from '../lib/subjects'
 import type { Subject } from '../lib/subjects'
 import { validateFile } from '../lib/attachmentUtils'
+import { useSchoolSettings } from '../services/schoolSettings'
 
 // ── types ─────────────────────────────────────────────────────────────────────
 interface Section { id: number; letter: string; stage: { name: string; branch: string } }
@@ -45,6 +46,7 @@ function nearestSchoolDay(d: Date): Date {
 }
 
 export default function Admin() {
+  const { settings } = useSchoolSettings()
   const nav = useNavigate()
   const [ready, setReady] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
@@ -449,7 +451,7 @@ export default function Admin() {
           <img src="/icon-192.png" alt="واجباتي" className="brand-logo" width={42} height={42} />
           <div className="today-header-titles">
             <h1 className="app-title">لوحة الإدارة</h1>
-            <p className="school-subtitle">إعدادية الرميلة للبنين</p>
+            <p className="school-subtitle">{settings.name}</p>
           </div>
         </div>
         <button className="icon-btn"

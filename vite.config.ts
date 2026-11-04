@@ -31,7 +31,7 @@ export default defineConfig({
       manifest: {
         name: 'واجباتي | Wajebati',
         short_name: 'Wajebati',
-        description: 'واجباتي — متابعة الواجبات اليومية لطلاب اعدادية الرميلة للبنين',
+        description: 'واجباتي — متابعة الواجبات اليومية للطلاب',
         lang: 'ar', dir: 'rtl',
         start_url: '/', display: 'standalone',
         background_color: '#F8FAFC', theme_color: '#007BFE',

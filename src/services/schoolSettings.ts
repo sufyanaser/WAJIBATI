@@ -14,7 +14,7 @@ export interface SchoolSettings {
 }
 
 export const DEFAULT_SCHOOL_SETTINGS: SchoolSettings = {
-  name: 'إعدادية الرميلة للبنين',
+  name: '',
   directorate: 'المديرية العامة لتربية الأنبار',
   governorate: 'الأنبار',
   location: 'الرمادي - الرميلة',

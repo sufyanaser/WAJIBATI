@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase, usernameToAdminEmail } from '../lib/supabase'
 import { EyeIcon, EyeOffIcon, ShieldIcon } from '../components/Icons'
 import { useSchoolSettings } from '../services/schoolSettings'
+import { AuthScenery } from '../components/AuthScenery'
 
 export default function AdminLogin() {
   const nav = useNavigate()
@@ -44,7 +45,8 @@ export default function AdminLogin() {
   }
 
   return (
-    <main className="auth-page" dir="rtl">
+    <main className="auth-page auth-page--admin" dir="rtl">
+      <AuthScenery />
       <div className="auth-card auth-card-admin">
         <div className="auth-brand">
           <div className="auth-logo-wrap">

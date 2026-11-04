@@ -104,7 +104,7 @@ export default function TimetablePage() {
   } = useWeeklyTimetable(currentSectionId)
 
   return (
-    <main className="screen timetable-page tt-page" dir="rtl">
+    <main className="screen timetable-page gtt-page" dir="rtl">
       {/* ── Unified Header ── */}
       <PageHeader
         title="الجدول الأسبوعي"
@@ -115,7 +115,7 @@ export default function TimetablePage() {
 
       {/* ── Multi-Child Selector ── */}
       {children.length > 1 && (
-        <nav className="child-tabs tt-child-tabs" aria-label="اختيار الطالب">
+        <nav className="child-tabs gtt-child-tabs" aria-label="اختيار الطالب">
           {children.map((c, i) => (
             <button
               key={c.student_id}
@@ -131,7 +131,7 @@ export default function TimetablePage() {
 
       {/* ── Student & Section Bar ── */}
       {currentChild && (
-        <div className="student-bar tt-student-bar">
+        <div className="student-bar gtt-student-bar">
           <div className="student-bar-info">
             <span className="student-bar-name">{currentChild.full_name}</span>
             <span className="student-bar-badge">{currentChild.section_label}</span>
@@ -162,14 +162,14 @@ export default function TimetablePage() {
       </div>
 
       {/* ── Day title, relative badge and return button ── */}
-      <div className="tt-section-head">
-        <div className="tt-section-title-row">
-          <h2 className="tt-section-title">جدول يوم {daySchedule.academicDayName}</h2>
-          {daySchedule.relativeBadge && <span className="tt-badge">{daySchedule.relativeBadge}</span>}
+      <div className="gtt-section-head">
+        <div className="gtt-section-title-row">
+          <h2 className="gtt-section-title">جدول يوم {daySchedule.academicDayName}</h2>
+          {daySchedule.relativeBadge && <span className="gtt-badge">{daySchedule.relativeBadge}</span>}
         </div>
 
         {daySchedule.isManualSelection && (
-          <button type="button" onClick={returnToSmartDay} className="tt-return-btn">
+          <button type="button" onClick={returnToSmartDay} className="gtt-return-btn">
             العودة لليوم الدراسي ↺
           </button>
         )}
@@ -177,34 +177,34 @@ export default function TimetablePage() {
 
       {/* ── Period list (6 canonical periods) ── */}
       {loading ? (
-        <div className="tt-list">
+        <div className="gtt-list">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="tt-skeleton" />
+            <div key={i} className="gtt-skeleton" />
           ))}
         </div>
       ) : daySchedule.isUnpublished ? (
         /* State 3: لا توجد حصص مسجلة لهذه الشعبة */
-        <div className="tt-empty">
-          <span className="tt-empty-icon" aria-hidden="true">
+        <div className="gtt-empty">
+          <span className="gtt-empty-icon" aria-hidden="true">
             <CalendarDaysIcon size={36} />
           </span>
-          <p className="tt-empty-title">لا توجد حصص مسجلة لهذه الشعبة</p>
-          <p className="tt-empty-text">سيظهر الجدول الأسبوعي هنا فور اعتماده من إدارة المدرسة.</p>
+          <p className="gtt-empty-title">لا توجد حصص مسجلة لهذه الشعبة</p>
+          <p className="gtt-empty-text">سيظهر الجدول الأسبوعي هنا فور اعتماده من إدارة المدرسة.</p>
         </div>
       ) : (
-        <div className="tt-list">
+        <div className="gtt-list">
           {daySchedule.slots.map(item => {
             if (item.type === 'ASSIGNED') {
               const s = item.slot
               const subColor = s.subject?.color || 'var(--accent)'
 
               return (
-                <div key={s.id} className="tt-row" style={{ '--tt-accent': subColor } as React.CSSProperties}>
-                  <div className="tt-row-start">
-                    <span className="tt-period">{s.period}</span>
+                <div key={s.id} className="gtt-row" style={{ '--tt-accent': subColor } as React.CSSProperties}>
+                  <div className="gtt-row-start">
+                    <span className="gtt-period">{s.period}</span>
                     <div>
-                      <div className="tt-subject">{s.subject?.name ?? 'مادة مسجلة'}</div>
-                      <div className="tt-teacher">{s.teacher?.full_name ?? 'المدرس: لم يُحدد'}</div>
+                      <div className="gtt-subject">{s.subject?.name ?? 'مادة مسجلة'}</div>
+                      <div className="gtt-teacher">{s.teacher?.full_name ?? 'المدرس: لم يُحدد'}</div>
                     </div>
                   </div>
                 </div>
@@ -216,25 +216,25 @@ export default function TimetablePage() {
               const subColor = s.subject?.color || 'var(--accent)'
 
               return (
-                <div key={s.id} className="tt-row" style={{ '--tt-accent': subColor } as React.CSSProperties}>
-                  <div className="tt-row-start">
-                    <span className="tt-period">{s.period}</span>
+                <div key={s.id} className="gtt-row" style={{ '--tt-accent': subColor } as React.CSSProperties}>
+                  <div className="gtt-row-start">
+                    <span className="gtt-period">{s.period}</span>
                     <div>
-                      <div className="tt-subject">{s.subject?.name ?? 'مادة مسجلة'}</div>
-                      <div className="tt-teacher">المدرس: لم يُحدد</div>
+                      <div className="gtt-subject">{s.subject?.name ?? 'مادة مسجلة'}</div>
+                      <div className="gtt-teacher">المدرس: لم يُحدد</div>
                     </div>
                   </div>
-                  <span className="tt-vacant">شاغر</span>
+                  <span className="gtt-vacant">شاغر</span>
                 </div>
               )
             }
 
             // State 2: NO_RECORD - حصة غير مسجلة
             return (
-              <div key={`empty-${item.period}`} className="tt-row tt-row--empty">
-                <div className="tt-row-start">
-                  <span className="tt-period tt-period--empty">{item.period}</span>
-                  <span className="tt-empty-slot-text">حصة غير مسجلة</span>
+              <div key={`empty-${item.period}`} className="gtt-row gtt-row--empty">
+                <div className="gtt-row-start">
+                  <span className="gtt-period gtt-period--empty">{item.period}</span>
+                  <span className="gtt-empty-slot-text">حصة غير مسجلة</span>
                 </div>
               </div>
             )

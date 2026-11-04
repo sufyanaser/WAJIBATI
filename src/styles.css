@@ -5870,3 +5870,35 @@ button:disabled {
 .bottom-nav-label {
   font-size: 0.75rem;
 }
+
+/* ── Archive ───────────────────────────────────────────────────────── */
+.archive-entry {
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+.archive-chip {
+  background: var(--accent-soft);
+  color: var(--accent-dim);
+  border-color: transparent;
+}
+.archive-chip--muted {
+  color: var(--muted);
+}
+.archive-day-card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--transition-fast);
+}
+.archive-day-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+.archive-day-card__date {
+  color: var(--fg);
+}
+.archive-day-card__count {
+  color: var(--accent-dim);
+  background: var(--accent-soft);
+}
+.archive-day-back {
+  color: var(--accent-dim);
+}

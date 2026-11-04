@@ -6147,3 +6147,18 @@ button:disabled {
   .auth-page .auth-footer a { min-height: 44px; }
   .auth-scenery { height: 150px; }
 }
+
+/* Keep login controls usable in standalone apps, narrow screens, and short browser windows. */
+.auth-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-inline: max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.auth-page .auth-card { min-width: 0; }
+.auth-page .auth-field, .auth-page .auth-form { min-width: 0; }
+.auth-page .input { width: 100%; min-width: 0; font-size: 16px; }
+@media (max-height: 600px) {
+  .auth-page { align-items: flex-start; padding-block: max(20px, env(safe-area-inset-top, 0px)) max(120px, env(safe-area-inset-bottom, 0px)); }
+  .auth-page .auth-card { margin-block: auto; }
+  .auth-scenery { height: 120px; }
+}

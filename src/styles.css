@@ -6133,3 +6133,17 @@ button:disabled {
 .auth-page--admin .auth-footer { color: #fff; }
 .auth-page--admin .login-title { color: #fff; }
 .auth-page--guardian .auth-card { background: #fff; }
+@media (max-width: 600px) {
+  .auth-page { padding-block: max(32px, env(safe-area-inset-top, 0px)) max(145px, env(safe-area-inset-bottom, 0px)); }
+  .auth-page .auth-card { padding: 10px 20px; gap: 18px; }
+  .auth-page .auth-brand { gap: 10px; }
+  .auth-page .auth-logo { width: 76px; height: 76px; border-radius: 18px; }
+  .auth-page .auth-role-badge { font-size: .85rem; }
+  .auth-page .login-title { font-size: 1.65rem; margin-bottom: 4px; }
+  .auth-page .school-subtitle, .auth-page .auth-label { font-size: .85rem; }
+  .auth-page .input { min-height: 44px; border-radius: 12px; font-size: .9rem; }
+  .auth-page .btn-primary { min-height: 44px; margin-top: 4px; }
+  .auth-page .auth-footer { gap: 14px; padding-top: 6px; font-size: .85rem; }
+  .auth-page .auth-footer a { min-height: 44px; }
+  .auth-scenery { height: 150px; }
+}

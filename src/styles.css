@@ -5979,15 +5979,15 @@ button:disabled {
 }
 
 /* ── Timetable (guardian) — design classes, no inline styles ─────── */
-.tt-page {
+.gtt-page {
   max-width: 600px;
   margin-inline: auto;
   padding-inline: var(--space-3);
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
-.tt-child-tabs { margin-bottom: var(--space-3); padding-bottom: var(--space-1); }
-.tt-student-bar { margin-top: 0; margin-bottom: var(--space-3); }
-.tt-section-head {
+.gtt-child-tabs { margin-bottom: var(--space-3); padding-bottom: var(--space-1); }
+.gtt-student-bar { margin-top: 0; margin-bottom: var(--space-3); }
+.gtt-section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5995,14 +5995,14 @@ button:disabled {
   margin-bottom: var(--space-3);
   padding-inline: var(--space-1);
 }
-.tt-section-title-row { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
-.tt-section-title {
+.gtt-section-title-row { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.gtt-section-title {
   margin: 0;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--fg);
 }
-.tt-badge {
+.gtt-badge {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   padding: 2px var(--space-2);
@@ -6010,7 +6010,7 @@ button:disabled {
   background: var(--accent-soft);
   color: var(--accent-dim);
 }
-.tt-return-btn {
+.gtt-return-btn {
   min-height: 44px;
   padding-inline: var(--space-3);
   border-radius: var(--radius-md);
@@ -6022,15 +6022,15 @@ button:disabled {
   font-weight: var(--font-weight-bold);
   cursor: pointer;
 }
-.tt-return-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.tt-list { display: flex; flex-direction: column; gap: var(--space-2); }
-.tt-skeleton {
+.gtt-return-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.gtt-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.gtt-skeleton {
   height: 58px;
   border-radius: var(--radius-md);
   background: var(--surface2);
   animation: pulse 1.5s infinite;
 }
-.tt-empty {
+.gtt-empty {
   margin-block: var(--space-5);
   padding: var(--space-6) var(--space-4);
   text-align: center;
@@ -6039,15 +6039,15 @@ button:disabled {
   border: 1px dashed var(--border);
   border-radius: var(--radius-lg);
 }
-.tt-empty-icon { display: inline-flex; color: var(--muted); margin-bottom: var(--space-2); }
-.tt-empty-title {
+.gtt-empty-icon { display: inline-flex; color: var(--muted); margin-bottom: var(--space-2); }
+.gtt-empty-title {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--fg);
 }
-.tt-empty-text { margin: 0; font-size: var(--font-size-sm); color: var(--muted); }
-.tt-row {
+.gtt-empty-text { margin: 0; font-size: var(--font-size-sm); color: var(--muted); }
+.gtt-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -6060,13 +6060,13 @@ button:disabled {
   border-inline-start: 4px solid var(--tt-accent, var(--accent));
   box-shadow: var(--shadow-card);
 }
-.tt-row--empty {
+.gtt-row--empty {
   background: var(--surface2);
   border: 1px dashed var(--border);
   box-shadow: none;
 }
-.tt-row-start { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.tt-period {
+.gtt-row-start { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.gtt-period {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6079,18 +6079,18 @@ button:disabled {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
-.tt-period--empty { color: var(--muted); }
-.tt-subject { font-size: var(--font-size-base); font-weight: var(--font-weight-bold); color: var(--fg); }
-.tt-teacher { margin-top: 2px; font-size: var(--font-size-xs); color: var(--muted); }
-.tt-vacant {
+.gtt-period--empty { color: var(--muted); }
+.gtt-subject { font-size: var(--font-size-base); font-weight: var(--font-weight-bold); color: var(--fg); }
+.gtt-teacher { margin-top: 2px; font-size: var(--font-size-xs); color: var(--muted); }
+.gtt-vacant {
   padding: 2px var(--space-2);
   border-radius: var(--radius-sm);
   background: var(--surface2);
   color: var(--muted);
   font-size: var(--font-size-xs);
 }
-.tt-empty-slot-text { font-size: var(--font-size-sm); font-style: italic; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .tt-skeleton { animation: none; } }
+.gtt-empty-slot-text { font-size: var(--font-size-sm); font-style: italic; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .gtt-skeleton { animation: none; } }
 
 /* ── Inquiries (guardian) — design classes, no inline styles ─────── */
 .inq-page {

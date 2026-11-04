@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase, usernameToAdminEmail } from '../lib/supabase'
-import { EyeIcon, EyeOffIcon, ShieldIcon } from '../components/Icons'
-import { useSchoolSettings } from '../services/schoolSettings'
+import { EyeIcon, EyeOffIcon } from '../components/Icons'
 import { AuthScenery } from '../components/AuthScenery'
+import { useSchoolSettings } from '../services/schoolSettings'
 
 export default function AdminLogin() {
   const nav = useNavigate()
@@ -49,44 +49,14 @@ export default function AdminLogin() {
       <AuthScenery />
       <div className="auth-card auth-card-admin">
         <div className="auth-brand">
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <img
-              src="/icon-192.png"
-              alt="شعار واجباتي"
-              width={76}
-              height={76}
-              className="auth-logo"
-            />
-            <span
-              style={{
-                position: 'absolute',
-                bottom: -4,
-                right: -4,
-                background: 'var(--surface2)',
-                borderRadius: '50%',
-                padding: '4px',
-                border: '1.5px solid var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent)',
-              }}
-              title="لوحة الإدارة المؤمنة"
-            >
-              <ShieldIcon size={16} />
-            </span>
-          </div>
-
-          <span className="auth-role-badge auth-role-badge-admin" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <ShieldIcon size={14} />
-            <span>بوابة الإدارة المدرسية</span>
-          </span>
+          <img src="/icon-192.png" alt="شعار واجباتي" width={76} height={76} className="auth-logo" />
+          <span className="auth-role-badge">واجباتي · بوابة المدرسة</span>
 
           <div>
-            <h1 className="login-title" style={{ color: 'var(--fg)', fontSize: '1.45rem' }}>
-              لوحة التحكم والإشراف
+            <h1 className="login-title">
+              دخول الإدارة
             </h1>
-            <p className="school-subtitle" style={{ marginTop: 4, color: 'var(--accent)', fontWeight: 600 }}>
+            <p className="school-subtitle" style={{ marginTop: 4, fontWeight: 600 }}>
               {settings.name}
             </p>
           </div>
@@ -141,7 +111,7 @@ export default function AdminLogin() {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'var(--muted)',
+                  color: '#526680',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',

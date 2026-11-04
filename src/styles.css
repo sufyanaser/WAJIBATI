@@ -5908,19 +5908,6 @@ button:disabled {
   --error-strong: #B42318;
   --info-strong: #0B6E85;
 }
-/* Admin sidebar keeps its dark navy identity (distinct from the guardian UI). */
-.admin-content-area table thead th {
-  position: sticky;
-  top: 0;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-}
-.admin-content-area table tbody tr {
-  height: 48px;
-}
-.admin-content-area table tbody tr:nth-child(even):not([style*="232, 176, 74"]) {
-  background: color-mix(in srgb, var(--surface2) 60%, transparent);
-}
 .status-badge {
   border-radius: var(--radius-full);
   padding: 4px 10px;

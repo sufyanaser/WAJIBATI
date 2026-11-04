@@ -1,12 +1,13 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'iq.wajibati.app',
+  appId: 'cc.raneen.wajibati',
   appName: 'واجباتي',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
+    iosScheme: 'capacitor',
   },
-};
+}
 
-export default config;
+export default config

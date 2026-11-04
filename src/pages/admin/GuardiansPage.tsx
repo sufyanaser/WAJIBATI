@@ -39,6 +39,7 @@ export default function GuardiansPage() {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [altPhone, setAltPhone] = useState('')
+  const [pin, setPin] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState<number | ''>('')
   const [relation, setRelation] = useState('أب')
   const [saving, setSaving] = useState(false)
@@ -109,6 +110,7 @@ export default function GuardiansPage() {
     setFullName('')
     setPhone('07')
     setAltPhone('')
+    setPin('')
     setSelectedStudentId('')
     setRelation('أب')
     setShowForm(true)
@@ -169,34 +171,28 @@ const cleanPhone = formatIraqiPhone(phone)
 
       showToast('تم تحديث بيانات ولي الأمر ✓', 'success')
     } else {
-      const extKey = `GUA-${Date.now().toString(36).toUpperCase()}`
-      const { data: newG, error } = await supabase
-        .from('guardians')
-        .insert({
-          external_key: extKey,
-          full_name: fullName.trim() || null,
-          phone: cleanPhone,
-          alt_phone: altPhone.trim() || null,
-          active: true,
-        })
-        .select('id')
-        .single()
-
-      if (error) {
-        showToast(`خطأ: ${error.message}`, 'error')
+      if (!/^[0-9]{6}$/.test(pin)) {
+        showToast('رمز PIN يجب أن يكون 6 أرقام', 'error')
         setSaving(false)
         return
       }
-
-      if (newG?.id && selectedStudentId) {
-        await supabase.from('guardian_students').insert({
-          guardian_id: newG.id,
-          student_id: Number(selectedStudentId),
+      // Creates the login and the guardian row together on the server.
+      const { data, error } = await supabase.functions.invoke('create-guardian', {
+        body: {
+          phone: cleanPhone,
+          pin,
+          full_name: fullName.trim() || null,
+          alt_phone: altPhone.trim() || null,
+          student_id: selectedStudentId === '' ? null : Number(selectedStudentId),
           relation: relation.trim() || null,
-        })
+        },
+      })
+      if (error || !data?.ok) {
+        showToast(`خطأ: ${error?.message ?? 'تعذر إنشاء الحساب'}`, 'error')
+        setSaving(false)
+        return
       }
-
-      showToast('تمت إضافة ولي الأمر بنجاح ✓', 'success')
+      showToast('تم إنشاء حساب ولي الأمر ✓', 'success')
     }
 
     setShowForm(false)
@@ -279,6 +275,19 @@ const cleanPhone = formatIraqiPhone(phone)
                 required
               />
             </label>
+            {!editing && (
+              <label>
+                <span>رمز PIN للدخول (6 أرقام) *</span>
+                <input
+                  value={pin}
+                  onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  dir="ltr"
+                  inputMode="numeric"
+                  placeholder="000000"
+                  required
+                />
+              </label>
+            )}
             <label>
               <span>رقم هاتف بديل (اختياري)</span>
               <input

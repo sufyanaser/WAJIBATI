@@ -100,6 +100,26 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ]
 
+
+// ── Phone bottom tabs and More sheet ──────────────────────────────────────────
+
+const TAB_ITEMS: Array<{ to: string; label: string; icon: React.ComponentType<IconProps> }> = [
+  { to: '/admin/dashboard', label: 'الرئيسية', icon: HomeIcon },
+  { to: '/admin/homework', label: 'الواجبات', icon: BookIcon },
+  { to: '/admin/timetable', label: 'الجدول', icon: CalendarIcon },
+  { to: '/admin/notices', label: 'الإعلانات', icon: BellIcon },
+]
+
+const MORE_DATABASE_LINKS: Array<{ to: string; label: string }> = [
+  { to: '/admin/students', label: 'دليل الطلاب' },
+  { to: '/admin/sections', label: 'الشعب الدراسية' },
+  { to: '/admin/guardians', label: 'أولياء الأمور' },
+  { to: '/admin/teachers', label: 'المعلمون' },
+  { to: '/admin/subjects', label: 'المواد الدراسية' },
+  { to: '/admin/master-data', label: 'سجل البيانات الشامل' },
+  { to: '/admin/import', label: 'الاستيراد الجماعي' },
+]
+
 // ── Breadcrumbs & Page Metadata ────────────────────────────────────────────────
 
 function getPageMeta(pathname: string): { section: string; title: string } {
@@ -134,6 +154,7 @@ export default function AdminShell() {
   const [role, setRole] = useState<'owner' | 'editor' | 'viewer'>('viewer')
   const [ready, setReady] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   // Sidebar collapse state persisted in localStorage
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -167,6 +188,7 @@ export default function AdminShell() {
   // Close mobile drawer on route change
   useEffect(() => {
     setMobileOpen(false)
+    setMoreOpen(false)
   }, [location.pathname])
 
   // Close mobile drawer on ESC
@@ -435,6 +457,81 @@ export default function AdminShell() {
             <Outlet />
           </main>
         </div>
+
+        {/* ── Phone app navigation: bottom tab bar + More sheet ─────────── */}
+        <nav className="admin-tabbar" aria-label="التنقّل السريع">
+          {TAB_ITEMS.map(tab => {
+            const Icon = tab.icon
+            return (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                end={tab.to === '/admin/dashboard'}
+                className={({ isActive }) => `admin-tab ${isActive ? 'active' : ''}`}
+                aria-label={`تبويب ${tab.label}`}
+              >
+                <Icon size={22} />
+                <span>{tab.label}</span>
+              </NavLink>
+            )
+          })}
+          <button
+            type="button"
+            className={`admin-tab ${moreOpen ? 'active' : ''}`}
+            onClick={() => setMoreOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={moreOpen}
+          >
+            <MenuIcon size={22} />
+            <span>المزيد</span>
+          </button>
+        </nav>
+
+        <div
+          className={`admin-more-backdrop ${moreOpen ? 'open' : ''}`}
+          onClick={() => setMoreOpen(false)}
+          aria-hidden={!moreOpen}
+        />
+        <section
+          className={`admin-more-sheet ${moreOpen ? 'open' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="المزيد"
+          aria-hidden={!moreOpen}
+        >
+          <div className="admin-more-sheet__handle" aria-hidden="true" />
+          <div className="admin-more-sheet__user">
+            <span className="admin-more-sheet__name">{displayName}</span>
+            <span
+              className="admin-more-sheet__role"
+              style={{ color: roleBadge.color, background: roleBadge.bg }}
+            >
+              {roleBadge.label}
+            </span>
+          </div>
+
+          <div className="admin-more-sheet__group">
+            <span className="admin-more-sheet__label">قاعدة البيانات المدرسية</span>
+            {MORE_DATABASE_LINKS.map(link => (
+              <NavLink key={link.to} to={link.to} className="admin-more-sheet__row">
+                <span>{link.label}</span>
+                <ChevronLeftIcon size={16} />
+              </NavLink>
+            ))}
+          </div>
+
+          <div className="admin-more-sheet__group">
+            <span className="admin-more-sheet__label">الحساب</span>
+            <NavLink to="/admin/settings" className="admin-more-sheet__row">
+              <span>الإعدادات والصلاحيات</span>
+              <ChevronLeftIcon size={16} />
+            </NavLink>
+            <button type="button" className="admin-more-sheet__row admin-more-sheet__row--danger" onClick={handleLogout}>
+              <span>تسجيل الخروج</span>
+              <LogOutIcon size={16} />
+            </button>
+          </div>
+        </section>
       </div>
     </AdminContext.Provider>
   )

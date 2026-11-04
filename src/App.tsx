@@ -1,6 +1,8 @@
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Spinner } from './components/Spinner'
+import NativeLinkBridge from './components/NativeLinkBridge'
+import IosUpdateGate from './components/IosUpdateGate'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
 
@@ -28,6 +30,8 @@ const Router = isLocalFile ? HashRouter : BrowserRouter
 export default function App() {
   return (
     <Router>
+      <NativeLinkBridge />
+      <IosUpdateGate>
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -54,6 +58,7 @@ export default function App() {
           <Route path="/*" element={<Today />} />
         </Routes>
       </Suspense>
+      </IosUpdateGate>
     </Router>
   )
 }

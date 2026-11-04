@@ -110,7 +110,7 @@ export default function Inquiries() {
       {/* ── Unified Header ── */}
       <PageHeader
         title="الاستفسارات والتواصل"
-        subtitle={settings.name || 'إعدادية الرميلة للبنين'}
+        subtitle={settings.name}
         onBack={() => nav('/')}
         backLabel="العودة للرئيسية"
       />

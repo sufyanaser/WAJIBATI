@@ -6,6 +6,7 @@ import type { AttachmentRow } from '../../hooks/useAdminSection'
 import { DateNavigator } from '../../components/DateNavigator'
 import { Toast, useToast } from '../../components/Toast'
 import { assertCanWrite } from '../../services/platform'
+import { useSchoolSettings } from '../../services/schoolSettings'
 import type { HomeworkExportData } from '../../utils/exportHomework'
 import {
   ImageIcon,
@@ -155,6 +156,7 @@ function StatusDot({ status }: { status: 'draft' | 'published' | 'archived' | nu
 // ── component ──────────────────────────────────────────────────────────────────
 
 export default function HomeworkEntry() {
+  const { settings } = useSchoolSettings()
   const nav = useNavigate()
   const [ready, setReady] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
@@ -338,7 +340,7 @@ export default function HomeworkEntry() {
       const { exportAsPDF } = await import('../../utils/exportHomework')
       const sec = sections.find(s => s.id === secId)
       const exportData: HomeworkExportData = {
-        schoolName: 'إعدادية الرميلة للبنين',
+        schoolName: settings.name,
         sectionName: sec
           ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}`
           : 'الشعبة الدراسية',

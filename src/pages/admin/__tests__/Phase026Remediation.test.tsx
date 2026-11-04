@@ -344,7 +344,7 @@ describe('Phase 02.6 Remediation — Targeted Verification & Non-Regression', ()
       )
 
       await waitFor(() => {
-        expect(screen.getByText('واجباتي | لوحة الإدارة — إعدادية الرميلة للبنين')).toBeInTheDocument()
+        expect(screen.getByText('واجباتي | لوحة الإدارة')).toBeInTheDocument()
       })
 
       // Verify canonical cards

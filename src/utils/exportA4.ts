@@ -17,6 +17,8 @@ export interface HomeworkItem {
 }
 
 export interface ExportA4Options {
+  /** School name from settings; empty string hides the line */
+  schoolName?: string
   /** 'YYYY-MM-DD' */
   date: string
   /** e.g. 'الصف الخامس علمي' */
@@ -105,7 +107,7 @@ function buildA4Html(opts: ExportA4Options): string {
         <div style="font-weight:700;font-size:15px">جمهورية العراق</div>
         <div style="font-weight:700;font-size:14px">وزارة التربية</div>
         <div style="font-weight:700;font-size:13px">المديرية العامة لتربية الأنبار</div>
-        <div style="font-weight:700;font-size:14px">إعدادية الرميلة للبنين</div>
+        <div style="font-weight:700;font-size:14px">${escapeHtml(opts.schoolName ?? '')}</div>
       </div>
 
       <!-- CENTER: logo + brand name -->

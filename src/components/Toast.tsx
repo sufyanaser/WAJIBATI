@@ -30,6 +30,7 @@ export function Toast({ message, type, onDone, duration = 3000 }: ToastProps) {
     <div
       role="alert"
       aria-live="assertive"
+      className="app-toast"
       style={{
         position: 'fixed',
         bottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))',
@@ -39,13 +40,12 @@ export function Toast({ message, type, onDone, duration = 3000 }: ToastProps) {
         border: `1.5px solid ${colors[type]}`,
         borderRadius: 'var(--radius-lg)',
         padding: '.75rem 1.25rem',
-        color: colors[type],
+        color: 'var(--fg)',
         fontWeight: 700,
         fontSize: '.9rem',
         boxShadow: '0 8px 28px var(--shadow)',
         opacity: visible ? 1 : 0,
         transition: 'opacity .3s',
-        zIndex: 9999,
         maxWidth: 'min(480px, 92vw)',
         textAlign: 'center',
         whiteSpace: 'normal',

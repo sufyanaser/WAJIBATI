@@ -5993,3 +5993,219 @@ button:disabled {
 .app-toast {
   z-index: var(--z-toast);
 }
+
+/* ── Timetable (guardian) — design classes, no inline styles ─────── */
+.tt-page {
+  max-width: 600px;
+  margin-inline: auto;
+  padding-inline: var(--space-3);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+}
+.tt-child-tabs { margin-bottom: var(--space-3); padding-bottom: var(--space-1); }
+.tt-student-bar { margin-top: 0; margin-bottom: var(--space-3); }
+.tt-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-inline: var(--space-1);
+}
+.tt-section-title-row { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.tt-section-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--fg);
+}
+.tt-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-dim);
+}
+.tt-return-btn {
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--accent-dim);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+.tt-return-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tt-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.tt-skeleton {
+  height: 58px;
+  border-radius: var(--radius-md);
+  background: var(--surface2);
+  animation: pulse 1.5s infinite;
+}
+.tt-empty {
+  margin-block: var(--space-5);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+.tt-empty-icon { display: inline-flex; color: var(--muted); margin-bottom: var(--space-2); }
+.tt-empty-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--fg);
+}
+.tt-empty-text { margin: 0; font-size: var(--font-size-sm); color: var(--muted); }
+.tt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--tt-accent, var(--accent));
+  box-shadow: var(--shadow-card);
+}
+.tt-row--empty {
+  background: var(--surface2);
+  border: 1px dashed var(--border);
+  box-shadow: none;
+}
+.tt-row-start { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.tt-period {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--fg-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+.tt-period--empty { color: var(--muted); }
+.tt-subject { font-size: var(--font-size-base); font-weight: var(--font-weight-bold); color: var(--fg); }
+.tt-teacher { margin-top: 2px; font-size: var(--font-size-xs); color: var(--muted); }
+.tt-vacant {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+}
+.tt-empty-slot-text { font-size: var(--font-size-sm); font-style: italic; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .tt-skeleton { animation: none; } }
+
+/* ── Inquiries (guardian) — design classes, no inline styles ─────── */
+.inq-page {
+  max-width: 720px;
+  margin-inline: auto;
+  padding: max(14px, env(safe-area-inset-top, 0px)) var(--space-4) calc(84px + env(safe-area-inset-bottom, 0px));
+  min-height: 100dvh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.inq-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.inq-form .field-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--fg-secondary);
+}
+.inq-form .input { width: 100%; min-height: 44px; padding-inline: var(--space-4); border-radius: var(--radius-md); }
+.inq-form textarea.input { padding-block: var(--space-3); line-height: 1.6; resize: vertical; }
+.inq-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.inq-info-label { display: block; margin-bottom: var(--space-1); font-size: var(--font-size-sm); color: var(--muted); }
+.inq-info-value { font-size: var(--font-size-base); font-weight: var(--font-weight-bold); color: var(--fg); }
+.inq-info-value--ltr { direction: ltr; text-align: start; }
+.inq-readonly {
+  padding: var(--space-3) var(--space-4);
+  min-height: 44px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--fg);
+}
+.inq-readonly--empty { font-weight: 400; color: var(--muted); }
+.inq-muted { font-size: var(--font-size-sm); font-weight: 400; color: var(--muted); }
+.inq-submit { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-1); }
+.btn-block { width: 100%; justify-content: center; }
+.inq-hint { font-size: var(--font-size-xs); text-align: center; color: var(--muted); }
+
+/* ── Shared page helpers (no inline styles) ─────────────────────── */
+.archive-entry__date--accent { margin: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); color: var(--accent); display: inline-flex; align-items: center; gap: var(--space-1); }
+.auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
+.auth-submit { min-height: 52px; padding-block: var(--space-3); font-size: var(--font-size-base); border-radius: var(--radius-lg); }
+.divider--flush { margin: 0; }
+.school-subtitle--tight { margin-top: var(--space-1); }
+.err--center { text-align: center; }
+
+/* ── Admin login — design classes, no inline styles ─────────────── */
+.auth-logo-wrap { position: relative; display: inline-block; }
+.admin-shield-badge {
+  position: absolute;
+  inset-block-end: -4px;
+  inset-inline-end: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+}
+.auth-role-badge--inline { display: inline-flex; align-items: center; gap: var(--space-2); }
+.login-title--admin { color: var(--fg); font-size: 1.45rem; }
+.school-subtitle--admin { margin-top: var(--space-1); color: var(--accent); font-weight: var(--font-weight-bold); }
+.pass-wrap { position: relative; display: flex; align-items: center; }
+.pass-input { width: 100%; padding-left: 44px; }
+.pass-toggle {
+  position: absolute;
+  left: var(--space-2); /* eye toggle stays on the left, as in the original admin login */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.pass-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

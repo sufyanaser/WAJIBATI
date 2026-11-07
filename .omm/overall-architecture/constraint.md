@@ -1,0 +1,4 @@
+- RTL only (dir="rtl", Arabic UI).
+- No external SMS gateway. Guardian auth strictly maps Iraqi phone numbers (+9647XXXXXXXXX) to synthetic emails (<digits>@guardian.rumaila.local) paired with a 6-digit PIN.
+- Strict data isolation via Supabase RLS: guardians must only read homework and attachments for their actively enrolled children's sections.
+- Past homework is never deleted; records are archived and remain searchable by date or full-text tsvector index.

@@ -1,0 +1,1 @@
+- Standard Web Push protocol (RFC 8030 / RFC 8291).

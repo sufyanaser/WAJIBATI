@@ -1,0 +1,9 @@
+created: 2026-10-21T23:29:03.196Z
+updated: 2026-10-21T23:29:03.196Z
+update_count: 1
+last_field: description
+kind: nested-class
+title: academic-schema
+children: []
+parentPath:
+  - supabase-database

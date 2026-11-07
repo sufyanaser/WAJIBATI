@@ -1,0 +1,1 @@
+Fans out Web Push notifications using VAPID to all active guardian subscriptions for a given section. Resolves subscriptions via get_section_subscriptions RPC and automatically prunes expired endpoints returning HTTP 404/410.

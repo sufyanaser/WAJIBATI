@@ -1,0 +1,1 @@
+Supabase authentication service using GoTrue under the hood. Configured with a zero-SMS email/password protocol where phone numbers are deterministically converted into emails (<digits>@guardian.rumaila.local) and passwords are 6-digit PINs. Admin users use <username>@admin.rumaila.local with passwords.

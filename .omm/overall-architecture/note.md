@@ -1,0 +1,3 @@
+- Configured school: ??????? ??????? ?????? (Directorate of Education in Anbar).
+- Primary accent palette: Navy (#0F1E33 / #1F3A5F) and Gold (#E8B04A / #C9A227).
+- Weekday range: Sunday (0) to Thursday (4), 6 periods per day (except Thursday 5 periods).

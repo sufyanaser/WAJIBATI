@@ -1,0 +1,1 @@
+- Listens for window messages to delete 'supabase-rest' cache storage upon sign-out.

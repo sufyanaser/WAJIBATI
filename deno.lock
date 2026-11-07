@@ -1,0 +1,51 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@supabase/supabase-js@2": "2.118.0"
+  },
+  "jsr": {
+    "@supabase/supabase-js@2.118.0": {
+      "integrity": "42009f9d5b35997f35bba560d509f42608057cae647bd5a25b9b4a06ec3ffad0"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@capacitor/app@7.1.2",
+        "npm:@capacitor/cli@7.6.9",
+        "npm:@capacitor/core@7.6.9",
+        "npm:@capacitor/filesystem@7.1.9",
+        "npm:@capacitor/ios@7.6.9",
+        "npm:@capacitor/share@7.0.4",
+        "npm:@playwright/test@^1.64.1",
+        "npm:@supabase/supabase-js@^2.45.0",
+        "npm:@tanstack/react-table@^9.3.1",
+        "npm:@tauri-apps/api@^2.12.4",
+        "npm:@testing-library/dom@^10.4.2",
+        "npm:@testing-library/jest-dom@^7.0.1",
+        "npm:@testing-library/react@^16.3.3",
+        "npm:@types/react-dom@^18.3.0",
+        "npm:@types/react@^18.3.3",
+        "npm:@types/recharts@^1.8.29",
+        "npm:@vitejs/plugin-react@^4.3.1",
+        "npm:html-to-image@^1.11.11",
+        "npm:jsdom@^29.1.1",
+        "npm:jspdf@^4.2.1",
+        "npm:react-dom@^18.3.1",
+        "npm:react-hook-form@^7.90.0",
+        "npm:react-router-dom@^6.26.0",
+        "npm:react@^18.3.1",
+        "npm:read-excel-file@^5.8.8",
+        "npm:recharts@^3.10.1",
+        "npm:supabase@^2.121.0",
+        "npm:tsx@^4.16.0",
+        "npm:typescript@^5.5.4",
+        "npm:vite-plugin-pwa@~0.20.1",
+        "npm:vite-plugin-singlefile@^2.3.4",
+        "npm:vite@^5.4.0",
+        "npm:vitest@^2.1.9",
+        "npm:zod@^4.6.7"
+      ]
+    }
+  }
+}

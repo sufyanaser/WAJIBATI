@@ -1,0 +1,16 @@
+node_modules/
+dist/
+dist-single/
+wajibati.html
+.env
+.env.local
+supabase/.temp/
+*.tsbuildinfo
+.claude/
+docs/reference/
+
+# Playwright
+test-results/
+e2e-report/
+e2e/screenshots/
+releases/v*/*.zip

@@ -1,0 +1,1 @@
+- 6-digit PIN space (1,000,000 possibilities) requires Supabase rate-limiting and brute-force protection on uth.signInWithPassword.

@@ -1,0 +1,14 @@
+created: 2026-10-21T23:28:06.572Z
+updated: 2026-10-21T23:28:18.303Z
+update_count: 7
+last_field: note
+git_commit: 1d3cfad
+git_branch: dev
+children:
+  - edge-functions
+  - pwa-client
+  - service-worker
+  - supabase-auth
+  - supabase-database
+  - supabase-storage
+  - web-push-service

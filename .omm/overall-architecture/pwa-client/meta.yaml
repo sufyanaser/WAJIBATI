@@ -1,0 +1,12 @@
+created: 2026-10-21T23:28:24.175Z
+updated: 2026-10-21T23:28:28.824Z
+update_count: 7
+last_field: note
+kind: nested-class
+title: pwa-client
+children:
+  - admin-portal
+  - data-hooks
+  - guardian-portal
+  - ui-components
+parentPath: []

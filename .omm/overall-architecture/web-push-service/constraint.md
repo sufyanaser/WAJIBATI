@@ -1,0 +1,1 @@
+- Requires VAPID key pair (public key configured in client bundle, private key stored securely in Edge Function environment).

@@ -1,0 +1,1 @@
+- Add rate limiting headers and request validation middleware across all functions.

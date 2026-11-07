@@ -1,0 +1,1 @@
+- Browsers with strict background execution constraints (like iOS low power mode or battery optimizers on Android) may delay push wakeups.

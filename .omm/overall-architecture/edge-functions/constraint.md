@@ -1,0 +1,3 @@
+- All edge functions must verify caller credentials using is_admin RPC check before executing privileged tasks.
+- CORS preflight OPTIONS requests must be handled explicitly.
+- Secrets (VAPID_PRIVATE_KEY, SUPABASE_SERVICE_ROLE_KEY) must never be leaked to client responses.

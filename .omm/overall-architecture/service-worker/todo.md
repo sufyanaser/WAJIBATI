@@ -1,0 +1,1 @@
+- Add background sync capabilities if offline homework completion tracking is introduced.

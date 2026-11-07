@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">واجباتي</string>
+    <string name="title_activity_main">واجباتي</string>
+    <string name="package_name">iq.wajibati.app</string>
+    <string name="custom_url_scheme">iq.wajibati.app</string>
+</resources>

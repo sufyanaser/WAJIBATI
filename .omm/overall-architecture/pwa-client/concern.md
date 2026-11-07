@@ -1,0 +1,1 @@
+- LocalStorage quota and persistence limits on iOS Safari when not opened frequently.

@@ -1,0 +1,1 @@
+- Storage policies defined in migration 20261021000000_init.sql and reinforced in 20261021100000_security_fixes.sql.

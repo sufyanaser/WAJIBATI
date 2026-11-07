@@ -1,0 +1,9 @@
+created: 2026-10-21T23:29:24.174Z
+updated: 2026-10-21T23:29:24.175Z
+update_count: 1
+last_field: description
+kind: nested-class
+title: import-guardians
+children: []
+parentPath:
+  - edge-functions

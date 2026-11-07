@@ -1,0 +1,1 @@
+Administrative interface for school supervisors and teachers. Includes quick daily homework entry organized by timetable periods, notice publishing, CSV student/guardian bulk import, and guardian PIN resetting.

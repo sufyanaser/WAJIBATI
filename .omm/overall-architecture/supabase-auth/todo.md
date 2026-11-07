@@ -1,0 +1,1 @@
+- Ensure automated account lockouts after consecutive failed PIN attempts are properly configured in Supabase Auth dashboard.

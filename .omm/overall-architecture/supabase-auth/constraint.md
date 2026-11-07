@@ -1,0 +1,2 @@
+- Phone numbers must normalize to E.164 without leading zeros before mapping (+9647XXXXXXXXX -> 9647XXXXXXXXX@guardian.rumaila.local).
+- Passwords for guardians are strictly 6 numeric digits.

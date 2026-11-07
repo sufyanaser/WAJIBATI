@@ -1,0 +1,12 @@
+created: 2026-10-21T23:28:52.968Z
+updated: 2026-10-21T23:28:57.961Z
+update_count: 7
+last_field: note
+kind: nested-class
+title: supabase-database
+children:
+  - academic-schema
+  - content-schema
+  - people-schema
+  - security-rls
+parentPath: []

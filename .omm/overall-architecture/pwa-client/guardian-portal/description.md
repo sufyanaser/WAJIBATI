@@ -1,0 +1,1 @@
+User interface dedicated to guardians. Features include single-screen daily homework viewing by section, child-switching tabs, date navigation, attachment previews, full-text homework search, and push notification opt-in.

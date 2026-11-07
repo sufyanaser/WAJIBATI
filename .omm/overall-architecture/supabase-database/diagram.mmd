@@ -1,0 +1,14 @@
+graph LR
+    classDef store fill:#a6e3a1,stroke:#a6e3a1,color:#1e1e2e
+    classDef sec fill:#f38ba8,stroke:#f38ba8,color:#1e1e2e
+
+    academic-schema["Academic Schema\nyears/stages/sections/timetable"]:::store
+    people-schema["People Schema\nstudents/guardians/admins"]:::store
+    content-schema["Content Schema\nhomework/notices/reads"]:::store
+    security-rls["Security & RLS\nfunctions & row policies"]:::sec
+
+    academic-schema -->|"structures"| people-schema
+    people-schema -->|"associates"| content-schema
+    security-rls -->|"restricts access to"| academic-schema
+    security-rls -->|"restricts access to"| people-schema
+    security-rls -->|"restricts access to"| content-schema

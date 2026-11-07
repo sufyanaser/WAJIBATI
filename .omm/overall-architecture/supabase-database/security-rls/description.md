@@ -1,0 +1,1 @@
+Comprehensive Row Level Security policies and security definer helper functions (is_admin, is_staff, my_guardian_id, my_section_ids, get_section_subscriptions) providing cryptographic multi-tenant isolation across sections.

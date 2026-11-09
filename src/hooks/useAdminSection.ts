@@ -96,7 +96,7 @@ export function useAdminSection(
         .order('period'),
       supabase
         .from('homework')
-        .select('id, period, body, status, attachments(id,storage_path,mime)')
+        .select('id, period, body, status, subject_id, teacher_id, subject:subjects(id,name,color), teacher:teachers(id,full_name), attachments(id,storage_path,mime)')
         .eq('section_id', sid)
         .eq('due_date', date),
     ])
@@ -149,12 +149,13 @@ export function useAdminSection(
           ? (taTeacherMap.get(slot.subject.id) ?? null)
           : null
       const resolvedTeacher = slot?.teacher ?? fallbackTeacher
+      const hasSubjectField = ex != null && 'subject_id' in ex
       return {
         period,
-        subject_id: slot?.subject?.id ?? ex?.subject_id ?? null,
-        teacher_id: resolvedTeacher?.id ?? ex?.teacher_id ?? null,
-        subject: slot?.subject?.name ?? ex?.subject?.name ?? '',
-        teacher: resolvedTeacher?.full_name ?? ex?.teacher?.full_name ?? '',
+        subject_id: hasSubjectField ? (ex.subject_id ?? null) : (slot?.subject?.id ?? null),
+        teacher_id: hasSubjectField ? (ex.teacher_id ?? null) : (resolvedTeacher?.id ?? null),
+        subject: hasSubjectField ? (ex.subject?.name ?? '') : (slot?.subject?.name ?? ''),
+        teacher: hasSubjectField ? (ex.teacher?.full_name ?? '') : (resolvedTeacher?.full_name ?? ''),
         hw_id: ex?.id ?? null,
         body: ex?.body ?? '',
         status: ex?.status ?? null,

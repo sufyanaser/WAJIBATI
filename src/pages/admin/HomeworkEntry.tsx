@@ -6,7 +6,6 @@ import type { AttachmentRow } from '../../hooks/useAdminSection'
 import { DateNavigator } from '../../components/DateNavigator'
 import { Toast, useToast } from '../../components/Toast'
 import { assertCanWrite } from '../../services/platform'
-import { useSchoolSettings } from '../../services/schoolSettings'
 import type { HomeworkExportData } from '../../utils/exportHomework'
 import {
   ImageIcon,
@@ -18,6 +17,7 @@ import {
   SendIcon,
   TrashIcon,
   DownloadIcon,
+  ChevronDownIcon,
 } from '../../components/Icons'
 
 // ── types ──────────────────────────────────────────────────────────────────────
@@ -156,7 +156,6 @@ function StatusDot({ status }: { status: 'draft' | 'published' | 'archived' | nu
 // ── component ──────────────────────────────────────────────────────────────────
 
 export default function HomeworkEntry() {
-  const { settings } = useSchoolSettings()
   const nav = useNavigate()
   const [ready, setReady] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
@@ -170,6 +169,87 @@ export default function HomeworkEntry() {
   const [publishingPeriod, setPublishingPeriod] = useState<number | null>(null)
   const [exporting, setExporting] = useState(false)
   const { toast, show: showToast, clear: clearToast } = useToast()
+  const [isDirty, setIsDirty] = useState(false)
+  const [expandedPeriods, setExpandedPeriods] = useState<Record<number, boolean>>({})
+
+  // ── Protection of Unsaved Drafts on Navigation & Back ───────────────────────
+  useEffect(() => {
+    if (!isDirty) return
+
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+
+    function handleCaptureClick(e: MouseEvent) {
+      const target = (e.target as HTMLElement).closest(
+        'a, .admin-mobile-back-btn, .admin-bottom-nav-item, .admin-nav-item, .admin-subnav-pill'
+      )
+      if (!target) return
+
+      if (target.closest('.he-controls-card, .he-timetable, .he-actions-sticky')) return
+
+      const confirmed = window.confirm('لديك تعديلات غير محفوظة في الواجبات. هل تريد مغادرة الصفحة وتجاهل التعديلات؟')
+      if (!confirmed) {
+        e.preventDefault()
+        e.stopPropagation()
+      } else {
+        setIsDirty(false)
+      }
+    }
+
+    function handlePopState() {
+      const confirmed = window.confirm('لديك تعديلات غير محفوظة في الواجبات. هل تريد الرجوع وتجاهل التعديلات؟')
+      if (!confirmed) {
+        window.history.pushState(null, '', window.location.href)
+      } else {
+        setIsDirty(false)
+        window.history.back()
+      }
+    }
+
+    window.history.pushState(null, '', window.location.href)
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('click', handleCaptureClick, true)
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('click', handleCaptureClick, true)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [isDirty])
+
+  function handleSectionChange(newId: number) {
+    if (newId === secId) return
+    if (isDirty) {
+      if (!window.confirm('لديك تعديلات غير محفوظة في الواجبات. هل تريد تغيير الشعبة وتجاهل التعديلات؟')) {
+        return
+      }
+    }
+    setIsDirty(false)
+    setSecId(newId)
+  }
+
+  function handleDateChange(newDate: Date) {
+    if (isDirty) {
+      if (!window.confirm('لديك تعديلات غير محفوظة في الواجبات. هل تريد تغيير التاريخ وتجاهل التعديلات؟')) {
+        return
+      }
+    }
+    setIsDirty(false)
+    setDate(newDate)
+  }
+
+  function handleBodyChange(period: number, val: string) {
+    setBodies({ [period]: val })
+    setIsDirty(true)
+  }
+
+  function togglePeriodExpand(period: number) {
+    setExpandedPeriods(prev => ({ ...prev, [period]: !prev[period] }))
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -214,6 +294,7 @@ export default function HomeworkEntry() {
   )
 
   function handleManualSubjectSelect(period: number, nextSubjectIdStr: string) {
+    setIsDirty(true)
     if (!nextSubjectIdStr) {
       setPeriodSubject(period, null, '', null, '')
       return
@@ -242,8 +323,11 @@ export default function HomeworkEntry() {
       const result = await save()
       if (result.failed > 0) {
         showToast(`حُفظ ${result.saved} — فشل ${result.failed}: ${result.errors[0]}`, 'error')
-      } else {
+      } else if (result.saved > 0) {
+        setIsDirty(false)
         showToast('تم الحفظ ✓', 'success')
+      } else {
+        setIsDirty(false)
       }
     } catch {
       showToast('خطأ أثناء الحفظ', 'error')
@@ -305,14 +389,19 @@ export default function HomeworkEntry() {
     setPublishing(true)
     try {
       const result = await publish()
-      if (result.saved === 0) {
+      if (result.saved === 0 && result.failed > 0) {
         showToast('لم يُنشر أي واجب — ' + (result.errors[0] ?? ''), 'error')
       } else if (result.failed > 0) {
         showToast(`نُشر ${result.saved} — فشل ${result.failed}`, 'error')
-      } else if (!result.pushSent) {
-        showToast(`تم النشر (${result.saved}) — فشل إرسال الإشعار`, 'info')
+      } else if (result.saved > 0) {
+        setIsDirty(false)
+        if (!result.pushSent) {
+          showToast(`تم النشر (${result.saved}) — فشل إرسال الإشعار`, 'info')
+        } else {
+          showToast(`تم النشر وإرسال الإشعارات (${result.saved})`, 'success')
+        }
       } else {
-        showToast(`تم النشر وإرسال الإشعارات (${result.saved})`, 'success')
+        setIsDirty(false)
       }
     } catch {
       showToast('خطأ أثناء النشر', 'error')
@@ -340,7 +429,7 @@ export default function HomeworkEntry() {
       const { exportAsPDF } = await import('../../utils/exportHomework')
       const sec = sections.find(s => s.id === secId)
       const exportData: HomeworkExportData = {
-        schoolName: settings.name,
+        schoolName: 'إعدادية الرميلة للبنين',
         sectionName: sec
           ? `${sec.stage.name} ${sec.stage.branch} / ${sec.letter}`
           : 'الشعبة الدراسية',
@@ -375,11 +464,33 @@ export default function HomeworkEntry() {
 
       {/* ── Section Selector + Date Navigator + Summary Strip ──── */}
       <section className="he-controls-card">
+        {/* Mobile Horizontal Section Pill Strip */}
+        <div className="he-section-pills-scroll" role="tablist" aria-label="أقسام الشعب الدراسية">
+          {sections.map(s => {
+            const isSelected = s.id === secId
+            const stageShort = s.stage.name.replace('الصف ', '').replace('الـ', '')
+            return (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                className={`he-section-pill ${isSelected ? 'active' : ''}`}
+                onClick={() => handleSectionChange(s.id)}
+              >
+                <span className="he-section-pill-stage">{stageShort}</span>
+                <span className="he-section-pill-sep">/</span>
+                <span className="he-section-pill-letter">{s.letter}</span>
+              </button>
+            )
+          })}
+        </div>
+
         <div className="he-controls-grid">
           <select
             className="admin-select"
             value={secId ?? ''}
-            onChange={e => setSecId(Number(e.target.value))}
+            onChange={e => handleSectionChange(Number(e.target.value))}
             aria-label="اختر الشعبة"
           >
             {sections.map(s => (
@@ -389,13 +500,20 @@ export default function HomeworkEntry() {
             ))}
           </select>
 
-          <DateNavigator date={date} onChange={setDate} />
+          <DateNavigator date={date} onChange={handleDateChange} />
         </div>
 
         <div className="he-summary-strip">
-          <span>
-            {currentSec ? `الشعبة الحالية: ${currentSec.stage.name} ${currentSec.stage.branch} / ${currentSec.letter}` : 'اختر الشعبة'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span>
+              {currentSec ? `الشعبة الحالية: ${currentSec.stage.name} ${currentSec.stage.branch} / ${currentSec.letter}` : 'اختر الشعبة'}
+            </span>
+            {isDirty && (
+              <span className="he-dirty-badge" role="status">
+                ⚠️ تعديلات غير محفوظة
+              </span>
+            )}
+          </div>
           <div className="he-summary-metrics">
             <span className="badge-success he-status he-status--published">منشور: {publishedCount}</span>
             <span className="badge-warn he-status he-status--draft">مسودة: {draftCount}</span>
@@ -442,79 +560,123 @@ export default function HomeworkEntry() {
         <p className="muted">جارٍ التحميل…</p>
       ) : (
         <div className="he-timetable">
-          {periods.map(slot => (
-            <div key={slot.period} className="he-period-row">
+          {periods.map(slot => {
+            const isExpanded = Boolean(expandedPeriods[slot.period])
+            return (
+              <div key={slot.period} className="he-period-row">
 
-              {/* RIGHT cell — period meta */}
-              <div className="he-period-meta">
-                <span className="he-period-num">حصة {slot.period}</span>
-                {slot.subject ? (
-                  <span className="he-subject-name">{slot.subject}</span>
-                ) : (
-                  <select
-                    className="admin-select"
-                    style={{ fontSize: '.76rem', padding: '4px 8px', minHeight: 32 }}
-                    aria-label={`اختر مادة الحصة ${slot.period}`}
-                    value={slot.subject_id ?? ''}
-                    onChange={e => handleManualSubjectSelect(slot.period, e.target.value)}
-                  >
-                    <option value="">+ اختر مادة</option>
-                    {subjects.map(sub => (
-                      <option key={sub.id} value={sub.id}>{sub.name}</option>
-                    ))}
-                  </select>
-                )}
-                {slot.teacher && (
-                  <span className="he-teacher-name">{slot.teacher}</span>
-                )}
-                <StatusDot status={slot.status} />
-                {slot.status === 'draft' && slot.hw_id && (
-                  <button
-                    type="button"
-                    className="btn btn-success btn-sm he-btn-publish--sm"
-                    disabled={publishingPeriod === slot.period || saving || publishing}
-                    onClick={() => void handlePublishPeriod(slot.period)}
-                  >
-                    <SendIcon size={13} />
-                    <span>{publishingPeriod === slot.period ? '…' : 'نشر'}</span>
-                  </button>
-                )}
-                {slot.hw_id && (
-                  <button
-                    type="button"
-                    className="btn-del"
-                    style={{ alignSelf: 'flex-start', marginTop: 2 }}
-                    title="حذف واجب هذه الحصة"
-                    onClick={() => void handleDeletePeriod(slot.period)}
-                  >
-                    <TrashIcon size={13} />
-                    <span>حذف</span>
-                  </button>
-                )}
+                {/* Mobile Tap Header */}
+                <div
+                  className="he-mob-card-head"
+                  onClick={() => togglePeriodExpand(slot.period)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      togglePeriodExpand(slot.period)
+                    }
+                  }}
+                  aria-expanded={isExpanded}
+                  aria-label={`الحصة ${slot.period}: ${slot.subject || 'بدون مادة'}`}
+                >
+                  <div className="he-mob-card-head-start">
+                    <span className="he-period-num">حصة {slot.period}</span>
+                    {slot.subject ? (
+                      <span className="he-subject-name">{slot.subject}</span>
+                    ) : (
+                      <span className="he-subject-name muted">+ اختر مادة</span>
+                    )}
+                    {slot.teacher && (
+                      <span className="he-teacher-name">{slot.teacher}</span>
+                    )}
+                    <StatusDot status={slot.status} />
+                    {slot.attachments.length > 0 && (
+                      <span className="he-attach-count-badge">📎 {slot.attachments.length}</span>
+                    )}
+                  </div>
+                  <span className={`he-mob-chevron ${isExpanded ? 'open' : ''}`}>
+                    <ChevronDownIcon size={16} />
+                  </span>
+                </div>
+
+                {/* Collapsed Snippet Preview on Mobile */}
+                <div
+                  className={`he-mob-preview ${isExpanded ? 'he-preview-hidden' : ''}`}
+                  onClick={() => togglePeriodExpand(slot.period)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`معاينة الحصة ${slot.period}`}
+                >
+                  <p className="he-mob-preview-snippet">
+                    {slot.body.trim() ? slot.body.trim() : <span className="muted">لا يوجد واجب مسجل (انقر للتحرير والمرفقات)</span>}
+                  </p>
+                </div>
+
+                {/* Details: Meta & Inputs (Collapsed on mobile when !isExpanded, always visible on desktop) */}
+                <div className={`he-period-meta ${!isExpanded ? 'he-mob-collapsed' : ''}`}>
+                  {!slot.subject && (
+                    <select
+                      className="admin-select"
+                      style={{ fontSize: '.76rem', padding: '4px 8px', minHeight: 32 }}
+                      aria-label={`اختر مادة الحصة ${slot.period}`}
+                      value={slot.subject_id ?? ''}
+                      onChange={e => handleManualSubjectSelect(slot.period, e.target.value)}
+                    >
+                      <option value="">+ اختر مادة</option>
+                      {subjects.map(sub => (
+                        <option key={sub.id} value={sub.id}>{sub.name}</option>
+                      ))}
+                    </select>
+                  )}
+                  {slot.status === 'draft' && slot.hw_id && (
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm he-btn-publish--sm"
+                      disabled={publishingPeriod === slot.period || saving || publishing}
+                      onClick={() => void handlePublishPeriod(slot.period)}
+                    >
+                      <SendIcon size={13} />
+                      <span>{publishingPeriod === slot.period ? '…' : 'نشر'}</span>
+                    </button>
+                  )}
+                  {slot.hw_id && (
+                    <button
+                      type="button"
+                      className="btn-del"
+                      style={{ alignSelf: 'flex-start', marginTop: 2 }}
+                      title="حذف واجب هذه الحصة"
+                      onClick={() => void handleDeletePeriod(slot.period)}
+                    >
+                      <TrashIcon size={13} />
+                      <span>حذف</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className={`he-period-input ${!isExpanded ? 'he-mob-collapsed' : ''}`}>
+                  <textarea
+                    className="hw-textarea he-hw-textarea"
+                    rows={2}
+                    placeholder="نص الواجب…"
+                    value={slot.body}
+                    onChange={e => handleBodyChange(slot.period, e.target.value)}
+                    dir="rtl"
+                    aria-label={`نص واجب الحصة ${slot.period}`}
+                  />
+                  <AttachmentChips
+                    hwId={slot.hw_id}
+                    attachments={slot.attachments}
+                    period={slot.period}
+                    onUpload={uploadAttachment}
+                    onDelete={deleteAttachment}
+                    showToast={showToast}
+                  />
+                </div>
+
               </div>
-
-              {/* LEFT cell — textarea + attachments */}
-              <div className="he-period-input">
-                <textarea
-                  className="hw-textarea he-hw-textarea"
-                  rows={2}
-                  placeholder="نص الواجب…"
-                  value={slot.body}
-                  onChange={e => setBodies({ [slot.period]: e.target.value })}
-                  dir="rtl"
-                />
-                <AttachmentChips
-                  hwId={slot.hw_id}
-                  attachments={slot.attachments}
-                  period={slot.period}
-                  onUpload={uploadAttachment}
-                  onDelete={deleteAttachment}
-                  showToast={showToast}
-                />
-              </div>
-
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

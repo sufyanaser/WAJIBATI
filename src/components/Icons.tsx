@@ -325,6 +325,14 @@ export function ChevronRightIcon({ size = 18, className, ...props }: IconProps) 
   )
 }
 
+export function ChevronDownIcon({ size = 18, className, ...props }: IconProps) {
+  return (
+    <svg {...baseProps(size, className)} {...props}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 export function EyeIcon({ size = 18, className, ...props }: IconProps) {
   return (
     <svg {...baseProps(size, className)} {...props}>

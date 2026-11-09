@@ -142,6 +142,93 @@ describe('useAdminSection — load', () => {
     expect(result.current.periods[2].teacher_id).toBe(44)
     expect(result.current.periods[2].teacher).toBe('أنس طلال')
   })
+
+  it('restores the saved daily subject and teacher instead of the weekly timetable', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      let calls = 0
+      chain.eq = vi.fn().mockImplementation(() => {
+        calls++
+        if (calls < 2) return chain
+        return { ...chain, error: null, data: table === 'timetable' ? timetableRows : [{
+          id: 'hw-1', period: 1, body: 'واجب سابق', status: 'draft',
+          subject_id: 12, teacher_id: 44,
+          subject: { id: 12, name: 'الكيمياء', color: null },
+          teacher: { id: 44, full_name: 'أنس طلال' }, attachments: [],
+        }] }
+      })
+      return chain
+    })
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.periods).toHaveLength(6))
+    expect(result.current.periods[0]).toMatchObject({ subject_id: 12, subject: 'الكيمياء', teacher_id: 44, teacher: 'أنس طلال' })
+  })
+
+  it('preserves saved homework with subject but no teacher (teacher_id = null) without taking timetable teacher', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      let calls = 0
+      chain.eq = vi.fn().mockImplementation(() => {
+        calls++
+        if (calls < 2) return chain
+        return { ...chain, error: null, data: table === 'timetable' ? timetableRows : [{
+          id: 'hw-1', period: 1, body: 'واجب بدون مدرس', status: 'draft',
+          subject_id: 12, teacher_id: null,
+          subject: { id: 12, name: 'الكيمياء', color: null },
+          teacher: null, attachments: [],
+        }] }
+      })
+      return chain
+    })
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.periods).toHaveLength(6))
+    expect(result.current.periods[0].subject_id).toBe(12)
+    expect(result.current.periods[0].subject).toBe('الكيمياء')
+    expect(result.current.periods[0].teacher_id).toBeNull()
+    expect(result.current.periods[0].teacher).toBe('')
+  })
+
+  it('preserves saved homework with subject_id = null without falling back to timetable', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      let calls = 0
+      chain.eq = vi.fn().mockImplementation(() => {
+        calls++
+        if (calls < 2) return chain
+        return { ...chain, error: null, data: table === 'timetable' ? timetableRows : [{
+          id: 'hw-1', period: 1, body: 'واجب بدون مادة', status: 'draft',
+          subject_id: null, teacher_id: null,
+          subject: null, teacher: null, attachments: [],
+        }] }
+      })
+      return chain
+    })
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.periods).toHaveLength(6))
+    expect(result.current.periods[0].subject_id).toBeNull()
+    expect(result.current.periods[0].subject).toBe('')
+    expect(result.current.periods[0].teacher_id).toBeNull()
+    expect(result.current.periods[0].teacher).toBe('')
+  })
+
+  it('keeps timetable slot defaults when no homework record exists', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      const chain = makeChain()
+      let calls = 0
+      chain.eq = vi.fn().mockImplementation(() => {
+        calls++
+        if (calls < 2) return chain
+        return { ...chain, error: null, data: table === 'timetable' ? timetableRows : [] }
+      })
+      return chain
+    })
+    const { result } = renderHook(() => useAdminSection('1', '2026-10-21'))
+    await waitFor(() => expect(result.current.periods).toHaveLength(6))
+    expect(result.current.periods[0].subject_id).toBe(10)
+    expect(result.current.periods[0].subject).toBe('رياضيات')
+    expect(result.current.periods[0].teacher_id).toBe(20)
+    expect(result.current.periods[0].teacher).toBe('أحمد')
+  })
 })
 
 describe('useAdminSection — save', () => {

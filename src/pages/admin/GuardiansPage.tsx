@@ -343,7 +343,7 @@ const cleanPhone = formatIraqiPhone(phone)
         </form>
       )}
 
-      <div className="dash-table-wrap">
+      <div className="dash-table-wrap dash-table-desktop">
         <table className="dash-table">
           <thead>
             <tr>
@@ -419,6 +419,71 @@ const cleanPhone = formatIraqiPhone(phone)
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Compact Cards */}
+      <div className="dash-cards-mobile">
+        {filtered.map(g => (
+          <div key={g.id} className={`admin-mobile-card ${!g.active ? 'dash-row-inactive' : ''}`}>
+            <div className="admin-mobile-card-header">
+              <h3 className="admin-mobile-card-title">{g.full_name ?? '—'}</h3>
+              <span className={`dash-badge ${g.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
+                {g.active ? 'مفعّل' : 'معطّل'}
+              </span>
+            </div>
+            <div className="admin-mobile-card-body">
+              <div className="admin-mobile-card-row">
+                <span className="admin-mobile-card-label">الهاتف:</span>
+                <strong dir="ltr">{g.phone}</strong>
+              </div>
+              {g.alt_phone && (
+                <div className="admin-mobile-card-row">
+                  <span className="admin-mobile-card-label">هاتف بديل:</span>
+                  <span dir="ltr">{g.alt_phone}</span>
+                </div>
+              )}
+              <div className="admin-mobile-card-row" style={{ alignItems: 'flex-start' }}>
+                <span className="admin-mobile-card-label">الأبناء:</span>
+                {g.children.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {g.children.map((c, ci) => (
+                      <span key={ci} className="badge">
+                        {c.student_name} ({c.section_label}){c.relation ? ` - ${c.relation}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="muted">لا يوجد أبناء مرتبطين</span>
+                )}
+              </div>
+            </div>
+            {canEdit && (
+              <div className="admin-mobile-card-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => startEdit(g)}
+                >
+                  <EditIcon size={14} />
+                  <span>تعديل</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${g.active ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => void toggleActive(g)}
+                >
+                  {g.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                  <span>{g.active ? 'تعطيل' : 'تفعيل'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <p className="muted" style={{ textAlign: 'center', padding: 20 }}>
+            لا توجد نتائج مطابقة
+          </p>
+        )}
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onDone={clearToast} />}

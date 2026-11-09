@@ -3,6 +3,7 @@ import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router
 import { Spinner } from './components/Spinner'
 import NativeLinkBridge from './components/NativeLinkBridge'
 import IosUpdateGate from './components/IosUpdateGate'
+import { AndroidBackNavigationHandler } from './hooks/useAndroidBackNavigation'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
 
@@ -30,6 +31,7 @@ const Router = isLocalFile ? HashRouter : BrowserRouter
 export default function App() {
   return (
     <Router>
+      <AndroidBackNavigationHandler />
       <NativeLinkBridge />
       <IosUpdateGate>
       <Suspense fallback={<Spinner />}>

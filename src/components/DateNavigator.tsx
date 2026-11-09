@@ -66,7 +66,7 @@ export function DateNavigator({ date, onChange, onLabelClick }: DateNavigatorPro
       <button
         type="button"
         className="date-nav-btn"
-        aria-label="يوم تالي"
+        aria-label="يوم تالٍ"
         onClick={() => onChange(stepDay(date, 1))}
       >
         <ChevronLeftIcon size={18} />

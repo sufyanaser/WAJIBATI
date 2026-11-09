@@ -1,4 +1,5 @@
-import React, { useEffect, useState, createContext, useContext, useMemo } from 'react'
+import React, { Suspense, useEffect, useState, createContext, useContext, useMemo } from 'react'
+import { Spinner } from '../../components/Spinner'
 import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import type { User } from '@supabase/supabase-js'
@@ -101,25 +102,6 @@ const NAV_SECTIONS: NavSection[] = [
 ]
 
 
-// ── Phone bottom tabs and More sheet ──────────────────────────────────────────
-
-const TAB_ITEMS: Array<{ to: string; label: string; icon: React.ComponentType<IconProps> }> = [
-  { to: '/admin/dashboard', label: 'الرئيسية', icon: HomeIcon },
-  { to: '/admin/homework', label: 'الواجبات', icon: BookIcon },
-  { to: '/admin/timetable', label: 'الجدول', icon: CalendarIcon },
-  { to: '/admin/notices', label: 'الإعلانات', icon: BellIcon },
-]
-
-const MORE_DATABASE_LINKS: Array<{ to: string; label: string }> = [
-  { to: '/admin/students', label: 'دليل الطلاب' },
-  { to: '/admin/sections', label: 'الشعب الدراسية' },
-  { to: '/admin/guardians', label: 'أولياء الأمور' },
-  { to: '/admin/teachers', label: 'المعلمون' },
-  { to: '/admin/subjects', label: 'المواد الدراسية' },
-  { to: '/admin/master-data', label: 'سجل البيانات الشامل' },
-  { to: '/admin/import', label: 'الاستيراد الجماعي' },
-]
-
 // ── Breadcrumbs & Page Metadata ────────────────────────────────────────────────
 
 function getPageMeta(pathname: string): { section: string; title: string } {
@@ -154,7 +136,6 @@ export default function AdminShell() {
   const [role, setRole] = useState<'owner' | 'editor' | 'viewer'>('viewer')
   const [ready, setReady] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
 
   // Sidebar collapse state persisted in localStorage
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -188,7 +169,6 @@ export default function AdminShell() {
   // Close mobile drawer on route change
   useEffect(() => {
     setMobileOpen(false)
-    setMoreOpen(false)
   }, [location.pathname])
 
   // Close mobile drawer on ESC
@@ -202,13 +182,24 @@ export default function AdminShell() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileOpen])
 
-  // Lock body scroll when mobile drawer is open (prevents background scroll on iOS)
+  // Android / iOS Back navigation & popstate listener
   useEffect(() => {
-    if (!mobileOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    function handlePopState() {
+      if (mobileOpen) {
+        setMobileOpen(false)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
   }, [mobileOpen])
+
+  function handleBack() {
+    if (window.history.length > 1) {
+      nav(-1)
+    } else {
+      nav('/admin/dashboard')
+    }
+  }
 
   function toggleCollapse() {
     setCollapsed(prev => {
@@ -229,6 +220,7 @@ export default function AdminShell() {
 
   // Active section metadata and sublinks
   const pageMeta = useMemo(() => getPageMeta(location.pathname), [location.pathname])
+  const isHome = location.pathname === '/admin' || location.pathname === '/admin/' || location.pathname === '/admin/dashboard'
   const activeSection = useMemo(() => {
     return NAV_SECTIONS.find(sec => {
       if (sec.matchPrefixes) {
@@ -256,6 +248,10 @@ export default function AdminShell() {
   return (
     <AdminContext.Provider value={{ user, role, ready }}>
       <div className="admin-shell-layout" dir="rtl">
+        {/* Skip Link for Accessibility */}
+        <a href="#admin-main-content" className="skip-link">
+          تخطي إلى المحتوى الرئيسي
+        </a>
         {/* Mobile Backdrop */}
         <div
           className={`admin-mobile-backdrop ${mobileOpen ? 'open' : ''}`}
@@ -280,7 +276,7 @@ export default function AdminShell() {
               />
               <div className="admin-sidebar-brand-text">
                 <span className="admin-sidebar-title">واجباتي</span>
-                <span className="admin-sidebar-subtitle">{settings.name}</span>
+                <span className="admin-sidebar-subtitle">{settings.name || 'إعدادية الرميلة للبنين'}</span>
               </div>
             </Link>
 
@@ -390,8 +386,21 @@ export default function AdminShell() {
         {/* ── Main Area Wrapper (Margin matches Sidebar in RTL) ─────────── */}
         <div className={`admin-main-wrapper ${collapsed ? 'sidebar-collapsed' : ''}`}>
           {/* Sticky Top Bar */}
-          <header className="admin-top-bar">
+          <header className={`admin-top-bar ${!isHome ? 'has-back-nav' : ''}`}>
             <div className="admin-top-bar-start">
+              {/* Mobile Back Button on subpages */}
+              {!isHome && (
+                <button
+                  type="button"
+                  className="admin-mobile-back-btn"
+                  onClick={handleBack}
+                  aria-label="الرجوع للرئيسية"
+                  title="رجوع"
+                >
+                  <ChevronRightIcon size={20} />
+                  <span className="admin-mobile-back-text">رجوع</span>
+                </button>
+              )}
               {/* Mobile Menu Trigger */}
               <button
                 type="button"
@@ -435,7 +444,7 @@ export default function AdminShell() {
           </header>
 
           {/* ── Content Area with Independent Scroll ────────────────────── */}
-          <main className="admin-content-area">
+          <main id="admin-main-content" className="admin-content-area" tabIndex={-1}>
             {/* Multi-Entity Subnav Pills if current section has subLinks */}
             {activeSection?.subLinks && (
               <nav className="admin-subnav-pills" aria-label="أقسام فرعية">
@@ -454,84 +463,57 @@ export default function AdminShell() {
               </nav>
             )}
 
-            <Outlet />
+            <Suspense fallback={<div className="admin-route-loading" role="status" aria-label="جارٍ تحميل القسم"><Spinner size={24} /><span>جارٍ تحميل القسم…</span></div>}>
+              <Outlet />
+            </Suspense>
           </main>
         </div>
 
-        {/* ── Phone app navigation: bottom tab bar + More sheet ─────────── */}
-        <nav className="admin-tabbar" aria-label="التنقّل السريع">
-          {TAB_ITEMS.map(tab => {
-            const Icon = tab.icon
-            return (
-              <NavLink
-                key={tab.to}
-                to={tab.to}
-                end={tab.to === '/admin/dashboard'}
-                className={({ isActive }) => `admin-tab ${isActive ? 'active' : ''}`}
-                aria-label={`تبويب ${tab.label}`}
-              >
-                <Icon size={22} />
-                <span>{tab.label}</span>
-              </NavLink>
-            )
-          })}
+        {/* ── Mobile Bottom Navigation Bar ────────────────────────────── */}
+        <nav className="admin-bottom-nav" aria-label="تنقل الهاتف السريع">
+          <NavLink
+            to="/admin/dashboard"
+            end
+            className={({ isActive }) => `admin-bottom-nav-item ${isActive ? 'active' : ''}`}
+            aria-label="الرئيسية (شريط سفلي)"
+          >
+            <HomeIcon size={20} />
+            <span>الرئيسية</span>
+          </NavLink>
+          <NavLink
+            to="/admin/homework"
+            className={({ isActive }) => `admin-bottom-nav-item ${isActive ? 'active' : ''}`}
+            aria-label="الواجبات (شريط سفلي)"
+          >
+            <BookIcon size={20} />
+            <span>الواجبات</span>
+          </NavLink>
+          <NavLink
+            to="/admin/timetable"
+            className={({ isActive }) => `admin-bottom-nav-item ${isActive ? 'active' : ''}`}
+            aria-label="الجدول (شريط سفلي)"
+          >
+            <CalendarIcon size={20} />
+            <span>الجدول</span>
+          </NavLink>
+          <NavLink
+            to="/admin/students"
+            className={({ isActive }) => `admin-bottom-nav-item ${isActive ? 'active' : ''}`}
+            aria-label="الطلاب (شريط سفلي)"
+          >
+            <GraduationCapIcon size={20} />
+            <span>الطلاب</span>
+          </NavLink>
           <button
             type="button"
-            className={`admin-tab ${moreOpen ? 'active' : ''}`}
-            onClick={() => setMoreOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={moreOpen}
+            className={`admin-bottom-nav-item ${mobileOpen ? 'active' : ''}`}
+            onClick={() => setMobileOpen(true)}
+            aria-label="المزيد (شريط سفلي)"
           >
-            <MenuIcon size={22} />
+            <MenuIcon size={20} />
             <span>المزيد</span>
           </button>
         </nav>
-
-        <div
-          className={`admin-more-backdrop ${moreOpen ? 'open' : ''}`}
-          onClick={() => setMoreOpen(false)}
-          aria-hidden={!moreOpen}
-        />
-        <section
-          className={`admin-more-sheet ${moreOpen ? 'open' : ''}`}
-          role="dialog"
-          aria-modal="true"
-          aria-label="المزيد"
-          aria-hidden={!moreOpen}
-        >
-          <div className="admin-more-sheet__handle" aria-hidden="true" />
-          <div className="admin-more-sheet__user">
-            <span className="admin-more-sheet__name">{displayName}</span>
-            <span
-              className="admin-more-sheet__role"
-              style={{ color: roleBadge.color, background: roleBadge.bg }}
-            >
-              {roleBadge.label}
-            </span>
-          </div>
-
-          <div className="admin-more-sheet__group">
-            <span className="admin-more-sheet__label">قاعدة البيانات المدرسية</span>
-            {MORE_DATABASE_LINKS.map(link => (
-              <NavLink key={link.to} to={link.to} className="admin-more-sheet__row">
-                <span>{link.label}</span>
-                <ChevronLeftIcon size={16} />
-              </NavLink>
-            ))}
-          </div>
-
-          <div className="admin-more-sheet__group">
-            <span className="admin-more-sheet__label">الحساب</span>
-            <NavLink to="/admin/settings" className="admin-more-sheet__row">
-              <span>الإعدادات والصلاحيات</span>
-              <ChevronLeftIcon size={16} />
-            </NavLink>
-            <button type="button" className="admin-more-sheet__row admin-more-sheet__row--danger" onClick={handleLogout}>
-              <span>تسجيل الخروج</span>
-              <LogOutIcon size={16} />
-            </button>
-          </div>
-        </section>
       </div>
     </AdminContext.Provider>
   )

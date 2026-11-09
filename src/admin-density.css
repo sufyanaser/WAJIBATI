@@ -1,0 +1,60 @@
+.admin-shell-layout .admin-content-area { padding: 18px 22px 28px; min-height: calc(100dvh - 64px); }
+.admin-route-loading { min-height: 320px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: .88rem; }
+@media (min-width: 1024px) {
+  html { scrollbar-gutter: stable; }
+  @supports not (scrollbar-gutter: stable) { html { overflow-y: scroll; } }
+}
+.admin-content-area :is(.dash-page, .admin-page-container) { display: grid; gap: 14px; min-width: 0; }
+.admin-content-area :is(.admin-page-header, .dash-header) { margin: 0; }
+.admin-content-area .dash-header { padding: 16px 18px; gap: 12px; }
+.admin-content-area .dash-header__title { font-size: 1.08rem; line-height: 1.6; }
+.admin-content-area .dash-header__sub { font-size: .8rem; }
+.admin-content-area .dash-header .dash-logo { width: 44px; height: 44px; flex-shrink: 0; object-fit: cover; }
+.admin-content-area .dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-content-area .dash-card { width: 100%; min-width: 0; min-height: 116px; padding: 14px 10px; gap: 7px; }
+.admin-content-area .dash-card__icon { width: 36px; height: 36px; }
+.admin-content-area .dash-card__label { font-size: .88rem; line-height: 1.5; }
+.admin-content-area .dash-card:hover:not(:disabled) { background: var(--card2); color: var(--fg); }
+.admin-content-area :is(.dash-toolbar, .dash-form) { padding: 12px 14px; gap: 10px; }
+.admin-content-area :is(.dash-filters, .dash-form-grid, .admin-selectors) { gap: 10px; }
+.admin-content-area :is(.dash-form-grid, .dash-filters) > * { min-width: 0; }
+.admin-content-area :is(input.input, select.input, .admin-select, .search-input) {
+  min-height: 40px;
+  height: 40px;
+  padding-block: 7px;
+  font-size: .88rem;
+  line-height: 1.5;
+  border-radius: 10px;
+}
+.admin-content-area .admin-select { padding-inline: 12px 32px; min-width: 0; }
+.admin-content-area .dash-filters .search-input { min-width: 180px; }
+.admin-content-area .dash-toolbar > .admin-select { flex: 0 1 260px; width: 260px; }
+.admin-content-area :is(.btn, .he-action-bar > button) { min-height: 40px; padding-block: 8px; font-size: .86rem; }
+.admin-content-area .he-controls-card { padding: 12px; gap: 8px; }
+.admin-content-area .he-action-bar { padding: 10px 12px; gap: 8px; }
+.admin-content-area .he-timetable { gap: 14px; }
+.admin-content-area .he-period-meta { padding: 10px 12px; }
+.admin-content-area .he-period-input { padding: 10px 12px; gap: 8px; }
+.admin-content-area .he-hw-textarea { min-height: 76px; padding: 9px 11px; }
+.admin-content-area .admin-subnav-pills { margin-bottom: 12px; padding-bottom: 8px; }
+.admin-content-area .admin-settings-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.admin-content-area .dash-table :is(th, td) { padding: 10px 12px; line-height: 1.6; }
+.dash-assignment-sections summary { cursor: pointer; color: var(--accent); width: fit-content; padding: 4px 0; }
+.dash-assignment-sections span { display: block; margin-top: 6px; font-size: .8rem; line-height: 1.8; }
+@media (min-width: 1500px) {
+  .admin-content-area .dash-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .admin-shell-layout .admin-content-area { padding: 12px 12px 24px; }
+  .admin-content-area .dash-header { padding: 14px; align-items: flex-start; }
+  .admin-content-area .dash-header__title { font-size: .98rem; }
+  .admin-content-area .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .admin-content-area .dash-card { min-height: 118px; }
+  .admin-content-area :is(input.input, select.input, .admin-select, .search-input) { height: 44px; min-height: 44px; font-size: 16px; }
+  .admin-content-area :is(.btn, .he-action-bar > button) { min-height: 44px; }
+  .admin-content-area .dash-toolbar > .admin-select { flex: 1 1 100%; width: 100%; }
+  .admin-content-area .dash-filters { width: 100%; }
+  .admin-content-area .dash-filters .search-input { min-width: 0; width: 100%; }
+  .admin-content-area .dash-table :is(th, td) { padding: 9px 8px; font-size: .8rem; }
+  .dash-assignment-sections summary { min-height: 44px; display: flex; align-items: center; text-decoration: underline; text-underline-offset: 4px; }
+}

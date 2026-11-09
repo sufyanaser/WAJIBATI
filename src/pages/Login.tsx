@@ -1,7 +1,7 @@
 import { AuthScenery } from '../components/AuthScenery'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { supabase, phoneToEmail } from '../lib/supabase'
+import { supabase, phoneToEmail, toWesternDigits, classifyAuthError, authErrorMessage } from '../lib/supabase'
 import { Spinner } from '../components/Spinner'
 
 export default function Login() {
@@ -18,12 +18,17 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: phoneToEmail(phone),
-        password: pin,
+        password: toWesternDigits(pin.trim()),
       })
       if (error) throw error
       nav('/')
-    } catch {
-      setErr('رقم الهاتف أو الرمز غير صحيح')
+    } catch (e) {
+      // normalizePhone throws a plain Error('invalid_phone'): that is bad input,
+      // not a network failure, so it maps to the invalid-credentials message.
+      const kind = e instanceof Error && e.message === 'invalid_phone'
+        ? 'invalid_credentials' as const
+        : classifyAuthError(e)
+      setErr(authErrorMessage(kind, 'رقم الهاتف أو الرمز غير صحيح'))
     } finally {
       setLoading(false)
     }

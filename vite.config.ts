@@ -10,6 +10,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     exclude: ['node_modules/**', 'dist/**', 'e2e/**', '.claude/**'],
+    // Tests must not depend on a developer's .env or reach the real backend.
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
   },
   build: {
     rollupOptions: {

@@ -13,13 +13,62 @@ export const supabase = createClient(
   }
 )
 
+/**
+ * Converts Arabic-Indic (٠-٩, U+0660-0669) and Extended Arabic-Indic /
+ * Persian (۰-۹, U+06F0-06F9) digits to ASCII 0-9. Leading zeros are kept
+ * because the input and output are strings.
+ */
+export function toWesternDigits(input: string): string {
+  return input
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0))
+}
+
 /** Validates and normalises to local Iraqi format: 07XXXXXXXXX (11 digits). */
 export function normalizePhone(raw: string): string {
-  const d = raw.replace(/\D/g, '')
+  const western = toWesternDigits(raw)
+  const d = western.replace(/\D/g, '')
   if (/^07\d{9}$/.test(d)) return d           // already local — return as-is
   if (/^9647\d{9}$/.test(d)) return '0' + d.slice(3)  // 9647… → 07…
-  if (/^\+9647\d{9}$/.test(raw.trim())) return '0' + raw.trim().slice(4) // +9647… → 07…
+  if (/^\+9647\d{9}$/.test(western.trim())) return '0' + western.trim().slice(4) // +9647… → 07…
   throw new Error('invalid_phone')
+}
+
+export type AuthErrorKind = 'network' | 'rate_limit' | 'server' | 'invalid_credentials'
+
+/**
+ * Classifies a Supabase Auth error so the UI never claims "wrong credentials"
+ * when the request never reached the server (offline, DNS, rate limit, 5xx).
+ */
+export function classifyAuthError(err: unknown): AuthErrorKind {
+  const e = err as { status?: number; message?: string; name?: string } | null
+  if (!e) return 'invalid_credentials'
+  const msg = (e.message ?? '').toLowerCase()
+  if (
+    e.status === 0 ||
+    e.name === 'AuthRetryableFetchError' ||
+    msg.includes('fetch') ||
+    msg.includes('network')
+  ) {
+    return 'network'
+  }
+  if (e.status === 429) return 'rate_limit'
+  if (typeof e.status === 'number' && e.status >= 500) return 'server'
+  return 'invalid_credentials'
+}
+
+/** Arabic user-facing message for each auth error class. */
+export function authErrorMessage(kind: AuthErrorKind, invalidMessage: string): string {
+  switch (kind) {
+    case 'network':
+      return 'تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مجدداً'
+    case 'rate_limit':
+      return 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار قليلاً ثم المحاولة مجدداً'
+    case 'server':
+      return 'حدث خطأ في الخادم. يرجى المحاولة مجدداً بعد قليل'
+    default:
+      return invalidMessage
+  }
 }
 
 export const phoneToEmail = (phone: string) =>

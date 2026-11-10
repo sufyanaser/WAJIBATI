@@ -1331,7 +1331,7 @@ button:disabled {
 /* Homework Textarea */
 .hw-textarea {
   width: 100%;
-  background: var(--bg);
+  background: var(--card);
   color: var(--fg);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
@@ -2552,6 +2552,12 @@ button:disabled {
 .master-form-actions button {
   min-height: 40px;
   width: fit-content;
+}
+
+.master-list-status {
+  margin: 0;
+  padding: 12px 4px;
+  text-align: center;
 }
 
 .master-list {
@@ -4196,7 +4202,9 @@ button:disabled {
   color: #0F172A !important;
   text-align: right;
   flex: 1;
-  white-space: nowrap !important;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
   line-height: 1.25;
 }
 
@@ -4781,7 +4789,8 @@ button:disabled {
 
 .guardian-header-title,
 .guardian-header--brand .guardian-header-title {
-  font-size: 1.3rem;
+  /* scales down on narrow phones so long titles (e.g. الاستفسارات والتواصل) are not cut */
+  font-size: clamp(1rem, 4.6vw, 1.3rem);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -4964,9 +4973,9 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-bottom: 20px;
-  padding: 16px 20px;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 246, 254, 0.9) 100%);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-xl);
@@ -5857,6 +5866,13 @@ textarea.adm-input { padding-block: var(--space-3); line-height: 1.6; }
 .adm-sub { margin: 0; font-size: var(--font-size-sm); line-height: 1.6; color: var(--muted); }
 .adm-head-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .adm-badge { font-size: var(--font-size-xs); padding: 2px var(--space-2); }
+/* Phone: the sticky top bar already shows the page title, so the in-page copy is dropped. */
+@media (max-width: 767px) {
+  .admin-shell-layout .adm-title { display: none; }
+  .adm-head { padding-bottom: var(--space-3); margin-bottom: var(--space-3); }
+  .adm-head-actions,
+  .adm-head-actions .btn { width: 100%; }
+}
 
 /* Toolbar (search, filters, actions) */
 .adm-table-block { display: flex; flex-direction: column; gap: var(--space-3); }
@@ -6023,8 +6039,6 @@ textarea.adm-input { padding-block: var(--space-3); line-height: 1.6; }
 .student-bar-badge { flex: none; }
 .period-card--master { min-width: 0; }
 .period-card--master .period-card-icon-wrap { flex: none; }
-.period-card--master .period-card-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.period-card--master .period-card-subject { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; overflow: visible; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Visual language tokens (from reference set: blue→mint hero gradients,

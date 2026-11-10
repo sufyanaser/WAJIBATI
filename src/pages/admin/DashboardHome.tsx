@@ -154,18 +154,8 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* ── KPI tiles (phone-first) ────────────────────────────────────── */}
-      <section className="dash-kpis" aria-label="مؤشرات سريعة">
-        {kpis.map(k => (
-          <div key={k.key} className={`dash-kpi ${k.featured ? 'dash-kpi--featured' : ''}`}>
-            <span className="dash-kpi__value">{stats ? stats[k.key] : '…'}</span>
-            <span className="dash-kpi__label">{k.label}</span>
-          </div>
-        ))}
-      </section>
-
-      {/* ── quick actions as an app list ───────────────────────────────── */}
-      <section className="dash-section" aria-label="إجراءات سريعة">
+      {/* ── quick actions first (primary tasks before statistics) ─────── */}
+      <section className="dash-section dash-section--actions" aria-label="إجراءات سريعة">
         <h2 className="dash-section__title">إجراءات سريعة</h2>
         <div className="dash-list">
           {quickActions.map(a => {
@@ -184,8 +174,18 @@ export default function DashboardHome() {
         </div>
       </section>
 
+      {/* ── KPI tiles (below actions; full row on desktop) ─────────────── */}
+      <section className="dash-kpis" aria-label="مؤشرات سريعة">
+        {kpis.map(k => (
+          <div key={k.key} className={`dash-kpi ${k.featured ? 'dash-kpi--featured' : ''}`}>
+            <span className="dash-kpi__value">{stats ? stats[k.key] : '…'}</span>
+            <span className="dash-kpi__label">{k.label}</span>
+          </div>
+        ))}
+      </section>
+
       {/* ── teacher assignments ────────────────────────────────────────── */}
-      <section className="dash-section">
+      <section className="dash-section dash-section--assign">
         <h2 className="dash-section__title">إسناد المدرسين الحالي</h2>
 
         {loading ? (

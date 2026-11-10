@@ -4037,7 +4037,7 @@ button:disabled {
 
 /* ── Sticky Top Bar ────────────────────────────────────────────────────── */
 .admin-top-bar {
-  height: 64px;
+  height: 56px;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -4115,7 +4115,7 @@ button:disabled {
 /* ── Main Content Area ─────────────────────────────────────────────────── */
 .admin-content-area {
   flex: 1;
-  padding: 24px 28px 48px;
+  padding: 20px 28px 48px;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
@@ -4239,7 +4239,9 @@ button:disabled {
 
   .admin-breadcrumb-title {
     font-size: 0.92rem;
-    max-width: 150px;
+    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -4270,7 +4272,7 @@ button:disabled {
   }
 
   .admin-breadcrumb-title {
-    max-width: 110px;
+    max-width: 100%;
   }
 
   .admin-content-area {
@@ -6346,4 +6348,32 @@ textarea.adm-input { padding-block: var(--space-3); line-height: 1.6; }
   .auth-page .auth-footer { gap: 14px; padding-top: 6px; font-size: .85rem; }
   .auth-page .auth-footer a { min-height: 44px; }
   .auth-scenery { height: 150px; }
+}
+
+/* ── Admin dashboard layout: actions first; 2-column desktop grid ──────────── */
+@media (max-width: 640px) {
+  .dash-header { padding: 14px 16px; gap: 12px; }
+  .dash-logo { width: 44px; height: 44px; border-radius: 13px; }
+  .dash-header__title { font-size: 1.05rem; }
+}
+@media (min-width: 1024px) {
+  .dash-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-5);
+  }
+  .dash-page > .dash-header { grid-column: 1 / -1; grid-row: 1; }
+  .dash-page > .dash-kpis {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .dash-page > .dash-kpi,
+  .dash-kpis .dash-kpi,
+  .dash-kpis .dash-kpi:last-child,
+  .dash-kpis .dash-kpi--featured { grid-column: auto; }
+  .dash-page > .dash-section--actions { grid-column: 1; grid-row: 3; }
+  .dash-page > .dash-section--assign { grid-column: 2; grid-row: 3; }
+  .dash-kpi__value { font-size: var(--font-size-3xl, 1.875rem); }
 }

@@ -6408,3 +6408,93 @@ textarea.adm-input { padding-block: var(--space-3); line-height: 1.6; }
 .period-card--master .period-card-icon-wrap { flex: none; }
 .period-card--master .period-card-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .period-card--master .period-card-subject { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; overflow: visible; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Visual language tokens (from reference set: blue→mint hero gradients,
+   soft sky wash, frosted glass cards, floating pill nav, large radii,
+   blue-tinted soft shadows, pill CTAs). Shared by web, iOS, Android and
+   desktop shells because they all render this same stylesheet.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --ref-blue:          #0A5CFF;
+  --ref-blue-deep:     #0747C7;
+  --ref-sky:           #5EC8FF;
+  --ref-mint:          #2EE59D;
+  --ref-wash:          linear-gradient(180deg, #DCEEFF 0%, #EAF6FF 45%, #F4FAFF 100%);
+  --ref-hero:          linear-gradient(135deg, #0A5CFF 0%, #1C8CFF 45%, #2EE59D 100%);
+  --ref-glass:         rgba(255, 255, 255, 0.66);
+  --ref-glass-border:  rgba(255, 255, 255, 0.75);
+  --ref-icon-tile:     linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(206, 232, 255, 0.75));
+  --ref-radius-card:   24px;
+  --ref-radius-tile:   18px;
+  --ref-shadow-card:   0 10px 28px rgba(10, 92, 255, 0.10), 0 2px 6px rgba(10, 92, 255, 0.05);
+  --ref-shadow-nav:    0 14px 34px rgba(10, 60, 160, 0.18);
+}
+
+body { background: var(--ref-wash); }
+
+/* hero headers use the blue→mint gradient from the references */
+.guardian-header--brand,
+.today-sticky-header.guardian-header--brand,
+.dash-header--hero {
+  background: var(--ref-hero);
+  color: #FFFFFF;
+  box-shadow: 0 12px 28px rgba(10, 92, 255, 0.22);
+}
+
+/* cards: larger radius, blue-tinted soft shadow */
+.period-card--master,
+.dash-kpi,
+.dash-list,
+.dash-header {
+  border-radius: var(--ref-radius-card);
+  box-shadow: var(--ref-shadow-card);
+}
+.dash-list__icon,
+.period-card-icon-wrap {
+  border-radius: var(--ref-radius-tile);
+  background: var(--ref-icon-tile);
+}
+
+/* floating pill navigation (guardian) */
+.bottom-nav-bar {
+  inset-inline: 12px;
+  width: auto;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  border-radius: 24px;
+  border: 1px solid var(--ref-glass-border);
+  background: var(--ref-glass);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--ref-shadow-nav);
+  padding-bottom: 8px;
+}
+
+/* floating pill navigation (admin phone tabs) */
+@media (max-width: 767px) {
+  .admin-tabbar {
+    inset-inline: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    border: 1px solid var(--ref-glass-border);
+    border-radius: 24px;
+    background: var(--ref-glass);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: var(--ref-shadow-nav);
+  }
+}
+
+/* pill CTAs (sign-in / pay-now style) */
+.btn-primary {
+  border-radius: 999px;
+  background: var(--ref-hero);
+  color: #FFFFFF;
+  box-shadow: 0 10px 24px rgba(10, 92, 255, 0.28);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--ref-hero);
+  box-shadow: 0 12px 28px rgba(10, 92, 255, 0.36);
+}
+@media (max-width: 767px) {
+  .bottom-nav-label { font-size: 0.6rem !important; letter-spacing: -0.02em; }
+}

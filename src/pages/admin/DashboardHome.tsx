@@ -144,7 +144,7 @@ export default function DashboardHome() {
   ]
 
   return (
-    <div dir="rtl" className="dash-page">
+    <div dir="rtl" className="dash-page dash-page--home">
       {/* ── school header ──────────────────────────────────────────────── */}
       <div className="dash-header">
         <img src="/icon-192.png" alt="شعار المدرسة" className="dash-logo" width={54} height={54} />

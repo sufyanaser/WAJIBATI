@@ -5974,24 +5974,24 @@ textarea.adm-input { padding-block: var(--space-3); line-height: 1.6; }
   .dash-header__title { font-size: 1.05rem; }
 }
 @media (min-width: 1024px) {
-  .dash-page {
+  .dash-page--home {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     gap: var(--space-5);
   }
-  .dash-page > .dash-header { grid-column: 1 / -1; grid-row: 1; }
-  .dash-page > .dash-kpis {
+  .dash-page--home > .dash-header { grid-column: 1 / -1; grid-row: 1; }
+  .dash-page--home > .dash-kpis {
     grid-column: 1 / -1;
     grid-row: 2;
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
-  .dash-page > .dash-kpi,
+  .dash-page--home > .dash-kpi,
   .dash-kpis .dash-kpi,
   .dash-kpis .dash-kpi:last-child,
   .dash-kpis .dash-kpi--featured { grid-column: auto; }
-  .dash-page > .dash-section--actions { grid-column: 1; grid-row: 3; }
-  .dash-page > .dash-section--assign { grid-column: 2; grid-row: 3; }
+  .dash-page--home > .dash-section--actions { grid-column: 1; grid-row: 3; }
+  .dash-page--home > .dash-section--assign { grid-column: 2; grid-row: 3; }
   .dash-kpi__value { font-size: var(--font-size-3xl, 1.875rem); }
 }
 

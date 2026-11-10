@@ -6377,3 +6377,34 @@ textarea.adm-input { padding-block: var(--space-3); line-height: 1.6; }
   .dash-page > .dash-section--assign { grid-column: 2; grid-row: 3; }
   .dash-kpi__value { font-size: var(--font-size-3xl, 1.875rem); }
 }
+
+/* ── Guardian: bottom nav labels never clip; desktop uses the wider viewport ─ */
+.bottom-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .bottom-nav-bar { padding-inline: 10px !important; }
+  .bottom-nav-grid { gap: 2px; }
+  .bottom-nav-label { font-size: 0.66rem !important; }
+}
+@media (min-width: 1024px) {
+  .screen.today { max-width: 1120px; }
+  .bottom-nav-grid { max-width: 1120px; }
+  .screen.today .period-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .screen.today .period-card--master { min-height: 72px; }
+}
+.bottom-nav-bar { width: 100%; box-sizing: border-box; }
+.bottom-nav-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); min-width: 0; }
+.bottom-nav-item { min-width: 0; }
+/* Single track that cannot grow past the viewport: stops wide children (tabs, header) from pushing the page sideways in RTL */
+.screen { grid-template-columns: minmax(0, 1fr); }
+.student-bar-info { min-width: 0; flex: 1 1 auto; }
+.student-bar-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.student-bar-badge { flex: none; }
+.period-card--master { min-width: 0; }
+.period-card--master .period-card-icon-wrap { flex: none; }
+.period-card--master .period-card-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.period-card--master .period-card-subject { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; overflow: visible; }

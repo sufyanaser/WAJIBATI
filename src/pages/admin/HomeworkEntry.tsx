@@ -368,7 +368,6 @@ export default function HomeworkEntry() {
   const publishedCount = periods.filter(p => p.status === 'published').length
   const draftCount = periods.filter(p => p.status === 'draft').length
   const filledCount = periods.filter(p => p.body.trim().length > 0).length
-  const currentSec = sections.find(s => s.id === secId)
 
   return (
     <div dir="rtl" className="homework-entry">
@@ -393,13 +392,10 @@ export default function HomeworkEntry() {
         </div>
 
         <div className="he-summary-strip">
-          <span>
-            {currentSec ? `الشعبة الحالية: ${currentSec.stage.name} ${currentSec.stage.branch} / ${currentSec.letter}` : 'اختر الشعبة'}
-          </span>
           <div className="he-summary-metrics">
             <span className="badge-success he-status he-status--published">منشور: {publishedCount}</span>
             <span className="badge-warn he-status he-status--draft">مسودة: {draftCount}</span>
-            <span className="badge-muted he-status he-status--empty">مملوء: {filledCount} / {periods.length || 6}</span>
+            <span className="badge-muted he-status he-status--empty">غير مكتمل: {(periods.length || 6) - filledCount}</span>
           </div>
         </div>
       </section>
@@ -443,17 +439,16 @@ export default function HomeworkEntry() {
       ) : (
         <div className="he-timetable">
           {periods.map(slot => (
-            <div key={slot.period} className="he-period-row">
+            <article key={slot.period} className={`he-period-row he-period-row--${slot.status ?? 'empty'}`}>
 
-              {/* RIGHT cell — period meta */}
-              <div className="he-period-meta">
+              {/* 1 · HEADER — period number, subject, teacher */}
+              <header className="he-period-head">
                 <span className="he-period-num">حصة {slot.period}</span>
                 {slot.subject ? (
                   <span className="he-subject-name">{slot.subject}</span>
                 ) : (
                   <select
-                    className="admin-select"
-                    style={{ fontSize: '.76rem', padding: '4px 8px', minHeight: 32 }}
+                    className="admin-select he-subject-select"
                     aria-label={`اختر مادة الحصة ${slot.period}`}
                     value={slot.subject_id ?? ''}
                     onChange={e => handleManualSubjectSelect(slot.period, e.target.value)}
@@ -467,42 +462,21 @@ export default function HomeworkEntry() {
                 {slot.teacher && (
                   <span className="he-teacher-name">{slot.teacher}</span>
                 )}
-                <StatusDot status={slot.status} />
-                {slot.status === 'draft' && slot.hw_id && (
-                  <button
-                    type="button"
-                    className="btn btn-success btn-sm he-btn-publish--sm"
-                    disabled={publishingPeriod === slot.period || saving || publishing}
-                    onClick={() => void handlePublishPeriod(slot.period)}
-                  >
-                    <SendIcon size={13} />
-                    <span>{publishingPeriod === slot.period ? '…' : 'نشر'}</span>
-                  </button>
-                )}
-                {slot.hw_id && (
-                  <button
-                    type="button"
-                    className="btn-del"
-                    style={{ alignSelf: 'flex-start', marginTop: 2 }}
-                    title="حذف واجب هذه الحصة"
-                    onClick={() => void handleDeletePeriod(slot.period)}
-                  >
-                    <TrashIcon size={13} />
-                    <span>حذف</span>
-                  </button>
-                )}
-              </div>
+              </header>
 
-              {/* LEFT cell — textarea + attachments */}
-              <div className="he-period-input">
-                <textarea
-                  className="hw-textarea he-hw-textarea"
-                  rows={2}
-                  placeholder="نص الواجب…"
-                  value={slot.body}
-                  onChange={e => setBodies({ [slot.period]: e.target.value })}
-                  dir="rtl"
-                />
+              {/* 2 · BODY — homework text is the primary field */}
+              <textarea
+                className="hw-textarea he-hw-textarea"
+                rows={3}
+                placeholder="اكتب نص الواجب هنا…"
+                aria-label={`نص واجب الحصة ${slot.period}`}
+                value={slot.body}
+                onChange={e => setBodies({ [slot.period]: e.target.value })}
+                dir="rtl"
+              />
+
+              {/* 3–6 · FOOTER — attachments, then save/publish state and row actions */}
+              <footer className="he-period-foot">
                 <AttachmentChips
                   hwId={slot.hw_id}
                   attachments={slot.attachments}
@@ -511,9 +485,34 @@ export default function HomeworkEntry() {
                   onDelete={deleteAttachment}
                   showToast={showToast}
                 />
-              </div>
+                <div className="he-period-actions">
+                  <StatusDot status={slot.status} />
+                  {slot.status === 'draft' && slot.hw_id && (
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm he-btn-publish--sm"
+                      disabled={publishingPeriod === slot.period || saving || publishing}
+                      onClick={() => void handlePublishPeriod(slot.period)}
+                    >
+                      <SendIcon size={13} />
+                      <span>{publishingPeriod === slot.period ? '…' : 'نشر'}</span>
+                    </button>
+                  )}
+                  {slot.hw_id && (
+                    <button
+                      type="button"
+                      className="btn-del he-row-delete"
+                      title="حذف واجب هذه الحصة"
+                      onClick={() => void handleDeletePeriod(slot.period)}
+                    >
+                      <TrashIcon size={13} />
+                      <span>حذف</span>
+                    </button>
+                  )}
+                </div>
+              </footer>
 
-            </div>
+            </article>
           ))}
         </div>
       )}

@@ -124,40 +124,17 @@ export function AdminDataTable<T extends Record<string, any>>({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+    <div className="adm-table-block">
       {/* Top Controls: Search, Filter, Actions */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
-          <div
-            style={{
-              position: 'relative',
-              flex: 1,
-              maxWidth: '360px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <span
-              style={{
-                position: 'absolute',
-                right: '12px',
-                color: 'var(--muted)',
-                display: 'flex',
-                pointerEvents: 'none',
-              }}
-            >
+      <div className="adm-toolbar">
+        <div className="adm-toolbar-start">
+          <div className="adm-search">
+            <span className="adm-search-icon" aria-hidden="true">
               <SearchIcon size={16} />
             </span>
             <input
               type="text"
+              className="adm-search-input"
               placeholder={searchPlaceholder}
               value={effectiveQuery}
               onChange={(e) => {
@@ -165,42 +142,21 @@ export function AdminDataTable<T extends Record<string, any>>({
                 else setInternalQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              style={{
-                width: '100%',
-                padding: '8px 36px 8px 12px',
-                borderRadius: '8px',
-                background: 'var(--card)',
-                border: '1px solid var(--border)',
-                color: 'var(--fg)',
-                fontSize: '0.85rem',
-              }}
             />
           </div>
           {filterSlot}
         </div>
 
-        {actionsSlot && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {actionsSlot}
-          </div>
-        )}
+        {actionsSlot && <div className="adm-toolbar-end">{actionsSlot}</div>}
       </div>
 
-      {/* Table Surface */}
-      <div
-        style={{
-          overflowX: 'auto',
-          border: '1px solid var(--border)',
-          borderRadius: '10px',
-          background: 'var(--card)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.86rem' }}>
+      {/* Table surface */}
+      <div className="adm-table-wrap">
+        <table className="adm-table">
           <thead>
-            <tr style={{ background: 'var(--card2)', borderBottom: '1px solid var(--border)' }}>
+            <tr>
               {selectedIds && (
-                <th style={{ width: '40px', padding: '12px 14px' }}>
+                <th className="adm-th adm-th--check">
                   <input
                     type="checkbox"
                     checked={allPageSelected}
@@ -209,48 +165,41 @@ export function AdminDataTable<T extends Record<string, any>>({
                   />
                 </th>
               )}
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  style={{
-                    padding: '12px 14px',
-                    color: 'var(--fg-secondary)',
-                    fontWeight: 700,
-                    width: col.width,
-                    cursor: col.sortable ? 'pointer' : 'default',
-                    userSelect: 'none',
-                  }}
-                  onClick={() => col.sortable && handleSort(col.key)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>{col.header}</span>
-                    {col.sortable && (
-                      <span style={{ fontSize: '0.75rem', color: sortKey === col.key ? 'var(--accent)' : 'var(--muted)' }}>
-                        {sortKey === col.key ? (sortAsc ? '▲' : '▼') : '↕'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
+              {columns.map((col) => {
+                const sorted = sortKey === col.key
+                return (
+                  <th
+                    key={col.key}
+                    className={`adm-th ${col.sortable ? 'adm-th--sortable' : ''}`}
+                    style={col.width ? { width: col.width } : undefined}
+                    onClick={() => col.sortable && handleSort(col.key)}
+                    aria-sort={sorted ? (sortAsc ? 'ascending' : 'descending') : undefined}
+                  >
+                    <span className="adm-th-label">
+                      <span>{col.header}</span>
+                      {col.sortable && (
+                        <span className={`adm-sort-icon ${sorted ? 'is-active' : ''}`} aria-hidden="true">
+                          {sorted ? (sortAsc ? '▲' : '▼') : '↕'}
+                        </span>
+                      )}
+                    </span>
+                  </th>
+                )
+              })}
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={columns.length + (selectedIds ? 1 : 0)} style={{ padding: '40px', textAlign: 'center' }}>
+                <td className="adm-state" colSpan={columns.length + (selectedIds ? 1 : 0)}>
                   <Spinner />
-                  <div style={{ marginTop: '10px', color: 'var(--muted)', fontSize: '0.82rem' }}>
-                    جاري تحميل السجلات...
-                  </div>
+                  <div className="adm-state-text">جاري تحميل السجلات...</div>
                 </td>
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
-                <td
-                  colSpan={columns.length + (selectedIds ? 1 : 0)}
-                  style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}
-                >
+                <td className="adm-state adm-state-text" colSpan={columns.length + (selectedIds ? 1 : 0)}>
                   {emptyMessage}
                 </td>
               </tr>
@@ -259,22 +208,9 @@ export function AdminDataTable<T extends Record<string, any>>({
                 const id = row[keyField]
                 const isSelected = selectedIds?.has(id)
                 return (
-                  <tr
-                    key={String(id ?? idx)}
-                    style={{
-                      borderBottom: '1px solid var(--border)',
-                      background: isSelected ? 'rgba(232, 176, 74, 0.08)' : 'transparent',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'var(--surface2)'
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
+                  <tr key={String(id ?? idx)} className={`adm-row ${isSelected ? 'is-selected' : ''}`}>
                     {selectedIds && (
-                      <td style={{ padding: '11px 14px' }}>
+                      <td className="adm-td adm-td--check">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -284,7 +220,7 @@ export function AdminDataTable<T extends Record<string, any>>({
                       </td>
                     )}
                     {columns.map((col) => (
-                      <td key={col.key} style={{ padding: '11px 14px', color: 'var(--fg)' }}>
+                      <td key={col.key} className="adm-td">
                         {col.render ? col.render(row, idx) : String(row[col.key] ?? '—')}
                       </td>
                     ))}
@@ -296,40 +232,22 @@ export function AdminDataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination Footer */}
+      {/* Pagination footer */}
       {!loading && totalItems > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            fontSize: '0.82rem',
-            color: 'var(--muted)',
-            flexWrap: 'wrap',
-            padding: '4px 0',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="adm-pager">
+          <div className="adm-pager-start">
             <span>
               عرض {Math.min(totalItems, (safePage - 1) * pageSize + 1)} إلى{' '}
               {Math.min(totalItems, safePage * pageSize)} من إجمالي {totalItems} سجل
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label className="adm-pager-size">
               <span>لكل صفحة:</span>
               <select
+                className="adm-select adm-select--compact"
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value))
                   setCurrentPage(1)
-                }}
-                style={{
-                  background: 'var(--card)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--fg)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
                 }}
               >
                 <option value={5}>5</option>
@@ -337,29 +255,27 @@ export function AdminDataTable<T extends Record<string, any>>({
                 <option value={20}>20</option>
                 <option value={50}>50</option>
               </select>
-            </div>
+            </label>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="adm-pager-end">
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary adm-pager-btn"
               disabled={safePage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              style={{ minHeight: '30px', padding: '0 10px', fontSize: '0.8rem' }}
             >
               <ChevronRightIcon size={14} />
               السابق
             </button>
-            <span style={{ fontWeight: 600, color: 'var(--fg-secondary)', padding: '0 4px' }}>
+            <span className="adm-pager-count">
               {safePage} / {totalPages}
             </span>
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary adm-pager-btn"
               disabled={safePage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              style={{ minHeight: '30px', padding: '0 10px', fontSize: '0.8rem' }}
             >
               التالي
               <ChevronLeftIcon size={14} />

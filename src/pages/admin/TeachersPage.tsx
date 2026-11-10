@@ -190,7 +190,8 @@ export default function TeachersPage() {
         </form>
       )}
 
-      <div className="dash-table-wrap">
+      {/* Desktop Table View */}
+      <div className="dash-table-wrap dash-table-desktop">
         <table className="dash-table">
           <thead>
             <tr>
@@ -207,7 +208,13 @@ export default function TeachersPage() {
               <tr key={t.id} className={!t.active ? 'dash-row-inactive' : ''}>
                 <td className="muted">{i + 1}</td>
                 <td><strong>{t.full_name}</strong></td>
-                <td>{t.subject?.name ?? '—'}</td>
+                <td>
+                  {t.subject?.name ? (
+                    <span className="badge">{t.subject.name}</span>
+                  ) : (
+                    <span className="badge badge-warn">غير مخصص</span>
+                  )}
+                </td>
                 <td className="muted">
                   {t.assignments.length > 0
                     ? [...new Set(t.assignments.map(a => a.section_label))].join(' ، ')
@@ -245,6 +252,63 @@ export default function TeachersPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Compact Cards View */}
+      <div className="dash-cards-mobile">
+        {teachers.map(t => (
+          <div key={t.id} className={`admin-mobile-card ${!t.active ? 'dash-row-inactive' : ''}`}>
+            <div className="admin-mobile-card-header">
+              <h3 className="admin-mobile-card-title">{t.full_name || '—'}</h3>
+              <span className={`dash-badge ${t.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
+                {t.active ? 'مفعّل' : 'معطّل'}
+              </span>
+            </div>
+            <div className="admin-mobile-card-body">
+              <div className="admin-mobile-card-row">
+                <span className="admin-mobile-card-label">المادة:</span>
+                {t.subject?.name ? (
+                  <span className="badge">{t.subject.name}</span>
+                ) : (
+                  <span className="badge badge-warn">غير مخصص لمادة</span>
+                )}
+              </div>
+              <div className="admin-mobile-card-row">
+                <span className="admin-mobile-card-label">الشعب:</span>
+                <span className="muted">
+                  {t.assignments.length > 0
+                    ? [...new Set(t.assignments.map(a => a.section_label))].join(' ، ')
+                    : 'لا توجد شعب مسندة'}
+                </span>
+              </div>
+            </div>
+            {canEdit && (
+              <div className="admin-mobile-card-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => startEdit(t)}
+                >
+                  <EditIcon size={14} />
+                  <span>تعديل</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${t.active ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => void toggleActive(t)}
+                >
+                  {t.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                  <span>{t.active ? 'تعطيل' : 'تفعيل'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        {teachers.length === 0 && (
+          <p className="muted" style={{ textAlign: 'center', padding: 20 }}>
+            لا توجد بيانات مدرسين
+          </p>
+        )}
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onDone={clearToast} />}

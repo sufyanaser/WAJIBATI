@@ -1,12 +1,10 @@
 import { AuthScenery } from '../components/AuthScenery'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { supabase, phoneToEmail } from '../lib/supabase'
+import { supabase, phoneToEmail, toWesternDigits, classifyAuthError, authErrorMessage } from '../lib/supabase'
 import { Spinner } from '../components/Spinner'
-import { useSchoolSettings } from '../services/schoolSettings'
 
 export default function Login() {
-  const { settings } = useSchoolSettings()
   const [phone, setPhone] = useState('')
   const [pin, setPin] = useState('')
   const [err, setErr] = useState('')
@@ -20,12 +18,17 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: phoneToEmail(phone),
-        password: pin,
+        password: toWesternDigits(pin.trim()),
       })
       if (error) throw error
       nav('/')
-    } catch {
-      setErr('رقم الهاتف أو الرمز غير صحيح')
+    } catch (e) {
+      // normalizePhone throws a plain Error('invalid_phone'): that is bad input,
+      // not a network failure, so it maps to the invalid-credentials message.
+      const kind = e instanceof Error && e.message === 'invalid_phone'
+        ? 'invalid_credentials' as const
+        : classifyAuthError(e)
+      setErr(authErrorMessage(kind, 'رقم الهاتف أو الرمز غير صحيح'))
     } finally {
       setLoading(false)
     }
@@ -44,12 +47,8 @@ export default function Login() {
             height={76}
             className="auth-logo"
           />
-          <span className="auth-role-badge">واجباتي · بوابة المدرسة</span>
           <div>
             <h1 className="login-title">دخول أولياء الأمور</h1>
-            <p className="school-subtitle school-subtitle--tight">
-              {settings.name}
-            </p>
           </div>
         </div>
 

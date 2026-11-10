@@ -36,9 +36,77 @@ export default function StudentsPage() {
   const [guardianId, setGuardianId] = useState<string>('')
   const [relation, setRelation] = useState('أب')
   const [saving, setSaving] = useState(false)
+  const [selectedStudent, setSelectedStudent] = useState<StudentRow | null>(null)
   const { toast, show: showToast, clear: clearToast } = useToast()
 
   const canEdit = role === 'owner' || role === 'editor'
+
+  // Initial form values tracker for unsaved edits protection
+  const [initialFormValues, setInitialFormValues] = useState<{
+    fullName: string
+    sectionId: number | ''
+    notes: string
+    guardianId: string
+    relation: string
+  }>({ fullName: '', sectionId: '', notes: '', guardianId: '', relation: 'أب' })
+
+  const isFormDirty = showForm && (
+    fullName !== initialFormValues.fullName ||
+    sectionId !== initialFormValues.sectionId ||
+    notes !== initialFormValues.notes ||
+    guardianId !== initialFormValues.guardianId ||
+    relation !== initialFormValues.relation
+  )
+
+  // ── Protection of Unsaved Form Edits on Navigation & Back ────────────────────
+  useEffect(() => {
+    if (!isFormDirty) return
+
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+
+    function handleCaptureClick(e: MouseEvent) {
+      const target = (e.target as HTMLElement).closest(
+        'a, .admin-mobile-back-btn, .admin-bottom-nav-item, .admin-nav-item, .admin-subnav-pill'
+      )
+      if (!target) return
+      if (target.closest('.rec-modal-sheet, .dash-form')) return
+
+      const confirmed = window.confirm('لديك تعديلات غير محفوظة في النموذج. هل تريد مغادرة الصفحة وتجاهل التعديلات؟')
+      if (!confirmed) {
+        e.preventDefault()
+        e.stopPropagation()
+      } else {
+        setShowForm(false)
+        setEditing(null)
+      }
+    }
+
+    function handlePopState() {
+      const confirmed = window.confirm('لديك تعديلات غير محفوظة في النموذج. هل تريد الرجوع وتجاهل التعديلات؟')
+      if (!confirmed) {
+        window.history.pushState(null, '', window.location.href)
+      } else {
+        setShowForm(false)
+        setEditing(null)
+        window.history.back()
+      }
+    }
+
+    window.history.pushState(null, '', window.location.href)
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('click', handleCaptureClick, true)
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('click', handleCaptureClick, true)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [isFormDirty])
 
   useEffect(() => {
     if (!ready) return
@@ -103,22 +171,54 @@ export default function StudentsPage() {
 
   function startAdd() {
     setEditing(null)
+    const initSec = filterSec || sections[0]?.id || ''
     setFullName('')
-    setSectionId(filterSec || sections[0]?.id || '')
+    setSectionId(initSec)
     setNotes('')
     setGuardianId('')
     setRelation('أب')
+    setInitialFormValues({
+      fullName: '',
+      sectionId: initSec,
+      notes: '',
+      guardianId: '',
+      relation: 'أب',
+    })
+    setSelectedStudent(null)
     setShowForm(true)
   }
 
   function startEdit(s: StudentRow) {
     setEditing(s)
-    setFullName(s.full_name)
-    setSectionId(s.section_id)
-    setNotes(s.notes ?? '')
-    setGuardianId(s.guardians[0]?.guardian_id ?? '')
-    setRelation(s.guardians[0]?.relation ?? 'أب')
+    const initName = s.full_name
+    const initSec = s.section_id
+    const initNotes = s.notes ?? ''
+    const initGId = s.guardians[0]?.guardian_id ?? ''
+    const initRel = s.guardians[0]?.relation ?? 'أب'
+    setFullName(initName)
+    setSectionId(initSec)
+    setNotes(initNotes)
+    setGuardianId(initGId)
+    setRelation(initRel)
+    setInitialFormValues({
+      fullName: initName,
+      sectionId: initSec,
+      notes: initNotes,
+      guardianId: initGId,
+      relation: initRel,
+    })
+    setSelectedStudent(null)
     setShowForm(true)
+  }
+
+  function handleCancelForm() {
+    if (isFormDirty) {
+      if (!window.confirm('لديك تعديلات غير محفوظة. هل تريد تجاهل التعديلات وإغلاق النموذج؟')) {
+        return
+      }
+    }
+    setShowForm(false)
+    setEditing(null)
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -175,9 +275,17 @@ export default function StudentsPage() {
 
   async function toggleActive(s: StudentRow) {
     const newActive = !s.active
+    if (!newActive) {
+      if (!window.confirm(`هل أنت متأكد من تعطيل حساب الطالب "${s.full_name}"؟`)) {
+        return
+      }
+    }
     const { error } = await supabase.from('students').update({ active: newActive }).eq('id', s.id)
     if (error) { showToast(`خطأ: ${error.message}`, 'error'); return }
     showToast(newActive ? 'تم تفعيل الطالب' : 'تم تعطيل الطالب', 'info')
+    if (selectedStudent?.id === s.id) {
+      setSelectedStudent(prev => prev ? { ...prev, active: newActive } : null)
+    }
     await load()
   }
 
@@ -198,7 +306,7 @@ export default function StudentsPage() {
         badgeVariant="blue"
         actions={
           canEdit ? (
-            <button type="button" className="btn btn-primary" onClick={startAdd}>
+            <button type="button" className="btn btn-primary" onClick={startAdd} aria-label="إضافة طالب جديد">
               <PlusIcon size={16} />
               <span>إضافة طالب جديد</span>
             </button>
@@ -206,91 +314,274 @@ export default function StudentsPage() {
         }
       />
 
-      {/* Filters */}
+      {/* Mobile Horizontal Section Filter Pills */}
+      <div className="rec-section-pills-scroll" role="tablist" aria-label="تصفية الشعب">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterSec === ''}
+          className={`rec-section-pill ${filterSec === '' ? 'active' : ''}`}
+          onClick={() => setFilterSec('')}
+        >
+          <span>كل الشعب</span>
+          <span className="badge-muted" style={{ padding: '1px 6px', fontSize: '.7rem', borderRadius: 8 }}>
+            {students.length}
+          </span>
+        </button>
+        {sections.map(s => {
+          const isSelected = filterSec === s.id
+          const count = students.filter(stu => stu.section_id === s.id).length
+          return (
+            <button
+              key={s.id}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              className={`rec-section-pill ${isSelected ? 'active' : ''}`}
+              onClick={() => setFilterSec(s.id)}
+            >
+              <span>{s.label}</span>
+              <span className="badge-muted" style={{ padding: '1px 6px', fontSize: '.7rem', borderRadius: 8 }}>
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Filters (Search & Select) */}
       <div className="dash-filters">
-        <input
-          className="search-input"
-          placeholder="بحث باسم الطالب…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div style={{ position: 'relative', flex: 1 }}>
+          <input
+            className="search-input"
+            placeholder="بحث باسم الطالب…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            aria-label="بحث باسم الطالب"
+          />
+          {search && (
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setSearch('')}
+              style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', minWidth: 28, minHeight: 28 }}
+              aria-label="مسح البحث"
+            >
+              <CloseIcon size={14} />
+            </button>
+          )}
+        </div>
         <select
           className="admin-select"
           style={{ width: 'auto', minWidth: 170 }}
           value={filterSec}
           onChange={e => setFilterSec(e.target.value ? Number(e.target.value) : '')}
+          aria-label="تصفية حسب الشعبة"
         >
           <option value="">كل الشعب</option>
           {sections.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
         </select>
       </div>
 
+      {/* Mobile Form Dialog / Bottom Sheet */}
       {showForm && (
-        <form className="dash-form" onSubmit={handleSave}>
-          <h3 className="dash-form-title">{editing ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</h3>
-          <div className="dash-form-grid">
-            <label>
-              <span>الاسم الكامل *</span>
-              <input value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="الاسم الرباعي" />
-            </label>
-            <label>
-              <span>الشعبة *</span>
-              <select className="admin-select" value={sectionId} onChange={e => setSectionId(Number(e.target.value))} required>
-                <option value="">اختر الشعبة…</option>
-                {sections.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>ربط بولي أمر</span>
-              <select
-                className="admin-select"
-                value={guardianId}
-                onChange={e => setGuardianId(e.target.value)}
+        <div className="rec-modal-backdrop" onClick={handleCancelForm}>
+          <form className="dash-form rec-modal-sheet" onSubmit={handleSave} onClick={e => e.stopPropagation()}>
+            <div className="rec-sheet-header">
+              <div>
+                <h3 className="dash-form-title">{editing ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}</h3>
+                {isFormDirty && <span className="rec-dirty-badge" role="status">⚠️ تعديلات غير محفوظة</span>}
+              </div>
+              <button type="button" className="icon-btn" onClick={handleCancelForm} aria-label="إغلاق النموذج">
+                <CloseIcon size={18} />
+              </button>
+            </div>
+            <div className="dash-form-grid">
+              <label>
+                <span>الاسم الكامل *</span>
+                <input
+                  className="tt-select-lg"
+                  value={fullName}
+                  onChange={e => setFullName(e.target.value)}
+                  required
+                  placeholder="الاسم الرباعي للطالب"
+                  aria-label="الاسم الكامل"
+                />
+              </label>
+              <label>
+                <span>الشعبة الدراسية *</span>
+                <select
+                  className="admin-select tt-select-lg"
+                  value={sectionId}
+                  onChange={e => setSectionId(Number(e.target.value))}
+                  required
+                  aria-label="الشعبة الدراسية"
+                >
+                  <option value="">اختر الشعبة…</option>
+                  {sections.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>ربط بولي أمر</span>
+                <select
+                  className="admin-select tt-select-lg"
+                  value={guardianId}
+                  onChange={e => setGuardianId(e.target.value)}
+                  aria-label="ربط بولي أمر"
+                >
+                  <option value="">بدون ربط حالياً</option>
+                  {guardiansList.map(g => (
+                    <option key={g.id} value={g.id}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>صلة القرابة</span>
+                <select
+                  className="admin-select tt-select-lg"
+                  value={relation}
+                  onChange={e => setRelation(e.target.value)}
+                  aria-label="صلة القرابة"
+                >
+                  <option value="أب">أب</option>
+                  <option value="أم">أم</option>
+                  <option value="أخ">أخ</option>
+                  <option value="ولي أمر">ولي أمر</option>
+                </select>
+              </label>
+              <label style={{ gridColumn: '1 / -1' }}>
+                <span>ملاحظات إضافية</span>
+                <input
+                  className="tt-select-lg"
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="ملاحظات صحية أو إدارية (اختياري)"
+                  aria-label="ملاحظات إضافية"
+                />
+              </label>
+            </div>
+            <div className="dash-form-actions rec-form-actions">
+              <button type="submit" className="btn btn-primary rec-btn-action" disabled={saving}>
+                <CheckIcon size={16} />
+                <span>{saving ? '…' : 'حفظ'}</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary rec-btn-action"
+                onClick={handleCancelForm}
               >
-                <option value="">بدون ربط حالياً</option>
-                {guardiansList.map(g => (
-                  <option key={g.id} value={g.id}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>صلة القرابة</span>
-              <select
-                className="admin-select"
-                value={relation}
-                onChange={e => setRelation(e.target.value)}
-              >
-                <option value="أب">أب</option>
-                <option value="أم">أم</option>
-                <option value="أخ">أخ</option>
-                <option value="ولي أمر">ولي أمر</option>
-              </select>
-            </label>
-            <label style={{ gridColumn: '1 / -1' }}>
-              <span>ملاحظات</span>
-              <input value={notes} onChange={e => setNotes(e.target.value)} placeholder="اختياري" />
-            </label>
-          </div>
-          <div className="dash-form-actions">
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              <CheckIcon size={16} />
-              <span>{saving ? '…' : 'حفظ'}</span>
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => { setShowForm(false); setEditing(null) }}
-            >
-              <CloseIcon size={16} />
-              <span>إلغاء</span>
-            </button>
-          </div>
-        </form>
+                <CloseIcon size={16} />
+                <span>إلغاء</span>
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
-      <div className="dash-table-wrap">
+      {/* Dedicated Mobile Detail Panel */}
+      {selectedStudent && (
+        <div className="rec-detail-backdrop" onClick={() => setSelectedStudent(null)}>
+          <div className="rec-detail-sheet" onClick={e => e.stopPropagation()} role="dialog" aria-label="تفاصيل سجل الطالب">
+            <div className="rec-detail-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="admin-mobile-avatar">
+                  {selectedStudent.full_name.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="admin-mobile-card-title">{selectedStudent.full_name}</h3>
+                  <span className="muted" style={{ fontSize: '.8rem' }}>سجل الطالب الأكاديمي</span>
+                </div>
+              </div>
+              <button type="button" className="icon-btn" onClick={() => setSelectedStudent(null)} aria-label="إغلاق التفاصيل">
+                <CloseIcon size={18} />
+              </button>
+            </div>
+
+            <div className="rec-detail-grid">
+              <div className="rec-detail-item">
+                <span className="rec-detail-item-label">حالة القيد</span>
+                <div>
+                  <StatusBadge
+                    variant={selectedStudent.active ? 'active' : 'suspended'}
+                    label={selectedStudent.active ? 'قيد فعّال ومسجل' : 'قيد معطّل وموقوف'}
+                  />
+                </div>
+              </div>
+
+              <div className="rec-detail-item">
+                <span className="rec-detail-item-label">المرحلة والشعبة</span>
+                <span className="rec-detail-item-value">{selectedStudent.section_label || 'غير مسكن في شعبة'}</span>
+              </div>
+
+              <div className="rec-detail-item">
+                <span className="rec-detail-item-label">أولياء الأمور المرتبطون</span>
+                {selectedStudent.guardians.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                    {selectedStudent.guardians.map((g, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <span>
+                          <strong>{g.full_name || 'ولي أمر'}</strong>
+                          <span className="muted"> ({g.relation || 'ولي أمر'})</span>
+                        </span>
+                        <a href={`tel:${g.phone}`} className="rec-detail-phone-link" aria-label={`اتصال بولي الأمر ${g.phone}`}>
+                          📞 {g.phone}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="muted" style={{ fontSize: '.88rem' }}>لا يوجد ولي أمر مرتبط حالياً</span>
+                )}
+              </div>
+
+              {selectedStudent.notes && (
+                <div className="rec-detail-item">
+                  <span className="rec-detail-item-label">ملاحظات</span>
+                  <span className="rec-detail-item-value" style={{ fontWeight: 400, color: '#C8D8EB' }}>
+                    {selectedStudent.notes}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="rec-detail-actions">
+              {canEdit && (
+                <button
+                  type="button"
+                  className="btn btn-primary rec-btn-action"
+                  onClick={() => startEdit(selectedStudent)}
+                >
+                  <EditIcon size={15} />
+                  <span>تعديل السجل</span>
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  className={`btn ${selectedStudent.active ? 'btn-danger' : 'btn-success'} rec-btn-action`}
+                  onClick={() => void toggleActive(selectedStudent)}
+                >
+                  {selectedStudent.active ? <TrashIcon size={15} /> : <CheckIcon size={15} />}
+                  <span>{selectedStudent.active ? 'تعطيل الحساب' : 'تفعيل الحساب'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-secondary rec-btn-action"
+                style={{ gridColumn: canEdit ? undefined : '1 / -1' }}
+                onClick={() => setSelectedStudent(null)}
+              >
+                <span>إغلاق</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Table View */}
+      <div className="dash-table-wrap dash-table-desktop">
         <table className="dash-table">
           <thead>
             <tr>
@@ -352,6 +643,90 @@ export default function StudentsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Compact Cards View */}
+      <div className="dash-cards-mobile">
+        {filtered.map(s => (
+          <div
+            key={s.id}
+            className={`admin-mobile-card clickable ${!s.active ? 'dash-row-inactive' : ''}`}
+            onClick={() => setSelectedStudent(s)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setSelectedStudent(s)
+              }
+            }}
+            aria-label={`بطاقة الطالب: ${s.full_name} - ${s.section_label}`}
+          >
+            <div className="admin-mobile-card-header">
+              <div className="admin-mobile-card-top">
+                <div className="admin-mobile-avatar">
+                  {s.full_name.charAt(0)}
+                </div>
+                <div>
+                  <h3 className="admin-mobile-card-title">{s.full_name}</h3>
+                  <span className="badge" style={{ marginTop: 2, display: 'inline-block' }}>{s.section_label}</span>
+                </div>
+              </div>
+              <span className={`dash-badge ${s.active ? 'dash-badge--ok' : 'dash-badge--off'}`}>
+                {s.active ? 'مفعّل' : 'معطّل'}
+              </span>
+            </div>
+
+            <div className="admin-mobile-card-body">
+              <div className="admin-mobile-card-row">
+                <span className="admin-mobile-card-label">ولي الأمر:</span>
+                <span className="muted">
+                  {s.guardians.length > 0
+                    ? `${s.guardians[0].full_name ?? ''} (${s.guardians[0].relation || 'ولي أمر'})`
+                    : 'غير مرتبط'}
+                </span>
+              </div>
+            </div>
+
+            <div className="admin-mobile-card-actions" onClick={e => e.stopPropagation()}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setSelectedStudent(s)}
+                aria-label={`عرض تفاصيل ${s.full_name}`}
+              >
+                <span>عرض التفاصيل</span>
+              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => startEdit(s)}
+                  aria-label={`تعديل ${s.full_name}`}
+                >
+                  <EditIcon size={14} />
+                  <span>تعديل</span>
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  type="button"
+                  className={`btn btn-sm ${s.active ? 'btn-danger' : 'btn-success'}`}
+                  onClick={() => void toggleActive(s)}
+                  aria-label={s.active ? `تعطيل ${s.full_name}` : `تفعيل ${s.full_name}`}
+                >
+                  {s.active ? <TrashIcon size={14} /> : <CheckIcon size={14} />}
+                  <span>{s.active ? 'تعطيل' : 'تفعيل'}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <p className="muted" style={{ textAlign: 'center', padding: 20 }}>
+            لا توجد نتائج مطابقة
+          </p>
+        )}
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onDone={clearToast} />}

@@ -1,0 +1,71 @@
+{
+  "release": "wajibati-1.2.0",
+  "version": "1.2.0",
+  "buildNumber": 10,
+  "gitBranch": "release/wajibati-unified-rc1",
+  "gitCommit": "c2887d6f6ff52caee3a4d541b26daf0bbcc3a290",
+  "builtAt": "2026-11-10T03:13:00+03:00",
+  "artifacts": [
+    {
+      "platform": "android",
+      "file": "android/wajibati-1.2.0-code10-release.aab",
+      "sha256": "27a661a925dbc3b842c03edca4d2b993d354f0d5c306012ebdfefe6d62b46a69",
+      "signing": "BLOCKED - SIGNING (no production keystore on build host)",
+      "toolchain": "AGP 8.7.2, Gradle 8.11.1, compileSdk 35, JDK 21",
+      "buildHost": "Windows 11 Pro",
+      "testStatus": "unit suite PASS; emulator smoke test PASS (debug build)"
+    },
+    {
+      "platform": "android",
+      "file": "android/wajibati-1.2.0-code10-release-unsigned.apk",
+      "sha256": "bab680833269dc640b30347dbd56d18c5fec3217fe6aa2965cd44f2e8374016a",
+      "signing": "unsigned",
+      "toolchain": "AGP 8.7.2, Gradle 8.11.1, compileSdk 35, JDK 21",
+      "buildHost": "Windows 11 Pro"
+    },
+    {
+      "platform": "android",
+      "file": "android/wajibati-1.2.0-code10-debug.apk",
+      "sha256": "dc2d22eb645611f0dbf8f9ecccd369e4a6750a58f32e954701c04eb2e334e21e",
+      "signing": "debug keystore",
+      "note": "installed and smoke-tested on Android 17 emulator (upgrade install, session restored)"
+    },
+    {
+      "platform": "ios",
+      "file": "ios/Wajibati-1.2.0.xcarchive.zip",
+      "sha256": "2fb74fb246fd49559d578f40a5589f13925c8e5c952774d256a2c182fbe96586",
+      "signing": "BLOCKED - APPLE SIGNING (0 identities on build Mac)",
+      "toolchain": "Xcode 27.2, CocoaPods 1.17.0",
+      "buildHost": "macOS (Alis-MacBook-Pro-2, arm64)"
+    },
+    {
+      "platform": "ios",
+      "file": "ios/Wajibati-1.2.0-simulator.app.zip",
+      "sha256": "2c07f57c9060607112994090f6ef434d38d376eed07dbca924dbe50bcc8e6081",
+      "note": "Release-iphonesimulator build; installed and smoke-tested on iPhone 18 Pro (iOS 27.2) simulator"
+    },
+    {
+      "platform": "windows",
+      "file": "windows/wajibati-admin_1.2.0_x64-setup.exe",
+      "sha256": "9ce9912d9d59ac9c103503d2f0978dd978be9d79c12d4b53846284389261e74f",
+      "signing": "unsigned (no Windows code-signing cert configured)",
+      "toolchain": "Tauri 2, Rust 1.99.0, NSIS",
+      "testStatus": "silent install, launch, RTL login render, uninstall entry verified"
+    },
+    {
+      "platform": "macos",
+      "file": "macos/wajibati-admin_1.2.0_aarch64.dmg",
+      "sha256": "0adeff618b624888839b5cb2fd80b722ccb4be452cc1ecaa487f9450647b1429",
+      "signing": "ad-hoc only; BLOCKED - APPLE SIGNING for notarized distribution",
+      "toolchain": "Tauri 2, Rust 1.99.1, Xcode 27.2 CLT",
+      "testStatus": "app launches on build Mac (process verified); Intel (x86_64) build NOT VERIFIED"
+    },
+    {
+      "platform": "web",
+      "file": "web/wajibati-web-1.2.0.zip",
+      "sha256": "898ef78e9e6d9fa93da2178c7b57dfc0a9769cb4456e0c114a7966bd97c06496",
+      "toolchain": "Vite 5.4.21, vite-plugin-pwa 0.20.5, Node 24.22.0, TypeScript 5.9.3",
+      "note": "PWA with injectManifest service worker, autoUpdate; 43 precache entries"
+    }
+  ]
+}

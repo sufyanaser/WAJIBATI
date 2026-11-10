@@ -1,12 +1,14 @@
 use std::fs;
 use std::path::PathBuf;
 
+#[cfg(windows)]
 #[repr(C)]
 struct DataBlob {
     cb_data: u32,
     pb_data: *mut u8,
 }
 
+#[cfg(windows)]
 #[link(name = "crypt32")]
 unsafe extern "system" {
     fn CryptProtectData(
@@ -30,16 +32,27 @@ unsafe extern "system" {
     ) -> i32;
 }
 
+#[cfg(windows)]
 #[link(name = "kernel32")]
 unsafe extern "system" {
     fn LocalFree(h_mem: *mut std::ffi::c_void) -> *mut std::ffi::c_void;
 }
 
+#[cfg(windows)]
 const CRYPTPROTECT_UI_FORBIDDEN: u32 = 0x1;
 
 fn get_storage_dir() -> PathBuf {
-    let app_data = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
-    let mut dir = PathBuf::from(app_data);
+    #[cfg(windows)]
+    let base = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
+    #[cfg(target_os = "macos")]
+    let base = std::env::var("HOME")
+        .map(|h| format!("{h}/Library/Application Support"))
+        .unwrap_or_else(|_| ".".to_string());
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    let base = std::env::var("XDG_DATA_HOME")
+        .or_else(|_| std::env::var("HOME").map(|h| format!("{h}/.local/share")))
+        .unwrap_or_else(|_| ".".to_string());
+    let mut dir = PathBuf::from(base);
     dir.push("wajibati-admin");
     dir.push("secure_store");
     if !dir.exists() {
@@ -60,6 +73,7 @@ fn sanitize_key(key: &str) -> String {
     }
 }
 
+#[cfg(windows)]
 pub fn protect(data: &[u8]) -> Result<Vec<u8>, String> {
     unsafe {
         let in_blob = DataBlob {
@@ -92,6 +106,7 @@ pub fn protect(data: &[u8]) -> Result<Vec<u8>, String> {
     }
 }
 
+#[cfg(windows)]
 pub fn unprotect(data: &[u8]) -> Result<Vec<u8>, String> {
     unsafe {
         let in_blob = DataBlob {
@@ -124,12 +139,35 @@ pub fn unprotect(data: &[u8]) -> Result<Vec<u8>, String> {
     }
 }
 
+// Non-Windows: no OS-level DPAPI equivalent is wired yet. Data is stored
+// without encryption but the file and its directory are restricted to the
+// current user (0600/0700), matching how mainstream desktop apps store
+// session data on macOS/Linux. Keychain integration is tracked as a known issue.
+#[cfg(not(windows))]
+pub fn protect(data: &[u8]) -> Result<Vec<u8>, String> {
+    Ok(data.to_vec())
+}
+
+#[cfg(not(windows))]
+pub fn unprotect(data: &[u8]) -> Result<Vec<u8>, String> {
+    Ok(data.to_vec())
+}
+
 #[tauri::command]
 pub fn dpapi_write(key: String, value: String) -> Result<(), String> {
     let encrypted = protect(value.as_bytes())?;
     let mut file_path = get_storage_dir();
     file_path.push(format!("{}.dpapi", sanitize_key(&key)));
-    fs::write(&file_path, encrypted).map_err(|e| format!("Failed to write secure file: {}", e))
+    fs::write(&file_path, encrypted).map_err(|e| format!("Failed to write secure file: {}", e))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&file_path, fs::Permissions::from_mode(0o600));
+        if let Some(parent) = file_path.parent() {
+            let _ = fs::set_permissions(parent, fs::Permissions::from_mode(0o700));
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]

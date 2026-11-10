@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { supabase, usernameToAdminEmail } from '../lib/supabase'
+import { supabase, usernameToAdminEmail, classifyAuthError, authErrorMessage } from '../lib/supabase'
 import { EyeIcon, EyeOffIcon } from '../components/Icons'
 import { AuthScenery } from '../components/AuthScenery'
 import { useSchoolSettings } from '../services/schoolSettings'
@@ -22,7 +22,7 @@ export default function AdminLogin() {
     const email = username.includes('@') ? username : usernameToAdminEmail(username)
     const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password: pass })
     if (error) {
-      setErr('اسم المستخدم أو كلمة المرور غير صحيحة')
+      setErr(authErrorMessage(classifyAuthError(error), 'اسم المستخدم أو كلمة المرور غير صحيحة'))
       setBusy(false)
       return
     }

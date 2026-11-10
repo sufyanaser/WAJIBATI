@@ -589,13 +589,12 @@ export default function MasterDataPage() {
                 </p>
               )}
 
+              {/* status lines sit outside the grid so they never take a card slot */}
+              {busy && <p className="muted master-list-status" role="status">جارٍ التحميل…</p>}
+              {!busy && rows.length === 0 && (
+                <p className="muted master-list-status">لا توجد سجلات حالياً.</p>
+              )}
               <div className="master-list">
-                {busy && <p className="muted">جارٍ التحميل…</p>}
-                {!busy && rows.length === 0 && (
-                  <p className="muted" style={{ padding: '16px', textAlign: 'center' }}>
-                    لا توجد سجلات حالياً.
-                  </p>
-                )}
                 {rows.map((row, index) => {
                   const rowKey = entity.compositeKeys
                     ? entity.compositeKeys.map(k => String(row[k] ?? '')).join('-')
